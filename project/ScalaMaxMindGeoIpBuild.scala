@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -10,22 +10,26 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hadoop.etl
+import sbt._
+import Keys._
 
-// Hadoop
-import org.apache.hadoop.util.ToolRunner
-import org.apache.hadoop.conf.Configuration
+object ScalaMaxMindGeoIpBuild extends Build {
 
-// Scalding
-import com.twitter.scalding.Tool
+  import Dependencies._
+  import BuildSettings._
 
-/**
- * Entrypoint for Hadoop to kick off the ETL job.
- *
- * Borrowed from com.twitter.scalding.Tool
- */
-object EtlRunner {
-	def main(args : Array[String]) {
-		ToolRunner.run(new Configuration, new Tool, args);
-	}
+  // Configure prompt to show current project
+  override lazy val settings = super.settings :+ {
+    shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+  }
+
+  // Define our project, with basic project information and library dependencies
+  lazy val project = Project("scala-maxmind-geoip", file("."))
+    .settings(buildSettings: _*)
+    .settings(
+      libraryDependencies ++= Seq(
+        Libraries.collUtils,
+        Libraries.specs2
+      )
+    )
 }

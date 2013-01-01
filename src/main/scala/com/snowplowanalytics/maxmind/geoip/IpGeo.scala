@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hadoop.etl.geo
+package com.snowplowanalytics.maxmind.geoip
 
 // Java
 import java.io.File
@@ -21,7 +21,7 @@ import com.twitter.util.LruMap
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
 
-// SnowPlow ETL
+// This library
 import IpLocation._
 
 /**
@@ -37,10 +37,10 @@ import IpLocation._
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: File, fromDisk: Boolean = false) {
+class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
 
 	// Initialise the cache
-	private val lru = new LruMap[String, IpLocation](10000) // Of type mutable.Map[String, IpLocation]
+	private val lru = new LruMap[String, IpLocation](cacheSize) // Of type mutable.Map[String, IpLocation]
 
 	// Configure the lookup service
 	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE

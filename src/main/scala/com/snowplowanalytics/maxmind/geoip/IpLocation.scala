@@ -15,24 +15,15 @@ package com.snowplowanalytics.maxmind.geoip
 // MaxMind
 import com.maxmind.geoip.Location
 
-// TODO: make an ADT of IpLocation plus UnknownLocation.
-
-// Represents an unidentified location
-val UnknownIpLocation = IpLocation(Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty)
-
 /**
- * A stringly-typed case class wrapper around the
+ * A case class wrapper around the
  * MaxMind Location class.
- * Stringly-typed because these fields will be
- * written to flatfile by Scalding.
- *
- * TODO: eurgh, what was I thinking making this stringly typed
  */
 case class IpLocation(
   countryCode: String,
   countryName: String,
-  region: String,
-  city: String,
+  region: Option[String],
+  city: Option[String],
   latitude: Float,
   longitude: Float,
   postalCode: Option[String],
@@ -45,18 +36,18 @@ case class IpLocation(
  * Helpers for an IpLocation
  */
 object IpLocation {
-  
-  // Helpers to convert int or float to option field for IpLocation
+
+  // Option-box a MaxMind Int, where MaxMind uses 0 to indicate None
   private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
 
   /**
-   * Converts MaxMind Location to a stringly-typed IpLocation
+   * Constructs an IpLocation from a MaxMind Location
    */
-  implicit def location2IpLocation(loc: Location): IpLocation = IpLocation(
+  def apply(loc: Location): IpLocation = IpLocation(
     countryCode = loc.countryCode,
     countryName = loc.countryName,
-    region = loc.region,
-    city = loc.city,
+    region = Option(loc.region),
+    city = Option(loc.city),
     latitude = loc.latitude,
     longitude = loc.longitude,
     postalCode = Option(loc.postalCode),

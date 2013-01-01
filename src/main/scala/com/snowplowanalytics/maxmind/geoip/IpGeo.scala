@@ -29,9 +29,9 @@ import IpLocation._
  *
  * Two main differences:
  *
- * 1. getLocation(ip: String) now returns a stringly-typed
- *    IpLocation case class, not a raw MaxMind Location
- * 2. IpGeo introduces a 10k-element LRU cache to improve
+ * 1. getLocation(ip: String) now returns an IpLocation
+ *    case class, not a raw MaxMind Location
+ * 2. IpGeo introduces an LRU cache to improve
  *    lookup performance
  *
  * Inspired by:
@@ -40,27 +40,26 @@ import IpLocation._
 class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
 
   // Initialise the cache
-  private val lru = new LruMap[String, IpLocation](cacheSize) // Of type mutable.Map[String, IpLocation]
+  private val lru = new LruMap[String, Option[IpLocation]](cacheSize) // Of type mutable.Map[String, Option[IpLocation]]
 
   // Configure the lookup service
   private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
   private val maxmind = new LookupService(dbFile, options)
 
   /**
-   * Returns the MaxMind location for this IP address.
-   * If MaxMind can't find the IP address, then return
-   * an empty location.
+   * Returns the MaxMind location for this IP address
+   * as an IpLocation, or None if MaxMind cannot find
+   * the location.
+   *
+   * Don't confuse the LRU returning None meaning no
+   * cache entry found, with an extant cache entry
+   * containing None, meaning that IP address is unknown.
    */
-  def getLocation(ip: String): IpLocation = lru.get(ip) match {
-    case Some(loc) => loc // In the Lru cache
-    case None => Option(maxmind.getLocation(ip)) match {
-      case Some(loc) => // In MaxMind
-        val ipLoc: IpLocation = loc // Do the implicit conversion one time
-        lru.put(ip, ipLoc)
-        ipLoc
-      case None =>
-        lru.put(ip, UnknownIpLocation) // Not found
-        UnknownIpLocation
-    }
+  def getLocation(ip: String): Option[IpLocation] = lru.get(ip) match {
+    case Some(loc) => loc // In the LRU cache
+    case None =>
+      val loc = Option(maxmind.getLocation(ip)) map IpLocation.apply
+      lru.put(ip, loc)
+      loc
   }
 }

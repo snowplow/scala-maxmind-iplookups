@@ -39,28 +39,28 @@ import IpLocation._
  */
 class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
 
-	// Initialise the cache
-	private val lru = new LruMap[String, IpLocation](cacheSize) // Of type mutable.Map[String, IpLocation]
+  // Initialise the cache
+  private val lru = new LruMap[String, IpLocation](cacheSize) // Of type mutable.Map[String, IpLocation]
 
-	// Configure the lookup service
-	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
-	private val maxmind = new LookupService(dbFile, options)
+  // Configure the lookup service
+  private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
+  private val maxmind = new LookupService(dbFile, options)
 
-	/**
-	 * Returns the MaxMind location for this IP address.
-	 * If MaxMind can't find the IP address, then return
-	 * an empty location.
-	 */
-	def getLocation(ip: String): IpLocation = lru.get(ip) match {
-		case Some(l) => l // In the Lru cache
-		case None => Option(maxmind.getLocation(ip)) match {
-			case Some(l) => // In MaxMind
-				val ipL: IpLocation = l // Do the implicit conversion one time
-				lru.put(ip, ipL)
-				ipL
-			case None =>
-				lru.put(ip, UnknownIpLocation) // Not found
-				UnknownIpLocation
-		}
-	}
+  /**
+   * Returns the MaxMind location for this IP address.
+   * If MaxMind can't find the IP address, then return
+   * an empty location.
+   */
+  def getLocation(ip: String): IpLocation = lru.get(ip) match {
+    case Some(loc) => loc // In the Lru cache
+    case None => Option(maxmind.getLocation(ip)) match {
+      case Some(loc) => // In MaxMind
+        val ipLoc: IpLocation = loc // Do the implicit conversion one time
+        lru.put(ip, ipLoc)
+        ipLoc
+      case None =>
+        lru.put(ip, UnknownIpLocation) // Not found
+        UnknownIpLocation
+    }
+  }
 }

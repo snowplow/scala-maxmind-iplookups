@@ -18,6 +18,8 @@ import java.io.File
 // Specs2
 import org.specs2.mutable.Specification
 
+// TODO: look into Specs2 DataTables
+
 object IpGeoTest {
 
 	type DataGrid = scala.collection.immutable.Map[String, IpLocation]

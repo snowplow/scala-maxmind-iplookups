@@ -51,9 +51,9 @@ class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
    * as an IpLocation, or None if MaxMind cannot find
    * the location.
    *
-   * Don't confuse the LRU returning None meaning no
-   * cache entry found, with an extant cache entry
-   * containing None, meaning that IP address is unknown.
+   * Don't confuse the LRU returning None (meaning that no
+   * cache entry could be found), versus an extant cache entry
+   * containing None (meaning that the IP address is unknown).
    */
   def getLocation(ip: String): Option[IpLocation] = lru.get(ip) match {
     case Some(loc) => loc // In the LRU cache

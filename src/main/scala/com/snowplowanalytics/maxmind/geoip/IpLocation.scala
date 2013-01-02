@@ -33,7 +33,8 @@ case class IpLocation(
   )
 
 /**
- * Helpers for an IpLocation
+ * Companion class contains a constructor
+ * which takes a MaxMind Location class.
  */
 object IpLocation {
 

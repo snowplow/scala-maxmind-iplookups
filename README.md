@@ -5,7 +5,7 @@
 This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
 1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code and `GeoLiteCity.dat`
-2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses `Option[]` boxing wherever possible
+2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
 3. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
@@ -32,11 +32,11 @@ val ipGeo = new IpGeo(dbFile = new java.io.File(dbFilepath), memCache = false, l
 
 for (loc <- ipGeo.getLocation("213.52.50.8")) {
   println(loc.countryCode)   // => "NO"
-  println(s.parameter)       // => "Norway" 
+  println(loc.countryName)   // => "Norway" 
 }
 ```
 
-Given that `GeoLiteCity.dat` is updated by MaxMind each month, we **strongly recommend** maintaining an up-to-date `GeoLiteCity.dat` file outside of the jar and using that for lookups, and only using the bundled `GeoLiteCity.dat` file for testing purposes. See [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that does this.
+Given that `GeoLiteCity.dat` is updated by MaxMind each month, we **strongly recommend** maintaining an up-to-date `GeoLiteCity.dat` file outside of the jar and using that for your geo-IP lookups, and only using the bundled `GeoLiteCity.dat` file for testing purposes. See [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that does this.
 
 For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala].
 

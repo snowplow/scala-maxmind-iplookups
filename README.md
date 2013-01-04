@@ -95,7 +95,7 @@ If you want to build a 'fat jar':
 
 The 'fat jar' is now available as:
 
-    target/scala-maxmind-geoip-0.0.1.jar
+    target/scala-maxmind-geoip-0.0.1-fat.jar
 
 ## Roadmap
 

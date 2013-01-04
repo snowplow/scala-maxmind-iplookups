@@ -63,7 +63,7 @@ object BuildSettings {
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
 
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {

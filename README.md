@@ -4,7 +4,7 @@
 
 This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
-1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code and `GeoLiteCity.dat` file
+1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code and `GeoLiteCity.dat`
 2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses `Option[]` boxing wherever possible
 3. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
 
@@ -17,7 +17,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"   % "scalamaxmindgeoip"   % "0.0.1"
+val maxmindGeoip = "com.snowplowanalytics"   % "scala-maxmind-geoip"   % "0.0.1"
 ```
 
 ## Usage
@@ -101,7 +101,7 @@ The `assembly` command above runs the test suite - but you can also run this man
 
 ## Roadmap
 
-Nothing planned currently.
+Nothing planned currently, although I want to look into Specs2's data tables and see if they would be a better fit for the unit tests.
 
 ## Copyright and license
 

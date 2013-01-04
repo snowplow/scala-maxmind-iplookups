@@ -79,25 +79,23 @@ We recommend trying different LRU cache sizes to see what works best for you.
 
 Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
-## Building
+## Building etc
 
 Assuming you already have SBT installed:
 
     $ git clone git://github.com/snowplow/scala-maxmind-geoip.git
     $ cd scala-maxmind-geoip
-    $ sbt assembly
+    $ sbt test
+    <snip>
+    [info] Passed: : Total 186, Failed 0, Errors 0, Passed 186, Skipped 0
+
+If you want to build a 'fat jar':
+
+    $ sbt assembly 
 
 The 'fat jar' is now available as:
 
     target/scala-maxmind-geoip-0.0.1.jar
-
-## Unit testing
-
-The `assembly` command above runs the test suite - but you can also run this manually with:
-
-    $ sbt test
-    <snip>
-    [info] Passed: : Total 186, Failed 0, Errors 0, Passed 186, Skipped 0
 
 ## Roadmap
 

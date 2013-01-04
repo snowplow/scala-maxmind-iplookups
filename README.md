@@ -99,7 +99,7 @@ The fat jar is now available as:
 
 ## Roadmap
 
-Nothing planned currently, although I want to look into Specs2's data tables and see if they would be a better fit for the unit tests.
+Nothing planned currently, although we want to look into Specs2's data tables and see if they would be a better fit for the unit tests.
 
 ## Copyright and license
 

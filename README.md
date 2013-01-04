@@ -89,7 +89,7 @@ Assuming you already have SBT installed:
 
 The 'fat jar' is now available as:
 
-    upload/scala-maxmind-geoip-0.0.1.jar
+    target/scala-maxmind-geoip-0.0.1.jar
 
 ## Unit testing
 

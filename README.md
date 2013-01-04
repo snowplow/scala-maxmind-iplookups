@@ -17,7 +17,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"   % "scala-maxmind-geoip"   % "0.0.1"
+val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.1"
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ Given that `GeoLiteCity.dat` is updated by MaxMind each month, we **strongly rec
 
 For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala].
 
-## Technical details
+## Implementation details
 
 ### IpGeo constructor
 
@@ -93,7 +93,7 @@ If you want to build a 'fat jar':
 
     $ sbt assembly 
 
-The 'fat jar' is now available as:
+The fat jar is now available as:
 
     target/scala-maxmind-geoip-0.0.1-fat.jar
 

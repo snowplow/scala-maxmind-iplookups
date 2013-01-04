@@ -24,9 +24,9 @@ object IpGeoTest {
 
   type DataGrid = scala.collection.immutable.Map[String, Option[IpLocation]]
 
-  val GeoLiteCity: IpGeo = {
+  def GeoLiteCity(fromDisk: Boolean, cacheSize: Int): IpGeo = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
-    new IpGeo(dbFile = new File(dbFilepath), fromDisk = false)
+    new IpGeo(dbFile = new File(dbFilepath), fromDisk, cacheSize)
   }
 
   val testData: DataGrid = Map(
@@ -81,51 +81,60 @@ class IpGeoTest extends Specification {
 
   "Looking up some IP address locations should match their expected locations" >> {
 
+    val df: Boolean => String = d => if (d) "using" else "without using"
+    val cf: Int => String = c => if (c > 0) "cache sized %s".format(c) else "no cache"
+    val formatter: (String, Boolean, Int) => String =
+      (ip, disk, cache) => "The IP address %s looked up (%s disk and with %s)".format(ip, df(disk), cf(cache))
+
     import IpGeoTest._
-    testData foreach { case (ip, expected) =>
+    for (fromDisk  <- Seq(true, false);
+         cacheSize <- Seq(0, 1000, 10000)) {
 
-      "The IP address %s".format(ip) should {
+      testData foreach { case (ip, expected) =>
 
-        val actual = GeoLiteCity.getLocation(ip)
+        formatter(ip, fromDisk, cacheSize) should {
 
-        if (expected == None) {
-          "not be found" in {
-            actual must beNone
-          }
-        } else {
+          val actual = GeoLiteCity(fromDisk, cacheSize).getLocation(ip)
 
-          val a = actual.get
-          val e = expected.get
+          if (expected == None) {
+            "not be found" in {
+              actual must beNone
+            }
+          } else {
 
-          "have countryCode = %s".format(e.countryCode) in {
-            a.countryCode must_== e.countryCode
-          }
-          "have countryName = %s".format(e.countryName) in {
-            a.countryName must_== e.countryName
-          }
-          "have region = %s".format(e.region) in {
-            a.region must_== e.region
-          }
-          "have city = %s".format(e.city) in {
-            a.city must_== e.city
-          }
-          "have latitude = %s".format(e.latitude) in {
-            a.latitude must_== e.latitude
-          }
-          "have longitude = %s".format(e.longitude) in {
-            a.longitude must_== e.longitude
-          }
-          "have postalCode = %s".format(e.postalCode) in {
-            a.postalCode must_== e.postalCode
-          }
-          "have dmaCode = %s".format(e.dmaCode) in {
-            a.dmaCode must_== e.dmaCode
-          }
-          "have areaCode = %s".format(e.areaCode) in {
-            a.areaCode must_== e.areaCode
-          }
-          "have metroCode = %s".format(e.metroCode) in {
-            a.metroCode must_== e.metroCode
+            val a = actual.get
+            val e = expected.get
+
+            "have countryCode = %s".format(e.countryCode) in {
+              a.countryCode must_== e.countryCode
+            }
+            "have countryName = %s".format(e.countryName) in {
+              a.countryName must_== e.countryName
+            }
+            "have region = %s".format(e.region) in {
+              a.region must_== e.region
+            }
+            "have city = %s".format(e.city) in {
+              a.city must_== e.city
+            }
+            "have latitude = %s".format(e.latitude) in {
+              a.latitude must_== e.latitude
+            }
+            "have longitude = %s".format(e.longitude) in {
+              a.longitude must_== e.longitude
+            }
+            "have postalCode = %s".format(e.postalCode) in {
+              a.postalCode must_== e.postalCode
+            }
+            "have dmaCode = %s".format(e.dmaCode) in {
+              a.dmaCode must_== e.dmaCode
+            }
+            "have areaCode = %s".format(e.areaCode) in {
+              a.areaCode must_== e.areaCode
+            }
+            "have metroCode = %s".format(e.metroCode) in {
+              a.metroCode must_== e.metroCode
+            }
           }
         }
       }

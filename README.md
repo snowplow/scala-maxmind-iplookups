@@ -1,6 +1,8 @@
-# SnowPlow Hadoop ETL
+# Scala MaxMind Geo-IP
 
 ## Introduction
+
+This is a Scala wrapper for the 
 
 This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding].
 

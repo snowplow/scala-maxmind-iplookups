@@ -24,9 +24,9 @@ object IpGeoTest {
 
   type DataGrid = scala.collection.immutable.Map[String, Option[IpLocation]]
 
-  def GeoLiteCity(fromDisk: Boolean, cacheSize: Int): IpGeo = {
+  def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
-    new IpGeo(dbFile = new File(dbFilepath), fromDisk, cacheSize)
+    new IpGeo(dbFile = new File(dbFilepath), memCache, lruCache)
   }
 
   val testData: DataGrid = Map(
@@ -81,20 +81,22 @@ class IpGeoTest extends Specification {
 
   "Looking up some IP address locations should match their expected locations" >> {
 
-    val df: Boolean => String = d => if (d) "using" else "without using"
-    val cf: Int => String = c => if (c > 0) "cache sized %s".format(c) else "no cache"
+    val mcf: Boolean => String = mc => if (mc) "using" else "without using"
+    val lcf: Int => String = lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
     val formatter: (String, Boolean, Int) => String =
-      (ip, disk, cache) => "The IP address %s looked up (%s disk and with %s)".format(ip, df(disk), cf(cache))
+      (ip, mcache, lcache) => "The IP address %s looked up (%s memory cache and with %s)".format(ip, mcf(mcache), lcf(lcache))
 
     import IpGeoTest._
-    for (fromDisk  <- Seq(true, false);
-         cacheSize <- Seq(0, 1000, 10000)) {
+    for (memCache <- Seq(true, false);
+         lruCache <- Seq(0, 1000, 10000)) {
+
+      val ipGeo = GeoLiteCity(memCache, lruCache)
 
       testData foreach { case (ip, expected) =>
 
-        formatter(ip, fromDisk, cacheSize) should {
+        formatter(ip, memCache, lruCache) should {
 
-          val actual = GeoLiteCity(fromDisk, cacheSize).getLocation(ip)
+          val actual = ipGeo.getLocation(ip)
 
           if (expected == None) {
             "not be found" in {

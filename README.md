@@ -2,29 +2,94 @@
 
 ## Introduction
 
-This is a Scala wrapper for the 
+This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
-This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding].
+1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code and `GeoLiteCity.dat` file
+2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses `Option[]` boxing wherever possible
+3. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
 
-The SnowPlow Hadoop ETL process is an alternative to the SnowPlow Hive ETL process. 
+## Installation
 
-## Technical approach
+Add this to your SBT config:
 
-The Hadoop ETL parses raw CloudFront log files, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format flatfiles.
+```scala
+// Resolver
+val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
-Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr] using the EMR ETL Harness, a Rubygem.
+// Dependency
+val maxmindGeoip = "com.snowplowanalytics"   % "scalamaxmindgeoip"   % "0.0.1"
+```
+
+## Usage
+
+Here is a simple usage example, using the bundled `GeoLiteCity.dat` file:
+
+```scala
+import com.snowplowanalytics.maxmind.geoip.IpGeo
+
+val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
+val ipGeo = new IpGeo(dbFile = new java.io.File(dbFilepath), memCache = false, lruCache = 20000)
+
+for (loc <- ipGeo.getLocation("213.52.50.8")) {
+  println(loc.countryCode)   // => "NO"
+  println(s.parameter)       // => "Norway" 
+}
+```
+
+Given that `GeoLiteCity.dat` is updated by MaxMind each month, we **strongly recommend** maintaining an up-to-date `GeoLiteCity.dat` file outside of the jar and using that for lookups, and only using the bundled `GeoLiteCity.dat` file for testing purposes. See [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that does this.
+
+For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala].
+
+## Technical details
+
+### IpGeo constructor
+
+The signature is as follows:
+
+```scala
+class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000)
+```
+
+The `memCache` flag is set to true by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
+
+The `lruCache` value defaults to 10,000 - meaning Scala MaxMind Geo-IP will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+
+### IpLocation case class
+
+The `getLocation(ip)` method returns an `IpLocation` case class with the following structure:
+
+```scala
+case class IpLocation(
+  countryCode: String,
+  countryName: String,
+  region: Option[String],
+  city: Option[String],
+  latitude: Float,
+  longitude: Float,
+  postalCode: Option[String],
+  dmaCode: Option[Int],
+  areaCode: Option[Int],
+  metroCode: Option[Int]
+  )
+```
+
+### LRU cache
+
+We recommend trying different LRU cache sizes to see what works best for you.
+
+Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-lru-cache]). Switch it off if you are working with threads.
 
 ## Building
 
 Assuming you already have SBT installed:
 
-    $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 3-etl/hadoop-etl
+    $ git clone git://github.com/snowplow/scala-maxmind-geoip.git
+    $ cd scala-maxmind-geoip
     $ sbt assembly
 
 The 'fat jar' is now available as:
 
-    upload/snowplow-hadoop-etl-0.0.1.jar
+    upload/scala-maxmind-geoip-0.0.1.jar
 
 ## Unit testing
 
@@ -32,60 +97,11 @@ The `assembly` command above runs the test suite - but you can also run this man
 
     $ sbt test
     <snip>
-    [info] + A WordCount job should
-	[info]   + count words correctly
-	[info] Passed: : Total 2, Failed 0, Errors 0, Passed 2, Skipped 0
-
-## Running on Amazon EMR
-
-First, upload the jar to S3 - if you haven't yet built the project (see above), you can grab the latest copy of the jar from this repo's [Downloads] [downloads].
-
-Next, upload the data file [`data/hello.txt`] [hello-txt] to S3.
-
-Finally, you are ready to run this job using the [Amazon Ruby EMR client] [emr-client]:
-
-    $ elastic-mapreduce --create --name "scalding-example-project" \
-      --jar s3n://{{JAR_BUCKET}}/scalding-example-project-0.0.1.jar \
-      --arg com.snowplowanalytics.hadoop.scalding.WordCountJob \
-      --arg --hdfs \
-      --arg --input --arg s3n://{{IN_BUCKET}}/hello.txt \
-      --arg --output --arg s3n://{{OUT_BUCKET}}/results
-
-## Checking your results
-
-Once the output has completed, you should see a folder structure like this in your output bucket:
-
-     results
-     |
-     +- _SUCCESS
-     +- part-00000
-
-Download the `part-00000` file and check that it contains:
-
-	goodbye	1
-	hello	1
-	world	2
-
-## Troubleshooting
-
-If you are trying to run this on a non-Amazon EMR environment, you may need to edit:
-
-    project/BuildSettings.scala
-
-And comment out the Hadoop jar exclusions:
-
-    // "hadoop-core-0.20.2.jar", // Provided by Amazon EMR. Delete this line if you're not on EMR
-    // "hadoop-tools-0.20.2.jar" // "
-
-## Next steps
-
-Fork this project and adapt it into your own custom Scalding job.
-
-Use the excellent [Elasticity] [elasticity] Ruby library to invoke/schedule your Scalding job on EMR.
+    [info] Passed: : Total 186, Failed 0, Errors 0, Passed 186, Skipped 0
 
 ## Roadmap
 
-Nothing planned - although it would be nice to upgrade from Specs to Specs2 for the testing, and bump Scala to 2.9.1 at the same time. If you would like to do this, feel free to submit a pull request.
+Nothing planned currently.
 
 ## Copyright and license
 
@@ -100,12 +116,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[wordcount]: https://github.com/twitter/scalding/blob/master/README.md
-[scalding]: https://github.com/twitter/scalding/
-[snowplow]: http://snowplowanalytics.com
-[emr]: http://aws.amazon.com/elasticmapreduce/
-[downloads]: https://github.com/snowplow/scalding-example-project/downloads
-[hello-txt]: https://github.com/snowplow/scalding-example-project/raw/master/data/hello.txt
-[emr-client]: http://aws.amazon.com/developertools/2264
-[elasticity]: https://github.com/rslifka/elasticity
+[java-lib]: http://www.maxmind.com/download/geoip/api/java/
+
+[ipgeotest-scala]: https://github.com/snowplow/scala-maxmind-geoip/blob/master/src/test/scala/com/snowplowanalytics/maxmind/geoip/IpGeoTest.scala
+
+[twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
+
+[maxmind-geolite-update]: https://github.com/psychicbazaar/maxmind-geolite-update
+
 [license]: http://www.apache.org/licenses/LICENSE-2.0

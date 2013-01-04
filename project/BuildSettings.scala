@@ -63,6 +63,8 @@ object BuildSettings {
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
+
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf

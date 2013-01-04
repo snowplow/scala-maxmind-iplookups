@@ -37,13 +37,13 @@ import IpLocation._
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
+class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
 
   // Initialise the cache
-  private val lru = if (cacheSize > 0) new LruMap[String, Option[IpLocation]](cacheSize) else null // Of type mutable.Map[String, Option[IpLocation]]
+  private val lru = if (lruCache > 0) new LruMap[String, Option[IpLocation]](lruCache) else null // Of type mutable.Map[String, Option[IpLocation]]
 
   // Configure the lookup service
-  private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
+  private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
   private val maxmind = new LookupService(dbFile, options)
 
   /**
@@ -51,7 +51,7 @@ class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
    * as an IpLocation, or None if MaxMind cannot find
    * the location.
    */
-  def getLocation = if (cacheSize <= 0) getLocationWithoutCache _ else getLocationWithCache _
+  def getLocation = if (lruCache <= 0) getLocationWithoutLruCache _ else getLocationWithLruCache _
 
   /**
    * Returns the MaxMind location for this IP address
@@ -60,7 +60,7 @@ class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
    *
    * This version does not use the LRU cache.
    */
-  private def getLocationWithoutCache(ip: String): Option[IpLocation] =
+  private def getLocationWithoutLruCache(ip: String): Option[IpLocation] =
     Option(maxmind.getLocation(ip)) map IpLocation.apply
 
   /**
@@ -74,7 +74,7 @@ class IpGeo(dbFile: File, fromDisk: Boolean = false, cacheSize: Int = 10000) {
    * cache entry could be found), versus an extant cache entry
    * containing None (meaning that the IP address is unknown).
    */
-  private def getLocationWithCache(ip: String): Option[IpLocation] = lru.get(ip) match {
+  private def getLocationWithLruCache(ip: String): Option[IpLocation] = lru.get(ip) match {
     case Some(loc) => loc // In the LRU cache
     case None => // Not in the LRU cache
       val loc = Option(maxmind.getLocation(ip)) map IpLocation.apply

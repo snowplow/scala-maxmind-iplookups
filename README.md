@@ -105,7 +105,7 @@ Nothing planned currently, although I want to look into Specs2's data tables and
 
 ## Copyright and license
 
-Copyright 2012 SnowPlow Analytics Ltd, with significant portions copyright 2012 Twitter, Inc.
+Copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.

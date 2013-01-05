@@ -50,9 +50,9 @@ The signature is as follows:
 class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000)
 ```
 
-The `memCache` flag is set to true by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
+The `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
 
-The `lruCache` value defaults to 10,000 - meaning Scala MaxMind Geo-IP will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+The `lruCache` value defaults to `10000` - meaning Scala MaxMind Geo-IP will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
 ### IpLocation case class
 

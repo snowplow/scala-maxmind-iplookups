@@ -98,46 +98,48 @@ class IpGeoTest extends Specification {
 
           val actual = ipGeo.getLocation(ip)
 
-          // TODO: switch to pattern match
-          if (expected == None) {
-            "not be found" in {
-              actual must beNone
-            }
-          } else {
+          expected match {
+            case None =>
+              "not be found" in {
+                actual must beNone
+              }
 
-            val a = actual.get
-            val e = expected.get
+            case Some(e) =>
+              "not be None" in {
+                actual must not beNone
+              }
 
-            "have countryCode = %s".format(e.countryCode) in {
-              a.countryCode must_== e.countryCode
-            }
-            "have countryName = %s".format(e.countryName) in {
-              a.countryName must_== e.countryName
-            }
-            "have region = %s".format(e.region) in {
-              a.region must_== e.region
-            }
-            "have city = %s".format(e.city) in {
-              a.city must_== e.city
-            }
-            "have latitude = %s".format(e.latitude) in {
-              a.latitude must_== e.latitude
-            }
-            "have longitude = %s".format(e.longitude) in {
-              a.longitude must_== e.longitude
-            }
-            "have postalCode = %s".format(e.postalCode) in {
-              a.postalCode must_== e.postalCode
-            }
-            "have dmaCode = %s".format(e.dmaCode) in {
-              a.dmaCode must_== e.dmaCode
-            }
-            "have areaCode = %s".format(e.areaCode) in {
-              a.areaCode must_== e.areaCode
-            }
-            "have metroCode = %s".format(e.metroCode) in {
-              a.metroCode must_== e.metroCode
-            }
+              val a = actual.get
+              "have countryCode = %s".format(e.countryCode) in {
+                a.countryCode must_== e.countryCode
+              }
+              "have countryName = %s".format(e.countryName) in {
+                a.countryName must_== e.countryName
+              }
+              "have region = %s".format(e.region) in {
+                a.region must_== e.region
+              }
+              "have city = %s".format(e.city) in {
+                a.city must_== e.city
+              }
+              "have latitude = %s".format(e.latitude) in {
+                a.latitude must_== e.latitude
+              }
+              "have longitude = %s".format(e.longitude) in {
+                a.longitude must_== e.longitude
+              }
+              "have postalCode = %s".format(e.postalCode) in {
+                a.postalCode must_== e.postalCode
+              }
+              "have dmaCode = %s".format(e.dmaCode) in {
+                a.dmaCode must_== e.dmaCode
+              }
+              "have areaCode = %s".format(e.areaCode) in {
+                a.areaCode must_== e.areaCode
+              }
+              "have metroCode = %s".format(e.metroCode) in {
+                a.metroCode must_== e.metroCode
+              }
           }
         }
       }

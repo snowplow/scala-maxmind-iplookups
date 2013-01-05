@@ -98,6 +98,7 @@ class IpGeoTest extends Specification {
 
           val actual = ipGeo.getLocation(ip)
 
+          // TODO: switch to pattern match
           if (expected == None) {
             "not be found" in {
               actual must beNone

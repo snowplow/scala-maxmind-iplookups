@@ -13,8 +13,9 @@ This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The ma
 Add this to your SBT config:
 
 ```scala
-// Resolver
+// Resolvers
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
+val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
 val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.1"

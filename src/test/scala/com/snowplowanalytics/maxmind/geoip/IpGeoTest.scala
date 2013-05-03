@@ -72,6 +72,20 @@ object IpGeoTest {
       metroCode = None
     )),
 
+    "216.13.200.211" -> // IP address that might fail in MaxMind 1.2.8 (see https://github.com/guardian/maxmind-geoip-build/pull/1)
+    Some(IpLocation(
+      countryCode = "CA",
+      countryName = "Canada",
+      region = Some("BC"),
+      city = Some("Burnaby"),
+      latitude = 49.25F,
+      longitude = -122.95F,
+      postalCode = None,
+      dmaCode = None,
+      areaCode = None,
+      metroCode = None
+    )),
+
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     None
   )

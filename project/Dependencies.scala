@@ -24,7 +24,7 @@ object Dependencies {
   }
 
   object V {
-    val maxmind     = "1.2.8" // Compiled in BuildSettings
+    val maxmind     = "1.2.9" // Compiled in BuildSettings
     val collUtils   = "5.3.10"
     val specs2      = "1.8"
   }

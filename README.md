@@ -18,7 +18,7 @@ val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.1"
+val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.2"
 ```
 
 ## Usage
@@ -96,7 +96,7 @@ If you want to build a 'fat jar':
 
 The fat jar is now available as:
 
-    target/scala-maxmind-geoip-0.0.1-fat.jar
+    target/scala-maxmind-geoip-0.0.2-fat.jar
 
 ## Roadmap
 

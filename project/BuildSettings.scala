@@ -20,7 +20,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.2",
+    version       := "0.0.3",
     description   := "Scala wrapper for MaxMind GeoIP library",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
@@ -68,6 +68,7 @@ object BuildSettings {
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
+        case x if x.endsWith("GeoLiteCity.dat") => MergeStrategy.discard // Don't include the MaxMind file
         case x => old(x)
       }
     }

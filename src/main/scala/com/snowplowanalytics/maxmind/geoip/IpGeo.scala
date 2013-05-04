@@ -25,6 +25,20 @@ import com.maxmind.geoip.{Location, LookupService}
 import IpLocation._
 
 /**
+ * Companion object to hold alternative constructors.
+ *
+ */
+object IpGeo {
+
+  /**
+   * Alternative constructor taking a String rather than File
+   */
+  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000) = {
+    new IpGeo(new File(dbFile), memCache, lruCache)
+  }
+}
+
+/**
  * IpGeo is a Scala wrapper around MaxMind's own LookupService Java class.
  *
  * Two main differences:

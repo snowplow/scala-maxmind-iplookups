@@ -18,18 +18,19 @@ val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.2"
+val maxmindGeoip = "com.snowplowanalytics"  % "scala-maxmind-geoip"  % "0.0.3"
 ```
+
+Retrieve the `GeoLiteCity.dat` file from the [MaxMind downloads page] [maxmind-downloads] ([direct link] [geolitecity-dat]).
 
 ## Usage
 
-Here is a simple usage example, using the bundled `GeoLiteCity.dat` file:
+Here is a simple usage example:
 
 ```scala
 import com.snowplowanalytics.maxmind.geoip.IpGeo
 
-val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
-val ipGeo = new IpGeo(dbFile = new java.io.File(dbFilepath), memCache = false, lruCache = 20000)
+val ipGeo = IpGeo(dbFile = "/opt/maxmind/GeoLiteCity.dat", memCache = false, lruCache = 20000)
 
 for (loc <- ipGeo.getLocation("213.52.50.8")) {
   println(loc.countryCode)   // => "NO"
@@ -37,9 +38,9 @@ for (loc <- ipGeo.getLocation("213.52.50.8")) {
 }
 ```
 
-Given that `GeoLiteCity.dat` is updated by MaxMind each month, we **strongly recommend** maintaining an up-to-date `GeoLiteCity.dat` file outside of the jar and using that for your geo-IP lookups, and only using the bundled `GeoLiteCity.dat` file for testing purposes. See [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that does this.
+Note that `GeoLiteCity.dat` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that regularly keeps your local `GeoLiteCity.dat` up-to-date.
 
-For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala].
+For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala]. The test suite downloads its own copy of `GeoLiteCity.dat` from MaxMind for testing purposes.
 
 ## Implementation details
 
@@ -51,7 +52,13 @@ The signature is as follows:
 class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000)
 ```
 
-The `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
+In the `IpGeo` companion object there is an alternative constructor which takes a String `dbFile` instead:
+
+```scala
+def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000)
+```
+
+In both signatures, the `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
 
 The `lruCache` value defaults to `10000` - meaning Scala MaxMind Geo-IP will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
@@ -104,7 +111,7 @@ Nothing planned currently, although we want to look into Specs2's data tables an
 
 ## Copyright and license
 
-Copyright 2012 SnowPlow Analytics Ltd.
+Copyright 2012-2013 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -121,6 +128,8 @@ limitations under the License.
 
 [twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
+[maxmind-downloads]: http://dev.maxmind.com/geoip/legacy/geolite
+[geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
 [maxmind-geolite-update]: https://github.com/psychicbazaar/maxmind-geolite-update
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0

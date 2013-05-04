@@ -25,8 +25,9 @@ object IpGeoTest {
   type DataGrid = scala.collection.immutable.Map[String, Option[IpLocation]]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
-    val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
-    new IpGeo(dbFile = new File(dbFilepath), memCache, lruCache)
+    val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
+    // ^ Warning: don't try this outside of this project, as the .dat file won't be found
+    IpGeo(dbFilepath, memCache, lruCache)
   }
 
   val testData: DataGrid = Map(

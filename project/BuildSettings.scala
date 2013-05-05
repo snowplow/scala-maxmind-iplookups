@@ -40,7 +40,7 @@ object BuildSettings {
     },
 
     // Download the GeoLite City and add it into our jar
-    resourceGenerators in Compile <+= (resourceManaged in Compile) map { out =>
+    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
       val gzRemote = new URL(Urls.maxmindData)
       val datLocal = out / "maxmind" / "GeoLiteCity.dat"
       
@@ -68,7 +68,6 @@ object BuildSettings {
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
-        case x if x.endsWith("GeoLiteCity.dat") => MergeStrategy.discard // Don't include the MaxMind file
         case x => old(x)
       }
     }

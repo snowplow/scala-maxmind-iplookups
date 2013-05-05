@@ -38,7 +38,7 @@ for (loc <- ipGeo.getLocation("213.52.50.8")) {
 }
 ```
 
-Note that `GeoLiteCity.dat` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that regularly keeps your local `GeoLiteCity.dat` up-to-date.
+Note that `GeoLiteCity.dat` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that pings MaxMind regularly to keep your local copy up-to-date.
 
 For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala]. The test suite downloads its own copy of `GeoLiteCity.dat` from MaxMind for testing purposes.
 
@@ -103,7 +103,7 @@ If you want to build a 'fat jar':
 
 The fat jar is now available as:
 
-    target/scala-maxmind-geoip-0.0.2-fat.jar
+    target/scala-maxmind-geoip-0.0.3-fat.jar
 
 ## Roadmap
 

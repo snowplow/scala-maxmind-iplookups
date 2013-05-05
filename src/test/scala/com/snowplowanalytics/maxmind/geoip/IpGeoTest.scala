@@ -49,10 +49,10 @@ object IpGeoTest {
     Some(IpLocation(
       countryCode = "GB",
       countryName = "United Kingdom",
-      region = None,
-      city = None,
-      latitude = 54.0F,
-      longitude = -2.0F,
+      region = Some("C3"),
+      city = Some("Cambridge"),
+      latitude = 52.199997F,
+      longitude = 0.11669922F,
       postalCode = None,
       dmaCode = None,
       areaCode = None,
@@ -73,14 +73,14 @@ object IpGeoTest {
       metroCode = None
     )),
 
-    "216.13.200.211" -> // IP address that might fail in MaxMind 1.2.8 (see https://github.com/guardian/maxmind-geoip-build/pull/1)
+    "216.13.200.211" -> // South Sudan, fails in MaxMind 1.2.8 (see https://github.com/guardian/maxmind-geoip-build/pull/1)
     Some(IpLocation(
-      countryCode = "CA",
-      countryName = "Canada",
-      region = Some("BC"),
-      city = Some("Burnaby"),
-      latitude = 49.25F,
-      longitude = -122.95F,
+      countryCode = "SS",
+      countryName = "South Sudan",
+      region = None,
+      city = None,
+      latitude = 4.850006F,
+      longitude = 31.600006F,
       postalCode = None,
       dmaCode = None,
       areaCode = None,

@@ -39,7 +39,7 @@ object BuildSettings {
       (out / "GeoIPJava-%s".format(V.maxmind) / "source" ** ("*.java")).get
     },
 
-    // Download the GeoLite City and add it into our jar
+    // Download the GeoLite City for our test suite
     resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
       val gzRemote = new URL(Urls.maxmindData)
       val datLocal = out / "maxmind" / "GeoLiteCity.dat"

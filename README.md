@@ -1,5 +1,7 @@
 # Scala MaxMind Geo-IP
 
+[![Build Status](https://travis-ci.org/snowplow/scala-maxmind-geoip.png)](https://travis-ci.org/snowplow/scala-maxmind-geoip)
+
 ## Introduction
 
 This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:

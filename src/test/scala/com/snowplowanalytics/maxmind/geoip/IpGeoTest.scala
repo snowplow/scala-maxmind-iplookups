@@ -59,28 +59,28 @@ object IpGeoTest {
       metroCode = None
     )),
 
-    "192.197.77.0" -> // Canadian government, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
+    "4.2.2.2" -> // Famous DNS server, taken from http://www.tummy.com/articles/famous-dns-server/
     Some(IpLocation(
-      countryCode = "CA",
-      countryName = "Canada",
-      region = Some("ON"),
-      city = Some("Ottawa"),
-      latitude = 45.416702F,
-      longitude = -75.7F,
+      countryCode = "US",
+      countryName = "United States",
+      region = None,
+      city = None,
+      latitude = 38.0F,
+      longitude = -97.0F,
       postalCode = None,
       dmaCode = None,
       areaCode = None,
       metroCode = None
     )),
 
-    "216.13.200.211" -> // South Sudan, fails in MaxMind 1.2.8 (see https://github.com/guardian/maxmind-geoip-build/pull/1)
+    "194.60.0.0" -> // UK Parliament, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
     Some(IpLocation(
-      countryCode = "SS",
-      countryName = "South Sudan",
+      countryCode = "GB",
+      countryName = "United Kingdom",
       region = None,
       city = None,
-      latitude = 4.850006F,
-      longitude = 31.600006F,
+      latitude = 51.5F,
+      longitude = -0.13000488F,
       postalCode = None,
       dmaCode = None,
       areaCode = None,

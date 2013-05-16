@@ -1,6 +1,4 @@
-# Scala MaxMind Geo-IP
-
-[![Build Status](https://travis-ci.org/snowplow/scala-maxmind-geoip.png)](https://travis-ci.org/snowplow/scala-maxmind-geoip)
+# Scala MaxMind Geo-IP [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-geoip.png)](https://travis-ci.org/snowplow/scala-maxmind-geoip)
 
 ## Introduction
 

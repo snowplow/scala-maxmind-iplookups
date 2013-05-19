@@ -59,21 +59,6 @@ object BuildSettings {
     }
   )
 
-  // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
-
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
-      (old) => {
-        case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
-        case x => old(x)
-      }
-    }
-  )
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](

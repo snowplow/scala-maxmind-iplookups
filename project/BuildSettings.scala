@@ -73,5 +73,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ maxmindSettings ++ sbtAssemblySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ maxmindSettings ++ publishSettings
 }

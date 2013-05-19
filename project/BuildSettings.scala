@@ -20,12 +20,10 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.5",
+    version       := "0.0.4",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.10.0",
-    crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),
+    scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
-    parallelExecution in Test := false,
     resolvers     ++= Dependencies.resolutionRepos
   )
 
@@ -60,6 +58,21 @@ object BuildSettings {
     }
   )
 
+  // sbt-assembly settings for building a fat jar
+  import sbtassembly.Plugin._
+  import AssemblyKeys._
+  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
+
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
+      (old) => {
+        case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
+        case x => old(x)
+      }
+    }
+  )
+
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -74,5 +87,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ maxmindSettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ maxmindSettings ++ sbtAssemblySettings ++ publishSettings
 }

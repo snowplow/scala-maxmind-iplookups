@@ -27,9 +27,10 @@ object ScalaMaxMindGeoIpBuild extends Build {
   lazy val project = Project("scala-maxmind-geoip", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Seq(
-        Libraries.collUtils,
-        Libraries.specs2
+      libraryDependencies <++= Dependencies.onVersion(
+        all = Seq(Libraries.collUtils),
+        on292 = Seq(Libraries.specs2Old),
+        on210 = Seq(Libraries.specs2)
       )
     )
 }

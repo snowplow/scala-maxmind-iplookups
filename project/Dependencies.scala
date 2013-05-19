@@ -11,6 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 import sbt._
+import Keys._
 
 object Dependencies {
   val resolutionRepos = Seq(
@@ -26,11 +27,16 @@ object Dependencies {
   object V {
     val maxmind     = "1.2.9" // Compiled in BuildSettings
     val collUtils   = "5.3.10"
-    val specs2      = "1.8"
+    val specs2Old   = "1.12.4.1"
+    val specs2      = "1.14"
   }
 
   object Libraries {
     val collUtils   = "com.twitter"                %  "util-collection"     % V.collUtils
+    val specs2Old   = "org.specs2"                 %% "specs2"              % V.specs2Old    % "test"
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }
+
+  def onVersion[A](all: Seq[A], on292: => Seq[A] = Seq(), on210: => Seq[A] = Seq()) =
+    scalaVersion(v => all ++ (if (v.contains("2.10")) on210 else on292))
 }

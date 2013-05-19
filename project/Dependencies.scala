@@ -26,7 +26,7 @@ object Dependencies {
 
   object V {
     val maxmind     = "1.2.9" // Compiled in BuildSettings
-    val collUtils   = "5.3.10"
+    val collUtils   = "6.3.4"
     val specs2Old   = "1.12.4.1"
     val specs2      = "1.14"
   }

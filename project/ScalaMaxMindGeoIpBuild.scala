@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,9 +27,9 @@ object ScalaMaxMindGeoIpBuild extends Build {
   lazy val project = Project("scala-maxmind-geoip", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Seq(
-        Libraries.collUtils,
-        Libraries.specs2
+      libraryDependencies <++= Dependencies.onVersion(
+        on292 = Seq(Libraries.collUtilsOld, Libraries.specs2Old),
+        on210 = Seq(Libraries.collUtils, Libraries.specs2)
       )
     )
 }

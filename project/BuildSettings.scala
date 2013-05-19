@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -20,9 +20,10 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.4",
+    version       := "0.0.5",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.9.1",
+    scalaVersion  := "2.9.2",
+    crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
@@ -58,21 +59,6 @@ object BuildSettings {
     }
   )
 
-  // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
-
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
-      (old) => {
-        case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
-        case x => old(x)
-      }
-    }
-  )
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -87,5 +73,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ maxmindSettings ++ sbtAssemblySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ maxmindSettings ++ publishSettings
 }

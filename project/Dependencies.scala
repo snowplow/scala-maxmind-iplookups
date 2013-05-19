@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,6 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 import sbt._
+import Keys._
 
 object Dependencies {
   val resolutionRepos = Seq(
@@ -19,19 +20,25 @@ object Dependencies {
   )
 
   object Urls {
-    val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
-    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+    val maxmindJava  = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
+    val maxmindData  = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
   }
 
   object V {
-    val maxmind     = "1.2.9" // Compiled in BuildSettings
-    val collUtils   = "5.3.10"
-    val specs2      = "1.8"
+    val maxmind      = "1.2.9" // Compiled in BuildSettings
+    val collUtilsOld = "5.3.10"
+    val collUtils    = "6.3.4"
+    val specs2Old    = "1.12.4.1"
+    val specs2       = "1.14"
   }
 
   object Libraries {
-    val collUtils   = "com.twitter"                %%  "util-collection"    % V.collUtils
-    val specs2Old   = "org.specs2"                 %% "specs2"              % V.specs2Old    % "test"
-    val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
+    val collUtilsOld = "com.twitter"                %  "util-collection"     % V.collUtilsOld
+    val collUtils    = "com.twitter"                %% "util-collection"     % V.collUtils
+    val specs2Old    = "org.specs2"                 %% "specs2"              % V.specs2Old    % "test"
+    val specs2       = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }
+
+  def onVersion[A](all: Seq[A] = Seq(), on292: => Seq[A] = Seq(), on210: => Seq[A] = Seq()) =
+    scalaVersion(v => all ++ (if (v.contains("2.10")) on210 else on292))
 }

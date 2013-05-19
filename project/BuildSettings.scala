@@ -22,9 +22,10 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.0.5",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.9.2",
+    scalaVersion  := "2.10.0",
     crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    parallelExecution in Test := false,
     resolvers     ++= Dependencies.resolutionRepos
   )
 

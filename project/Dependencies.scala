@@ -30,7 +30,8 @@ object Dependencies {
   }
 
   object Libraries {
-    val collUtils   = "com.twitter"                %  "util-collection"     % V.collUtils
+    val collUtils   = "com.twitter"                %%  "util-collection"    % V.collUtils
+    val specs2Old   = "org.specs2"                 %% "specs2"              % V.specs2Old    % "test"
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }
 }

@@ -63,7 +63,6 @@ object BuildSettings {
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
    
-    crossPaths := false,
     publishTo <<= version { version =>
       val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
       val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {

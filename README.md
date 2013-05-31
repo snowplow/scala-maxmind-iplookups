@@ -10,6 +10,8 @@ This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The ma
 
 ## Installation
 
+The latest version of scala-maxmind-geoip is **0.0.5** and is dual-published to be Scala 2.9 and 2.10 compatible.
+
 Add this to your SBT config:
 
 ```scala
@@ -20,6 +22,8 @@ val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 // Dependency
 val maxmindGeoip = "com.snowplowanalytics"  %% "scala-maxmind-geoip"  % "0.0.5"
 ```
+
+Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.
 
 Retrieve the `GeoLiteCity.dat` file from the [MaxMind downloads page] [maxmind-downloads] ([direct link] [geolitecity-dat]).
 

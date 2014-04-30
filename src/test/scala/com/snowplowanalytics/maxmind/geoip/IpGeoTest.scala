@@ -105,12 +105,11 @@ class IpGeoTest extends Specification {
     for (memCache <- Seq(true, false);
          lruCache <- Seq(0, 1000, 10000)) {
 
-      val ipGeo = GeoLiteCity(memCache, lruCache)
-
       testData foreach { case (ip, expected) =>
 
         formatter(ip, memCache, lruCache) should {
 
+          val ipGeo = GeoLiteCity(memCache, lruCache)
           val actual = ipGeo.getLocation(ip)
 
           expected match {

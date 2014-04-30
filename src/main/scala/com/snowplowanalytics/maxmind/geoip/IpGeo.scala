@@ -74,8 +74,13 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
    *
    * This version does not use the LRU cache.
    */
-  private def getLocationWithoutLruCache(ip: String): Option[IpLocation] =
-    Option(maxmind.getLocation(ip)) map IpLocation.apply
+  private def getLocationWithoutLruCache(ip: String): Option[IpLocation] = {
+    try {
+      Option(maxmind.getLocation(ip)) map IpLocation.apply
+    } finally {
+      maxmind.close
+    }
+  }
 
   /**
    * Returns the MaxMind location for this IP address
@@ -91,7 +96,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
   private def getLocationWithLruCache(ip: String): Option[IpLocation] = lru.get(ip) match {
     case Some(loc) => loc // In the LRU cache
     case None => // Not in the LRU cache
-      val loc = Option(maxmind.getLocation(ip)) map IpLocation.apply
+      val loc = getLocationWithoutLruCache(ip)
       lru.put(ip, loc)
       loc
   }

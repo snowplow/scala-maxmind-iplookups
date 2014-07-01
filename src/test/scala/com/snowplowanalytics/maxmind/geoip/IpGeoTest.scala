@@ -42,7 +42,8 @@ object IpGeoTest {
       postalCode = None,
       dmaCode = None,
       areaCode = None,
-      metroCode = None
+      metroCode = None,
+      regionName = None
     )),
 
     "128.232.0.0" -> // Cambridge uni address, taken from http://www.ucs.cam.ac.uk/network/ip/camnets.html
@@ -56,7 +57,8 @@ object IpGeoTest {
       postalCode = None,
       dmaCode = None,
       areaCode = None,
-      metroCode = None
+      metroCode = None,
+      regionName = Some("Cambridgeshire")
     )),
 
     "4.2.2.2" -> // Famous DNS server, taken from http://www.tummy.com/articles/famous-dns-server/
@@ -70,7 +72,8 @@ object IpGeoTest {
       postalCode = None,
       dmaCode = None,
       areaCode = None,
-      metroCode = None
+      metroCode = None,
+      regionName = None
     )),
 
     "194.60.0.0" -> // UK Parliament, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
@@ -84,7 +87,8 @@ object IpGeoTest {
       postalCode = None,
       dmaCode = None,
       areaCode = None,
-      metroCode = None
+      metroCode = None,
+      regionName = None
     )),
 
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
@@ -155,6 +159,9 @@ class IpGeoTest extends Specification {
               "have metroCode = %s".format(e.metroCode) in {
                 a.metroCode must_== e.metroCode
               }
+              "have regionName = %s".format(e.regionName) in {
+                a.regionName must_== e.regionName
+              }              
           }
         }
       }

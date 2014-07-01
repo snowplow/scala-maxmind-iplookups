@@ -13,7 +13,10 @@
 package com.snowplowanalytics.maxmind.geoip
 
 // MaxMind
-import com.maxmind.geoip.Location
+import com.maxmind.geoip.{
+  Location,
+  regionName
+}
 
 /**
  * A case class wrapper around the
@@ -29,7 +32,8 @@ case class IpLocation(
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],
-  metroCode: Option[Int]
+  metroCode: Option[Int],
+  regionName: Option[String]
   )
 
 /**
@@ -54,6 +58,8 @@ object IpLocation {
     postalCode = Option(loc.postalCode),
     dmaCode = optionify(loc.dma_code),
     areaCode = optionify(loc.area_code),
-    metroCode = optionify(loc.metro_code)
+    metroCode = optionify(loc.metro_code),
+    regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))//Option(regionName.regionNameByCode("GB","C3"))
     )
+
 }

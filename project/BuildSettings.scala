@@ -20,7 +20,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.5",
+    version       := "0.1.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
     scalaVersion  := "2.9.2",
     crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),

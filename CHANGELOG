@@ -1,4 +1,4 @@
-Version 0.6.0 (2014-XX-XX)
+Version 0.1.0 (2014-XX-XX)
 --------------------------
 Added support for MaxMind ISP lookup (#14) (TODO)
 Added support for MaxMind domain lookup (#8) (TODO)

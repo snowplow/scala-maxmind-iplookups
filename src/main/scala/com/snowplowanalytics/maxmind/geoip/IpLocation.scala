@@ -19,6 +19,12 @@ import com.maxmind.geoip.{
   regionName
 }
 
+// Concurrency
+import scala.concurrent._
+import scala.concurrent.duration._
+import ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
+
 /**
  * A case class wrapper around the
  * MaxMind Location class.
@@ -54,7 +60,35 @@ object IpLocation {
    * address and MaxMind LookupServices
    */
   def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): Option[IpLocation] = {
-    Option(maxmind.getLocation(ip)).map(loc => 
+
+    val maxmindFuture = Future {
+      Option(maxmind.getLocation(ip))
+    }
+
+    val ispFuture = Future {
+      ispService.map(ls => ls.getOrg(ip)).filter(_ != null)
+    }
+
+    val orgFuture = Future {
+      orgService.map(ls => ls.getOrg(ip)).filter(_ != null)
+    }
+
+    val domainFuture = Future {
+      domainService.map(ls => ls.getOrg(ip)).filter(_ != null)
+    }
+
+    val aggregateFuture: Future[(Option[Location], Option[String], Option[String], Option[String])] = for {
+      maxmindResult <- maxmindFuture
+      ispResult     <- ispFuture
+      orgResult     <- orgFuture
+      domainResult  <- domainFuture
+    } yield (maxmindResult, ispResult, orgResult, domainResult)
+
+    val aggregateResult = Await.result(aggregateFuture, 10.seconds)
+
+    val locationOption = aggregateResult._1
+
+    locationOption.map(loc =>
       IpLocation(
         countryCode = loc.countryCode,
         countryName = loc.countryName,
@@ -67,9 +101,9 @@ object IpLocation {
         areaCode = optionify(loc.area_code),
         metroCode = optionify(loc.metro_code),
         regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region)),
-        isp = ispService.map(ls => ls.getOrg(ip)).filter(_ != null),
-        org = orgService.map(ls => ls.getOrg(ip)).filter(_ != null),
-        domain = domainService.map(ls => ls.getOrg(ip)).filter(_ != null)
+        isp = aggregateResult._2,
+        org = aggregateResult._3,
+        domain = aggregateResult._4
       )
     )
   }

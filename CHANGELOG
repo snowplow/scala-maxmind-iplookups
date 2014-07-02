@@ -1,9 +1,9 @@
 Version 0.1.0 (2014-XX-XX)
 --------------------------
-Added support for MaxMind ISP lookup (#14) (TODO)
-Added support for MaxMind domain lookup (#8) (TODO)
+Added support for MaxMind ISP lookup (#14)
+Added support for MaxMind domain lookup (#8)
 Added support for MaxMind region lookup (#6)
-Added support for MaxMind organization lookup (#5) (TODO)
+Added support for MaxMind organization lookup (#5)
 Made unit tests use test databases (#11) (TODO)
 Used MaxMindlibrary from Maven (#9)
 Clarified README (#2) (TODO)

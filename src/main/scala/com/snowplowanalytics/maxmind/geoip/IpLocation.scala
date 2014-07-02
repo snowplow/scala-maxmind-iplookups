@@ -35,7 +35,9 @@ case class IpLocation(
   areaCode: Option[Int],
   metroCode: Option[Int],
   regionName: Option[String],
-  isp: Option[String] = None
+  isp: Option[String] = None,
+  org: Option[String] = None,
+  domain: Option[String] = None
   )
 
 /**
@@ -51,7 +53,7 @@ object IpLocation {
    * Constructs an IpLocation from an IP
    * address and MaxMind LookupServices
    */
-  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService]): Option[IpLocation] = {
+  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): Option[IpLocation] = {
     Option(maxmind.getLocation(ip)).map(loc => 
       IpLocation(
         countryCode = loc.countryCode,
@@ -65,7 +67,9 @@ object IpLocation {
         areaCode = optionify(loc.area_code),
         metroCode = optionify(loc.metro_code),
         regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region)),
-        isp = ispService.map(ls => ls.getOrg(ip)).filter(_ != null)
+        isp = ispService.map(ls => ls.getOrg(ip)).filter(_ != null),
+        org = orgService.map(ls => ls.getOrg(ip)).filter(_ != null),
+        domain = domainService.map(ls => ls.getOrg(ip)).filter(_ != null)
       )
     )
   }

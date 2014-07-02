@@ -33,8 +33,9 @@ object IpGeo {
   /**
    * Alternative constructor taking a String rather than File
    */
-  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, ispFile: Option[String] = None) = {
-    new IpGeo(new File(dbFile), memCache, lruCache, ispFile)
+  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, 
+            ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) = {
+    new IpGeo(new File(dbFile), memCache, lruCache, ispFile, orgFile, domainFile)
   }
 }
 
@@ -51,7 +52,8 @@ object IpGeo {
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000, ispFile: Option[String] = None) {
+class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
+            ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) {
 
   // Initialise the cache
   private val lru = if (lruCache > 0) new LruMap[String, Option[IpLocation]](lruCache) else null // Of type mutable.Map[String, Option[IpLocation]]
@@ -60,6 +62,8 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000, ispFi
   private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
   private val maxmind = new LookupService(dbFile, options)
   private val ispService: Option[LookupService] = ispFile.map(x => new LookupService(x, options))
+  private val orgService: Option[LookupService] = orgFile.map(x => new LookupService(x, options))
+  private val domainService: Option[LookupService] = domainFile.map(x => new LookupService(x, options))
 
   /**
    * Returns the MaxMind location for this IP address
@@ -76,7 +80,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000, ispFi
    * This version does not use the LRU cache.
    */
   private def getLocationWithoutLruCache(ip: String): Option[IpLocation] =
-    IpLocation.multi(ip, maxmind, ispService)
+    IpLocation.multi(ip, maxmind, ispService, orgService, domainService)
 
   /**
    * Returns the MaxMind location for this IP address

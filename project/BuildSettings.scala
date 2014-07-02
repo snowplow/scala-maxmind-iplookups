@@ -32,14 +32,6 @@ object BuildSettings {
   import Dependencies._
   lazy val maxmindSettings = Seq(
 
-    // Download and compile the MaxMind GeoIP Java API from source
-    // Adapted from https://github.com/guardian/maxmind-geoip-build/blob/master/project/Build.scala
-    sourceGenerators in Compile <+= (sourceManaged in Compile) map { out =>
-      val zip = new URL(Urls.maxmindJava format (V.maxmind))
-      IO.unzipURL(zip, out)
-      (out / "GeoIPJava-%s".format(V.maxmind) / "source" ** ("*.java")).get
-    },
-
     // Download the GeoLite City for our test suite
     resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
       val gzRemote = new URL(Urls.maxmindData)

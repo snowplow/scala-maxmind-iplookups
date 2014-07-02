@@ -27,7 +27,8 @@ object IpGeoTest {
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
     // ^ Warning: don't try this outside of this project, as the .dat file won't be found
-    IpGeo(dbFilepath, memCache, lruCache)
+    val ispFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPDomain.dat")
+    IpGeo(dbFilepath, memCache, lruCache, ispFilepath)
   }
 
   val testData: DataGrid = Map(
@@ -43,7 +44,8 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None
+      regionName = None,
+      isp = None
     )),
 
     "128.232.0.0" -> // Cambridge uni address, taken from http://www.ucs.cam.ac.uk/network/ip/camnets.html
@@ -58,7 +60,8 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = Some("Cambridgeshire")
+      regionName = Some("Cambridgeshire"),
+      isp = None
     )),
 
     "4.2.2.2" -> // Famous DNS server, taken from http://www.tummy.com/articles/famous-dns-server/
@@ -73,7 +76,8 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None
+      regionName = None,
+      isp = None
     )),
 
     "194.60.0.0" -> // UK Parliament, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
@@ -88,7 +92,24 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None
+      regionName = None,
+      isp = None
+    )),
+
+    "70.46.123.145" -> // ISP lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
+    Some(IpLocation(
+      countryCode = "US",
+      countryName = "United States",
+      region = Some("FL"),
+      city = Some("Delray Beach"),
+      latitude = 26.461502F,
+      longitude = -80.0728F,
+      postalCode = None,
+      dmaCode = Some(548),
+      areaCode = Some(561),
+      metroCode = Some(548),
+      regionName = Some("Florida"),
+      isp = Some("nuvox.net")
     )),
 
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
@@ -162,6 +183,9 @@ class IpGeoTest extends Specification {
               "have regionName = %s".format(e.regionName) in {
                 a.regionName must_== e.regionName
               }              
+              "have isp = %s".format(e.isp) in {
+                a.isp must_== e.isp
+              }                 
           }
         }
       }

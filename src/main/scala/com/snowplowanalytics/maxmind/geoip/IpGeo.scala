@@ -33,8 +33,8 @@ object IpGeo {
   /**
    * Alternative constructor taking a String rather than File
    */
-  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000) = {
-    new IpGeo(new File(dbFile), memCache, lruCache)
+  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, ispFile: Option[String] = None) = {
+    new IpGeo(new File(dbFile), memCache, lruCache, ispFile)
   }
 }
 
@@ -51,14 +51,15 @@ object IpGeo {
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
+class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000, ispFile: Option[String] = None) {
 
   // Initialise the cache
   private val lru = if (lruCache > 0) new LruMap[String, Option[IpLocation]](lruCache) else null // Of type mutable.Map[String, Option[IpLocation]]
 
-  // Configure the lookup service
+  // Configure the lookup services
   private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
   private val maxmind = new LookupService(dbFile, options)
+  private val ispService: Option[LookupService] = ispFile.map(x => new LookupService(x, options))
 
   /**
    * Returns the MaxMind location for this IP address
@@ -75,7 +76,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
    * This version does not use the LRU cache.
    */
   private def getLocationWithoutLruCache(ip: String): Option[IpLocation] =
-    Option(maxmind.getLocation(ip)) map IpLocation.apply
+    IpLocation.multi(ip, maxmind, ispService)
 
   /**
    * Returns the MaxMind location for this IP address
@@ -91,7 +92,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000) {
   private def getLocationWithLruCache(ip: String): Option[IpLocation] = lru.get(ip) match {
     case Some(loc) => loc // In the LRU cache
     case None => // Not in the LRU cache
-      val loc = Option(maxmind.getLocation(ip)) map IpLocation.apply
+      val loc = getLocationWithoutLruCache(ip)
       lru.put(ip, loc)
       loc
   }

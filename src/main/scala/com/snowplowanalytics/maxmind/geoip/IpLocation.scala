@@ -14,6 +14,7 @@ package com.snowplowanalytics.maxmind.geoip
 
 // MaxMind
 import com.maxmind.geoip.{
+  LookupService,
   Location,
   regionName
 }
@@ -33,7 +34,8 @@ case class IpLocation(
   dmaCode: Option[Int],
   areaCode: Option[Int],
   metroCode: Option[Int],
-  regionName: Option[String]
+  regionName: Option[String],
+  isp: Option[String] = None
   )
 
 /**
@@ -46,20 +48,26 @@ object IpLocation {
   private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
 
   /**
-   * Constructs an IpLocation from a MaxMind Location
+   * Constructs an IpLocation from an IP
+   * address and MaxMind LookupServices
    */
-  def apply(loc: Location): IpLocation = IpLocation(
-    countryCode = loc.countryCode,
-    countryName = loc.countryName,
-    region = Option(loc.region),
-    city = Option(loc.city),
-    latitude = loc.latitude,
-    longitude = loc.longitude,
-    postalCode = Option(loc.postalCode),
-    dmaCode = optionify(loc.dma_code),
-    areaCode = optionify(loc.area_code),
-    metroCode = optionify(loc.metro_code),
-    regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))//Option(regionName.regionNameByCode("GB","C3"))
+  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService]): Option[IpLocation] = {
+    Option(maxmind.getLocation(ip)).map(loc => 
+      IpLocation(
+        countryCode = loc.countryCode,
+        countryName = loc.countryName,
+        region = Option(loc.region),
+        city = Option(loc.city),
+        latitude = loc.latitude,
+        longitude = loc.longitude,
+        postalCode = Option(loc.postalCode),
+        dmaCode = optionify(loc.dma_code),
+        areaCode = optionify(loc.area_code),
+        metroCode = optionify(loc.metro_code),
+        regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region)),
+        isp = ispService.map(ls => ls.getOrg(ip)).filter(_ != null)
+      )
     )
+  }
 
 }

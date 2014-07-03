@@ -61,34 +61,30 @@ object IpLocation {
    */
   def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): Option[IpLocation] = {
 
+    def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
+      Future {
+        service.map(ls => ls.getOrg(ip)).filter(_ != null)
+      }
+
     val maxmindFuture = Future {
       Option(maxmind.getLocation(ip))
     }
 
-    val ispFuture = Future {
-      ispService.map(ls => ls.getOrg(ip)).filter(_ != null)
-    }
-
-    val orgFuture = Future {
-      orgService.map(ls => ls.getOrg(ip)).filter(_ != null)
-    }
-
-    val domainFuture = Future {
-      domainService.map(ls => ls.getOrg(ip)).filter(_ != null)
-    }
-
     val aggregateFuture: Future[(Option[Location], Option[String], Option[String], Option[String])] = for {
       maxmindResult <- maxmindFuture
-      ispResult     <- ispFuture
-      orgResult     <- orgFuture
-      domainResult  <- domainFuture
+      ispResult     <- getLookupFuture(ispService)
+      orgResult     <- getLookupFuture(orgService)
+      domainResult  <- getLookupFuture(domainService)
     } yield (maxmindResult, ispResult, orgResult, domainResult)
 
-    val aggregateResult = Await.result(aggregateFuture, 10.seconds)
+    val aggregateResult = try {
+      Await.result(aggregateFuture, 4.seconds)
+    } catch {
+      case te: TimeoutException => (None, None, None, None)
+      case e: Exception => throw e
+    }
 
-    val locationOption = aggregateResult._1
-
-    locationOption.map(loc =>
+    aggregateResult._1.map(loc =>
       IpLocation(
         countryCode = loc.countryCode,
         countryName = loc.countryName,

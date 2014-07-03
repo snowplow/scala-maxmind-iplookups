@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 
 object IpGeoTest {
 
-  type DataGrid = scala.collection.immutable.Map[String, (Option[IpLocation], Option[String], Option[String], Option[String])]
+  type DataGrid = scala.collection.immutable.Map[String, IpLookupResult]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
@@ -205,7 +205,7 @@ class IpGeoTest extends Specification {
               "have domain = %s".format(domain) in {
                 actual._4 must_== domain
               }      
-                
+
             case _ => throw new Exception("Expected lookup result could not be matched - this should never happen")
           }
         }

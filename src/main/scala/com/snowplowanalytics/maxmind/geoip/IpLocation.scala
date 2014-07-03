@@ -53,12 +53,28 @@ object IpLocation {
   private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
 
   /**
-   * Constructs an IpLocation from an IP
-   * address and MaxMind LookupServices
+   * Concurrently looks up information
+   * based on an IP address from one or
+   * more MaxMind LookupServices
+   *
+   * @param ip IP address
+   * @param maxmind Location LookupService
+   * @param ispService ISP LookupService
+   * @param orgService Organization LookupService
+   * @param domainService Domain LookupService
+   * @return Tuple containing the results of the
+   *         LookupServices
    */
-  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): (Option[IpLocation], Option[String], Option[String], Option[String]) = {
+  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
 
-    // TODO: comments
+    /**
+     * Creates a Future boxing the result
+     * of using a lookup service on the ip
+     *
+     * @param service ISP, organization,
+     *        or domain LookupService
+     * @return the result of the lookup
+     */
     def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
       Future {
         service.map(_.getOrg(ip)).filter(_ != null)
@@ -82,7 +98,7 @@ object IpLocation {
       )
     }
 
-    val aggregateFuture: Future[(Option[IpLocation], Option[String], Option[String], Option[String])] = for {
+    val aggregateFuture: Future[IpLookupResult] = for {
       maxmindResult <- maxmindFuture
       ispResult     <- getLookupFuture(ispService)
       orgResult     <- getLookupFuture(orgService)

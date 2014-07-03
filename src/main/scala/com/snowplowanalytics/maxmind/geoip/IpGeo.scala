@@ -21,6 +21,12 @@ import com.twitter.util.LruMap
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
 
+// Concurrency
+import scala.concurrent._
+import scala.concurrent.duration._
+import ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
+
 // This library
 import IpLocation._
 
@@ -80,7 +86,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    * This version does not use the LRU cache.
    */
   private def getLocationWithoutLruCache(ip: String): IpLookupResult =
-    IpLocation.multi(ip, maxmind, ispService, orgService, domainService)
+    performLookups(ip, maxmind, ispService, orgService, domainService)
 
   /**
    * Returns the MaxMind location for this IP address
@@ -100,4 +106,51 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
       lru.put(ip, loc)
       loc
   }
+
+  /**
+   * Concurrently looks up information
+   * based on an IP address from one or
+   * more MaxMind LookupServices
+   *
+   * @param ip IP address
+   * @param maxmind Location LookupService
+   * @param ispService ISP LookupService
+   * @param orgService Organization LookupService
+   * @param domainService Domain LookupService
+   * @return Tuple containing the results of the
+   *         LookupServices
+   */
+  def performLookups(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
+
+    /**
+     * Creates a Future boxing the result
+     * of using a lookup service on the ip
+     *
+     * @param service ISP, organization,
+     *        or domain LookupService
+     * @return the result of the lookup
+     */
+    def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
+      Future {
+        service.map(_.getOrg(ip)).filter(_ != null)
+      }
+
+    val maxmindFuture = Future {
+      Option(maxmind.getLocation(ip)).map(IpLocation.apply(_))
+    }
+
+    val aggregateFuture: Future[IpLookupResult] = for {
+      maxmindResult <- maxmindFuture
+      ispResult     <- getLookupFuture(ispService)
+      orgResult     <- getLookupFuture(orgService)
+      domainResult  <- getLookupFuture(domainService)
+    } yield (maxmindResult, ispResult, orgResult, domainResult)
+
+    try {
+      Await.result(aggregateFuture, 4.seconds)
+    } catch {
+      case te: TimeoutException => (None, None, None, None)
+      case e: Exception => throw e
+    }
+  }  
 }

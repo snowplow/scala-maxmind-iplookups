@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 
 object IpGeoTest {
 
-  type DataGrid = scala.collection.immutable.Map[String, Option[IpLocation]]
+  type DataGrid = scala.collection.immutable.Map[String, (Option[IpLocation], Option[String], Option[String], Option[String])]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
@@ -36,7 +36,7 @@ object IpGeoTest {
 
   val testData: DataGrid = Map(
     "213.52.50.8" -> // Norwegian IP address, provided by MaxMind in their test suite
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "NO",
       countryName = "Norway",
       region = None,
@@ -47,12 +47,11 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None,
-      isp = None
-    )),
+      regionName = None
+    )), None, None, None),
 
     "128.232.0.0" -> // Cambridge uni address, taken from http://www.ucs.cam.ac.uk/network/ip/camnets.html
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "GB",
       countryName = "United Kingdom",
       region = Some("C3"),
@@ -63,12 +62,11 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = Some("Cambridgeshire"),
-      isp = None
-    )),
+      regionName = Some("Cambridgeshire")
+    )), None, None, None),
 
     "4.2.2.2" -> // Famous DNS server, taken from http://www.tummy.com/articles/famous-dns-server/
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "US",
       countryName = "United States",
       region = None,
@@ -79,12 +77,11 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None,
-      isp = None
-    )),
+      regionName = None
+    )), None, None, None),
 
     "194.60.0.0" -> // UK Parliament, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "GB",
       countryName = "United Kingdom",
       region = None,
@@ -95,12 +92,11 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None,
-      isp = None
-    )),
+      regionName = None
+    )), None, None, None),
 
     "70.46.123.145" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "US",
       countryName = "United States",
       region = Some("FL"),
@@ -111,14 +107,11 @@ object IpGeoTest {
       dmaCode = Some(548),
       areaCode = Some(561),
       metroCode = Some(548),
-      regionName = Some("Florida"),
-      isp = Some("FDN Communications"),
-      org = Some("DSLAM WAN Allocation"),
-      domain = Some("nuvox.net")
-    )),
+      regionName = Some("Florida")
+    )), Some("FDN Communications"), Some("DSLAM WAN Allocation"), Some("nuvox.net")),
 
     "67.43.156.0" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/DomainLookupTest.java
-    Some(IpLocation(
+    (Some(IpLocation(
       countryCode = "A1",
       countryName = "Anonymous Proxy",
       region = None,
@@ -129,14 +122,11 @@ object IpGeoTest {
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = None,
-      isp = Some("Loud Packet"),
-      org = Some("zudoarichikito_"),
-      domain = Some("shoesfin.NET")
-    )),    
+      regionName = None
+    )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET")),
 
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
-    None
+    (None, None, None, None)
   )
 }
 
@@ -162,17 +152,17 @@ class IpGeoTest extends Specification {
           val actual = ipGeo.getLocation(ip)
 
           expected match {
-            case None =>
+            case (None, None, None, None) =>
               "not be found" in {
-                actual must beNone
+                actual must_== (None, None, None, None)
               }
 
-            case Some(e) =>
+            case (Some(e), isp, org, domain) =>
               "not be None" in {
-                actual must not beNone
+                actual._1 must not beNone
               }
 
-              val a = actual.get
+              val a = actual._1.get
               "have countryCode = %s".format(e.countryCode) in {
                 a.countryCode must_== e.countryCode
               }
@@ -206,15 +196,17 @@ class IpGeoTest extends Specification {
               "have regionName = %s".format(e.regionName) in {
                 a.regionName must_== e.regionName
               }
-              "have isp = %s".format(e.isp) in {
-                a.isp must_== e.isp
+              "have isp = %s".format(isp) in {
+                actual._2 must_== isp
               }
-              "have org = %s".format(e.org) in {
-                a.org must_== e.org
+              "have org = %s".format(org) in {
+                actual._3 must_== org
               }                      
-              "have domain = %s".format(e.domain) in {
-                a.domain must_== e.domain
-              }                 
+              "have domain = %s".format(domain) in {
+                actual._4 must_== domain
+              }      
+                
+            case _ => throw new Exception("Expected lookup result could not be matched - this should never happen")
           }
         }
       }

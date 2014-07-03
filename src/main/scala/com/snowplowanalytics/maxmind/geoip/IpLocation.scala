@@ -40,10 +40,7 @@ case class IpLocation(
   dmaCode: Option[Int],
   areaCode: Option[Int],
   metroCode: Option[Int],
-  regionName: Option[String],
-  isp: Option[String] = None,
-  org: Option[String] = None,
-  domain: Option[String] = None
+  regionName: Option[String]  
   )
 
 /**
@@ -59,49 +56,45 @@ object IpLocation {
    * Constructs an IpLocation from an IP
    * address and MaxMind LookupServices
    */
-  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): Option[IpLocation] = {
+  def multi(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): (Option[IpLocation], Option[String], Option[String], Option[String]) = {
 
+    // TODO: comments
     def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
       Future {
-        service.map(ls => ls.getOrg(ip)).filter(_ != null)
+        service.map(_.getOrg(ip)).filter(_ != null)
       }
 
     val maxmindFuture = Future {
-      Option(maxmind.getLocation(ip))
+      Option(maxmind.getLocation(ip)).map(loc =>
+        IpLocation(
+          countryCode = loc.countryCode,
+          countryName = loc.countryName,
+          region = Option(loc.region),
+          city = Option(loc.city),
+          latitude = loc.latitude,
+          longitude = loc.longitude,
+          postalCode = Option(loc.postalCode),
+          dmaCode = optionify(loc.dma_code),
+          areaCode = optionify(loc.area_code),
+          metroCode = optionify(loc.metro_code),
+          regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))
+        )
+      )
     }
 
-    val aggregateFuture: Future[(Option[Location], Option[String], Option[String], Option[String])] = for {
+    val aggregateFuture: Future[(Option[IpLocation], Option[String], Option[String], Option[String])] = for {
       maxmindResult <- maxmindFuture
       ispResult     <- getLookupFuture(ispService)
       orgResult     <- getLookupFuture(orgService)
       domainResult  <- getLookupFuture(domainService)
     } yield (maxmindResult, ispResult, orgResult, domainResult)
 
-    val aggregateResult = try {
+    try {
       Await.result(aggregateFuture, 4.seconds)
     } catch {
       case te: TimeoutException => (None, None, None, None)
       case e: Exception => throw e
     }
-
-    aggregateResult._1.map(loc =>
-      IpLocation(
-        countryCode = loc.countryCode,
-        countryName = loc.countryName,
-        region = Option(loc.region),
-        city = Option(loc.city),
-        latitude = loc.latitude,
-        longitude = loc.longitude,
-        postalCode = Option(loc.postalCode),
-        dmaCode = optionify(loc.dma_code),
-        areaCode = optionify(loc.area_code),
-        metroCode = optionify(loc.metro_code),
-        regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region)),
-        isp = aggregateResult._2,
-        org = aggregateResult._3,
-        domain = aggregateResult._4
-      )
-    )
   }
 
 }

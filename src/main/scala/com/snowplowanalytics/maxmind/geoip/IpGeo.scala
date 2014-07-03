@@ -56,7 +56,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
             ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) {
 
   // Initialise the cache
-  private val lru = if (lruCache > 0) new LruMap[String, Option[IpLocation]](lruCache) else null // Of type mutable.Map[String, Option[IpLocation]]
+  private val lru = if (lruCache > 0) new LruMap[String, (Option[IpLocation], Option[String], Option[String], Option[String])](lruCache) else null // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
@@ -79,7 +79,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    *
    * This version does not use the LRU cache.
    */
-  private def getLocationWithoutLruCache(ip: String): Option[IpLocation] =
+  private def getLocationWithoutLruCache(ip: String): (Option[IpLocation], Option[String], Option[String], Option[String]) =
     IpLocation.multi(ip, maxmind, ispService, orgService, domainService)
 
   /**
@@ -93,7 +93,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    * cache entry could be found), versus an extant cache entry
    * containing None (meaning that the IP address is unknown).
    */
-  private def getLocationWithLruCache(ip: String): Option[IpLocation] = lru.get(ip) match {
+  private def getLocationWithLruCache(ip: String): (Option[IpLocation], Option[String], Option[String], Option[String]) = lru.get(ip) match {
     case Some(loc) => loc // In the LRU cache
     case None => // Not in the LRU cache
       val loc = getLocationWithoutLruCache(ip)

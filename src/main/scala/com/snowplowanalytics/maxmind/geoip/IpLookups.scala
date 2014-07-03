@@ -34,31 +34,31 @@ import IpLocation._
  * Companion object to hold alternative constructors.
  *
  */
-object IpGeo {
+object IpLookups {
 
   /**
    * Alternative constructor taking a String rather than File
    */
   def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, 
             ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) = {
-    new IpGeo(new File(dbFile), memCache, lruCache, ispFile, orgFile, domainFile)
+    new IpLookups(new File(dbFile), memCache, lruCache, ispFile, orgFile, domainFile)
   }
 }
 
 /**
- * IpGeo is a Scala wrapper around MaxMind's own LookupService Java class.
+ * IpLookups is a Scala wrapper around MaxMind's own LookupService Java class.
  *
  * Two main differences:
  *
  * 1. getLocation(ip: String) now returns an IpLocation
  *    case class, not a raw MaxMind Location
- * 2. IpGeo introduces an LRU cache to improve
+ * 2. IpLookups introduces an LRU cache to improve
  *    lookup performance
  *
  * Inspired by:
- * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
+ * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
-class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
+class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
             ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) {
 
   // Initialise the cache
@@ -120,7 +120,7 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    * @return Tuple containing the results of the
    *         LookupServices
    */
-  def performLookups(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
+  private def performLookups(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
 
     /**
      * Creates a Future boxing the result
@@ -152,5 +152,5 @@ class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
       case te: TimeoutException => (None, None, None, None)
       case e: Exception => throw e
     }
-  }  
+  }
 }

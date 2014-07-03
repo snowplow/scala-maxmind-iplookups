@@ -20,18 +20,18 @@ import org.specs2.mutable.Specification
 
 // TODO: look into Specs2 DataTables
 
-object IpGeoTest {
+object IpLookupsTest {
 
   type DataGrid = scala.collection.immutable.Map[String, IpLookupResult]
 
-  def GeoLiteCity(memCache: Boolean, lruCache: Int): IpGeo = {
+  def GeoLiteCity(memCache: Boolean, lruCache: Int): IpLookups = {
     val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
     // ^ Warning: don't try this outside of this project, as the .dat file won't be found
     val ispFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPISP.dat")
     val orgFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPOrg.dat")
     val domainFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPDomain.dat")
     
-    IpGeo(dbFilepath, memCache, lruCache, ispFilepath, orgFilepath, domainFilepath)
+    IpLookups(dbFilepath, memCache, lruCache, ispFilepath, orgFilepath, domainFilepath)
   }
 
   val testData: DataGrid = Map(
@@ -130,7 +130,7 @@ object IpGeoTest {
   )
 }
 
-class IpGeoTest extends Specification {
+class IpLookupsTest extends Specification {
 
   "Looking up some IP address locations should match their expected locations" >> {
 
@@ -139,17 +139,17 @@ class IpGeoTest extends Specification {
     val formatter: (String, Boolean, Int) => String =
       (ip, mcache, lcache) => "The IP address %s looked up (%s memory cache and with %s)".format(ip, mcf(mcache), lcf(lcache))
 
-    import IpGeoTest._
+    import IpLookupsTest._
     for (memCache <- Seq(true, false);
          lruCache <- Seq(0, 1000, 10000)) {
 
-      val ipGeo = GeoLiteCity(memCache, lruCache)
+      val ipLookups = GeoLiteCity(memCache, lruCache)
 
       testData foreach { case (ip, expected) =>
 
         formatter(ip, memCache, lruCache) should {
 
-          val actual = ipGeo.getLocation(ip)
+          val actual = ipLookups.getLocation(ip)
 
           expected match {
             case (None, None, None, None) =>

@@ -41,7 +41,7 @@ object IpLookups {
    */
   def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, 
             ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) = {
-    new IpLookups(new File(dbFile), memCache, lruCache, ispFile, orgFile, domainFile)
+    new IpLookups(new File(dbFile), memCache, lruCache, ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)))
   }
 }
 
@@ -59,7 +59,7 @@ object IpLookups {
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
 class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
-            ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) {
+            ispFile: Option[File] = None, orgFile: Option[File] = None, domainFile: Option[File] = None) {
 
   // Initialise the cache
   private val lru = if (lruCache > 0) new LruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]

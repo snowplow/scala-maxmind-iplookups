@@ -15,24 +15,26 @@ package com.snowplowanalytics.maxmind.geoip
 // Java
 import java.io.File
 
+// Scala
+import scala.io.Source
+
 // Specs2
 import org.specs2.mutable.Specification
-
-// TODO: look into Specs2 DataTables
 
 object IpLookupsTest {
 
   type DataGrid = scala.collection.immutable.Map[String, IpLookupResult]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpLookups = {
-    val geoFilepath    = "./src/test/resources/maxmind/GeoIPCity.dat"
-    val ispFilepath    = "./src/test/resources/maxmind/GeoIPISP.dat"
-    val orgFilepath    = "./src/test/resources/maxmind/GeoIPOrg.dat"
-    val domainFilepath = "./src/test/resources/maxmind/GeoIPDomain.dat"
-    
-    IpLookups(geoFilepath, memCache, lruCache, Some(ispFilepath), Some(orgFilepath), Some(domainFilepath))
+    val geoFile    = getClass.getResource("GeoIPCity.dat").getFile
+    val ispFile    = getClass.getResource("GeoIPISP.dat").getFile
+    val orgFile    = getClass.getResource("GeoIPOrg.dat").getFile
+    val domainFile = getClass.getResource("GeoIPDomain.dat").getFile
+  
+    IpLookups(geoFile, memCache, lruCache, Some(ispFile), Some(orgFile), Some(domainFile))
   }
 
+  // TODO: replace with Specs2 DataTables, https://github.com/snowplow/scala-maxmind-geoip/issues/17
   val testData: DataGrid = Map(
 
     "70.46.123.145" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java

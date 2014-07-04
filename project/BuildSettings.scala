@@ -28,29 +28,6 @@ object BuildSettings {
     resolvers     ++= Dependencies.resolutionRepos
   )
 
-  // For MaxMind support
-  import Dependencies._
-  lazy val maxmindSettings = Seq(
-
-    // Download the GeoLite City for our test suite
-    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
-      val gzRemote = new URL(Urls.maxmindData)
-      val datLocal = out / "maxmind" / "GeoLiteCity.dat"
-      
-      // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
-      if (!datLocal.exists()) {
-        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
-        val gzLocal = out / "GeoLiteCity.dat.gz"        
-        IO.download(gzRemote, gzLocal)
-        IO.createDirectory(out / "maxmind")
-        IO.gunzip(gzLocal, datLocal)
-        IO.delete(gzLocal)
-        // gunzipURL(gzRemote, out / "maxmind")
-      }
-      datLocal.get
-    }
-  )
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -64,5 +41,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ maxmindSettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ publishSettings
 }

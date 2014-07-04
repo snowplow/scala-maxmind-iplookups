@@ -25,75 +25,15 @@ object IpLookupsTest {
   type DataGrid = scala.collection.immutable.Map[String, IpLookupResult]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpLookups = {
-    val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-    // ^ Warning: don't try this outside of this project, as the .dat file won't be found
-    val ispFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPISP.dat")
-    val orgFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPOrg.dat")
-    val domainFilepath = Option("/vagrant/scala-maxmind-geoip/src/resources/GeoIPDomain.dat")
+    val geoFilepath    = "./src/test/resources/maxmind/GeoIPCity.dat"
+    val ispFilepath    = "./src/test/resources/maxmind/GeoIPISP.dat"
+    val orgFilepath    = "./src/test/resources/maxmind/GeoIPOrg.dat"
+    val domainFilepath = "./src/test/resources/maxmind/GeoIPDomain.dat"
     
-    IpLookups(dbFilepath, memCache, lruCache, ispFilepath, orgFilepath, domainFilepath)
+    IpLookups(geoFilepath, memCache, lruCache, Some(ispFilepath), Some(orgFilepath), Some(domainFilepath))
   }
 
   val testData: DataGrid = Map(
-    "213.52.50.8" -> // Norwegian IP address, provided by MaxMind in their test suite
-    (Some(IpLocation(
-      countryCode = "NO",
-      countryName = "Norway",
-      region = None,
-      city = None,
-      latitude = 62.0F,
-      longitude = 10.0F,
-      postalCode = None,
-      dmaCode = None,
-      areaCode = None,
-      metroCode = None,
-      regionName = None
-    )), None, None, None),
-
-    "128.232.0.0" -> // Cambridge uni address, taken from http://www.ucs.cam.ac.uk/network/ip/camnets.html
-    (Some(IpLocation(
-      countryCode = "GB",
-      countryName = "United Kingdom",
-      region = Some("C3"),
-      city = Some("Cambridge"),
-      latitude = 52.199997F,
-      longitude = 0.11669922F,
-      postalCode = None,
-      dmaCode = None,
-      areaCode = None,
-      metroCode = None,
-      regionName = Some("Cambridgeshire")
-    )), None, None, None),
-
-    "4.2.2.2" -> // Famous DNS server, taken from http://www.tummy.com/articles/famous-dns-server/
-    (Some(IpLocation(
-      countryCode = "US",
-      countryName = "United States",
-      region = None,
-      city = None,
-      latitude = 38.0F,
-      longitude = -97.0F,
-      postalCode = None,
-      dmaCode = None,
-      areaCode = None,
-      metroCode = None,
-      regionName = None
-    )), None, None, None),
-
-    "194.60.0.0" -> // UK Parliament, taken from http://en.wikipedia.org/wiki/Wikipedia:Blocking_IP_addresses
-    (Some(IpLocation(
-      countryCode = "GB",
-      countryName = "United Kingdom",
-      region = None,
-      city = None,
-      latitude = 51.5F,
-      longitude = -0.13000488F,
-      postalCode = None,
-      dmaCode = None,
-      areaCode = None,
-      metroCode = None,
-      regionName = None
-    )), None, None, None),
 
     "70.46.123.145" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
     (Some(IpLocation(
@@ -109,6 +49,21 @@ object IpLookupsTest {
       metroCode = Some(548),
       regionName = Some("Florida")
     )), Some("FDN Communications"), Some("DSLAM WAN Allocation"), Some("nuvox.net")),
+
+    "89.92.213.32" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/resources/GeoIP/GeoIP.csv
+    (Some(IpLocation(
+      countryCode = "FR",
+      countryName = "France",
+      region = Some("B4"),
+      city = Some("Lille"),
+      latitude = 50.632996F,
+      longitude = 3.0585938F,
+      postalCode = None,
+      dmaCode = None,
+      areaCode = None,
+      metroCode = None,
+      regionName = Some("Nord-Pas-de-Calais")
+    )), Some("Bouygues Telecom"), Some("Bouygues Telecom"), Some("bbox.fr")),
 
     "67.43.156.0" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/DomainLookupTest.java
     (Some(IpLocation(
@@ -162,7 +117,7 @@ class IpLookupsTest extends Specification {
                 actual._1 must not beNone
               }
 
-              val a = actual._1.get
+              val a = actual._1.getOrElse(throw new Exception("Geo lookup failed"))
               "have countryCode = %s".format(e.countryCode) in {
                 a.countryCode must_== e.countryCode
               }

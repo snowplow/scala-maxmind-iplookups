@@ -20,7 +20,7 @@ package com.snowplowanalytics.maxmind
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object geoip {
+package object iplookups {
 
 	/**
 	 * Result of MaxMind lookups

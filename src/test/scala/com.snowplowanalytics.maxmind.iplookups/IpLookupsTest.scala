@@ -106,7 +106,7 @@ class IpLookupsTest extends Specification {
 
         formatter(ip, memCache, lruCache) should {
 
-          val actual = ipLookups.getLocation(ip)
+          val actual = ipLookups.performLookups(ip)
 
           expected match {
             case (None, None, None, None) =>

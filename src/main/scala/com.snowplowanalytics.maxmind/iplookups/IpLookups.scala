@@ -93,52 +93,19 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * as an IpLocation, or None if MaxMind cannot find
    * the location.
    */
-  def getLocation = if (lruCache <= 0) getLocationWithoutLruCache _ else getLocationWithLruCache _
+  def performLookups = if (lruCache <= 0) performLookupsWithoutLruCache _ else performLookupsWithLruCache _
 
   /**
-   * Returns the MaxMind location for this IP address
-   * as an IpLocation, or None if MaxMind cannot find
-   * the location.
-   *
    * This version does not use the LRU cache.
-   */
-  private def getLocationWithoutLruCache(ip: String): IpLookupResult =
-    performLookups(ip, geoService, ispService, orgService, domainService)
-
-  /**
-   * Returns the MaxMind location for this IP address
-   * as an IpLocation, or None if MaxMind cannot find
-   * the location.
-   *
-   * This version uses and maintains the LRU cache.
-   *
-   * Don't confuse the LRU returning None (meaning that no
-   * cache entry could be found), versus an extant cache entry
-   * containing None (meaning that the IP address is unknown).
-   */
-  private def getLocationWithLruCache(ip: String): IpLookupResult = lru.get(ip) match {
-    case Some(result) => result // In the LRU cache
-    case None => // Not in the LRU cache
-      val result = getLocationWithoutLruCache(ip)
-      lru.put(ip, result)
-      result
-  }
-
-  /**
    * Concurrently looks up information
    * based on an IP address from one or
    * more MaxMind LookupServices
    *
    * @param ip IP address
-   * @param geoService Location LookupService
-   * @param ispService ISP LookupService
-   * @param orgService Organization LookupService
-   * @param domainService Domain LookupService
    * @return Tuple containing the results of the
-   *         LookupServices
+   *         LookupServices   
    */
-  private def performLookups(ip: String, geoService: Option[LookupService], ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
-
+  private def performLookupsWithoutLruCache(ip: String): IpLookupResult = {
     /**
      * Creates a Future boxing the result
      * of using a lookup service on the ip
@@ -171,5 +138,24 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       case te: TimeoutException => (None, None, None, None)
       case e: Exception => throw e
     }
+  }
+
+  /**
+   * Returns the MaxMind location for this IP address
+   * as an IpLocation, or None if MaxMind cannot find
+   * the location.
+   *
+   * This version uses and maintains the LRU cache.
+   *
+   * Don't confuse the LRU returning None (meaning that no
+   * cache entry could be found), versus an extant cache entry
+   * containing None (meaning that the IP address is unknown).
+   */
+  private def performLookupsWithLruCache(ip: String): IpLookupResult = lru.get(ip) match {
+    case Some(result) => result // In the LRU cache
+    case None => // Not in the LRU cache
+      val result = performLookupsWithoutLruCache(ip)
+      lru.put(ip, result)
+      result
   }
 }

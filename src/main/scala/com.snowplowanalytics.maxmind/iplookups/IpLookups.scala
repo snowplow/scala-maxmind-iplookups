@@ -37,11 +37,12 @@ import IpLocation._
 object IpLookups {
 
   /**
-   * Alternative constructor taking a String rather than File
+   * Alternative constructor taking Strings rather than Files
    */
-  def apply(geoFile: Option[String], memCache: Boolean = true, lruCache: Int = 10000, 
-            ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) = {
-    new IpLookups(geoFile.map(new File(_)), memCache, lruCache, ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)))
+  def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None,
+            memCache: Boolean = true, lruCache: Int = 10000) = {    
+    new IpLookups(geoFile.map(new File(_)), ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)),
+                  memCache, lruCache)
   }
 }
 
@@ -57,9 +58,16 @@ object IpLookups {
  *
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
+ *
+ * @param geoFile Geographic lookup file
+ * @param ispFile ISP lookup file
+ * @param orgFile Organization lookup file
+ * @param domainFile Domain lookup file
+ * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
+ * @param lruCache Maximum size of LruMap cache
  */
-class IpLookups(geoFile: Option[File], memCache: Boolean = true, lruCache: Int = 10000,
-            ispFile: Option[File] = None, orgFile: Option[File] = None, domainFile: Option[File] = None) {
+class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgFile: Option[File] = None, domainFile: Option[File] = None,
+                memCache: Boolean = true, lruCache: Int = 10000) {
 
   // Initialise the cache
   private val lru = if (lruCache > 0) new LruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]
@@ -109,11 +117,11 @@ class IpLookups(geoFile: Option[File], memCache: Boolean = true, lruCache: Int =
    * containing None (meaning that the IP address is unknown).
    */
   private def getLocationWithLruCache(ip: String): IpLookupResult = lru.get(ip) match {
-    case Some(loc) => loc // In the LRU cache
+    case Some(result) => result // In the LRU cache
     case None => // Not in the LRU cache
-      val loc = getLocationWithoutLruCache(ip)
-      lru.put(ip, loc)
-      loc
+      val result = getLocationWithoutLruCache(ip)
+      lru.put(ip, result)
+      result
   }
 
   /**
@@ -145,7 +153,9 @@ class IpLookups(geoFile: Option[File], memCache: Boolean = true, lruCache: Int =
       }
 
     val geoFuture: Future[Option[IpLocation]] = Future {
-      geoService.flatMap(x => Option(x.getLocation(ip))).map(IpLocation.apply(_))
+
+      // gs.getLocation(ip) must be wrapped in a Option in case it is null
+      geoService.flatMap(gs => Option(gs.getLocation(ip))).map(IpLocation.apply(_))
     }
 
     val aggregateFuture: Future[IpLookupResult] = for {

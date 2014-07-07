@@ -1,16 +1,17 @@
-# Scala MaxMind IP Lookups [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-geoip.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
+# Scala MaxMind IP Lookups [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-iplookups.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
 
 ## Introduction
 
 This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
-1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code
-2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
-3. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
+1. **Provides a common interface to four MaxMind databases** - it works with MaxMind's databases for looking up geographic location, ISP, organization, and domain from an IP address
+2. **Easier to setup/test** - the SBT project definition makes it easy to download and test
+3. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
+4. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.1.0** and is compatible with Scala version 2.9.x where x is at least 3 and Scala version 2.10.
+The latest version of scala-maxmind-iplookups is **0.1.0** and is compatible with Scala version 2.9.x, where x is at least 3, and Scala version 2.10.x.
 
 Add this to your SBT config:
 

@@ -39,9 +39,9 @@ object IpLookups {
   /**
    * Alternative constructor taking a String rather than File
    */
-  def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000, 
+  def apply(geoFile: Option[String], memCache: Boolean = true, lruCache: Int = 10000, 
             ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None) = {
-    new IpLookups(new File(dbFile), memCache, lruCache, ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)))
+    new IpLookups(geoFile.map(new File(_)), memCache, lruCache, ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)))
   }
 }
 
@@ -58,7 +58,7 @@ object IpLookups {
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
-class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
+class IpLookups(geoFile: Option[File], memCache: Boolean = true, lruCache: Int = 10000,
             ispFile: Option[File] = None, orgFile: Option[File] = None, domainFile: Option[File] = None) {
 
   // Initialise the cache
@@ -66,10 +66,19 @@ class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
 
   // Configure the lookup services
   private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
-  private val maxmind = new LookupService(dbFile, options)
-  private val ispService: Option[LookupService] = ispFile.map(new LookupService(_, options))
-  private val orgService: Option[LookupService] = orgFile.map(new LookupService(_, options))
-  private val domainService: Option[LookupService] = domainFile.map(new LookupService(_, options))
+  private val geoService = getService(geoFile)
+  private val ispService = getService(ispFile)
+  private val orgService = getService(orgFile)
+  private val domainService = getService(domainFile)
+
+  /**
+   * Get a LookupService from a database file
+   *
+   * @param serviceFile The database file
+   * @return LookupService
+   */
+  private def getService(serviceFile: Option[File]): Option[LookupService] = 
+    serviceFile.map(new LookupService(_, options))
 
   /**
    * Returns the MaxMind location for this IP address
@@ -86,7 +95,7 @@ class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    * This version does not use the LRU cache.
    */
   private def getLocationWithoutLruCache(ip: String): IpLookupResult =
-    performLookups(ip, maxmind, ispService, orgService, domainService)
+    performLookups(ip, geoService, ispService, orgService, domainService)
 
   /**
    * Returns the MaxMind location for this IP address
@@ -113,14 +122,14 @@ class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
    * more MaxMind LookupServices
    *
    * @param ip IP address
-   * @param maxmind Location LookupService
+   * @param geoService Location LookupService
    * @param ispService ISP LookupService
    * @param orgService Organization LookupService
    * @param domainService Domain LookupService
    * @return Tuple containing the results of the
    *         LookupServices
    */
-  private def performLookups(ip: String, maxmind: LookupService, ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
+  private def performLookups(ip: String, geoService: Option[LookupService], ispService: Option[LookupService], orgService: Option[LookupService], domainService: Option[LookupService]): IpLookupResult = {
 
     /**
      * Creates a Future boxing the result
@@ -135,16 +144,16 @@ class IpLookups(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000,
         service.map(_.getOrg(ip)).filter(_ != null)
       }
 
-    val maxmindFuture = Future {
-      Option(maxmind.getLocation(ip)).map(IpLocation.apply(_))
+    val geoFuture: Future[Option[IpLocation]] = Future {
+      geoService.flatMap(x => Option(x.getLocation(ip))).map(IpLocation.apply(_))
     }
 
     val aggregateFuture: Future[IpLookupResult] = for {
-      maxmindResult <- maxmindFuture
+      geoResult     <- geoFuture
       ispResult     <- getLookupFuture(ispService)
       orgResult     <- getLookupFuture(orgService)
       domainResult  <- getLookupFuture(domainService)
-    } yield (maxmindResult, ispResult, orgResult, domainResult)
+    } yield (geoResult, ispResult, orgResult, domainResult)
 
     try {
       Await.result(aggregateFuture, 4.seconds)

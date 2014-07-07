@@ -31,7 +31,7 @@ object IpLookupsTest {
     val orgFile    = getClass.getResource("GeoIPOrg.dat").getFile
     val domainFile = getClass.getResource("GeoIPDomain.dat").getFile
   
-    IpLookups(geoFile, memCache, lruCache, Some(ispFile), Some(orgFile), Some(domainFile))
+    IpLookups(Some(geoFile), memCache, lruCache, Some(ispFile), Some(orgFile), Some(domainFile))
   }
 
   // TODO: replace with Specs2 DataTables, https://github.com/snowplow/scala-maxmind-geoip/issues/17

@@ -39,9 +39,11 @@ object IpLookups {
   /**
    * Alternative constructor taking Strings rather than Files
    */
-  def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None, domainFile: Option[String] = None,
+  def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None,
+            domainFile: Option[String] = None, netspeedFile: Option[String] = None,
             memCache: Boolean = true, lruCache: Int = 10000) = {    
-    new IpLookups(geoFile.map(new File(_)), ispFile.map(new File(_)), orgFile.map(new File(_)), domainFile.map(new File(_)),
+    new IpLookups(geoFile.map(new File(_)), ispFile.map(new File(_)), orgFile.map(new File(_)), 
+                  domainFile.map(new File(_)), netspeedFile.map(new File(_)),
                   memCache, lruCache)
   }
 }
@@ -63,10 +65,12 @@ object IpLookups {
  * @param ispFile ISP lookup file
  * @param orgFile Organization lookup file
  * @param domainFile Domain lookup file
+ * @param netspeedFile Net speed lookup file
  * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
  * @param lruCache Maximum size of LruMap cache
  */
-class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgFile: Option[File] = None, domainFile: Option[File] = None,
+class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgFile: Option[File] = None, 
+                domainFile: Option[File] = None, netspeedFile: Option[File] = None,
                 memCache: Boolean = true, lruCache: Int = 10000) {
 
   // Initialise the cache
@@ -78,6 +82,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
   private val ispService = getService(ispFile)
   private val orgService = getService(orgFile)
   private val domainService = getService(domainFile)
+  private val netspeedService = getService(netspeedFile)
 
   /**
    * Get a LookupService from a database file
@@ -111,7 +116,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
      * of using a lookup service on the ip
      *
      * @param service ISP, organization,
-     *        or domain LookupService
+     *        domain or net speed LookupService
      * @return the result of the lookup
      */
     def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
@@ -130,13 +135,14 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       ispResult     <- getLookupFuture(ispService)
       orgResult     <- getLookupFuture(orgService)
       domainResult  <- getLookupFuture(domainService)
-    } yield (geoResult, ispResult, orgResult, domainResult)
+      netspeedResult  <- getLookupFuture(netspeedService)
+    } yield (geoResult, ispResult, orgResult, domainResult, netspeedResult)
 
     try {
       Await.result(aggregateFuture, 4.seconds)
     } catch {
-      case te: TimeoutException => (None, None, None, None)
-      case iae: java.lang.IllegalArgumentException => (None, None, None, None)
+      case te: TimeoutException => (None, None, None, None, None)
+      case iae: IllegalArgumentException => (None, None, None, None, None)
       case e: Exception => throw e
     }
   }

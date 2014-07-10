@@ -30,14 +30,15 @@ object IpLookupsTest {
     val ispFile    = getClass.getResource("GeoIPISP.dat").getFile
     val orgFile    = getClass.getResource("GeoIPOrg.dat").getFile
     val domainFile = getClass.getResource("GeoIPDomain.dat").getFile
+    val netspeedFile = getClass.getResource("GeoIPNetSpeedCell.dat").getFile
   
-    IpLookups(Some(geoFile), Some(ispFile), Some(orgFile), Some(domainFile), memCache, lruCache)
+    IpLookups(Some(geoFile), Some(ispFile), Some(orgFile), Some(domainFile), Some(netspeedFile), memCache, lruCache)
   }
 
   // TODO: replace with Specs2 DataTables, https://github.com/snowplow/scala-maxmind-geoip/issues/17
   val testData: DataGrid = Map(
 
-    "70.46.123.145" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
+    "70.46.123.145" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
     (Some(IpLocation(
       countryCode = "US",
       countryName = "United States",
@@ -50,9 +51,9 @@ object IpLookupsTest {
       areaCode = Some(561),
       metroCode = Some(548),
       regionName = Some("Florida")
-    )), Some("FDN Communications"), Some("DSLAM WAN Allocation"), Some("nuvox.net")),
+    )), Some("FDN Communications"), Some("DSLAM WAN Allocation"), Some("nuvox.net"), Some("Cable/DSL")),
 
-    "89.92.213.32" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/resources/GeoIP/GeoIP.csv
+    "89.92.213.32" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/resources/GeoIP/GeoIP.csv
     (Some(IpLocation(
       countryCode = "FR",
       countryName = "France",
@@ -65,9 +66,9 @@ object IpLookupsTest {
       areaCode = None,
       metroCode = None,
       regionName = Some("Nord-Pas-de-Calais")
-    )), Some("Bouygues Telecom"), Some("Bouygues Telecom"), Some("bbox.fr")),
+    )), Some("Bouygues Telecom"), Some("Bouygues Telecom"), Some("bbox.fr"), Some("Cable/DSL")),
 
-    "67.43.156.0" -> // ISP, organization, and domain lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/DomainLookupTest.java
+    "67.43.156.0" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/DomainLookupTest.java
     (Some(IpLocation(
       countryCode = "A1",
       countryName = "Anonymous Proxy",
@@ -80,10 +81,10 @@ object IpLookupsTest {
       areaCode = None,
       metroCode = None,
       regionName = None
-    )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET")),
+    )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET"), Some("Corporate")),
 
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
-    (None, None, None, None)
+    (None, None, None, None, None)
   )
 }
 
@@ -109,12 +110,12 @@ class IpLookupsTest extends Specification {
           val actual = ipLookups.performLookups(ip)
 
           expected match {
-            case (None, None, None, None) =>
+            case (None, None, None, None, None) =>
               "not be found" in {
-                actual must_== (None, None, None, None)
+                actual must_== (None, None, None, None, None)
               }
 
-            case (Some(e), isp, org, domain) =>
+            case (Some(e), isp, org, domain, netspeed) =>
               "not be None" in {
                 actual._1 must not beNone
               }
@@ -162,7 +163,9 @@ class IpLookupsTest extends Specification {
               "have domain = %s".format(domain) in {
                 actual._4 must_== domain
               }      
-
+              "have net speed = %s".format(netspeed) in {
+                actual._5 must_== netspeed
+              }     
             case _ => throw new Exception("Expected lookup result could not be matched - this should never happen")
           }
         }

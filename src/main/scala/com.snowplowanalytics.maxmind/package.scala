@@ -25,6 +25,6 @@ package object iplookups {
 	/**
 	 * Result of MaxMind lookups
 	 */
-	type IpLookupResult = (Option[IpLocation], Option[String], Option[String], Option[String])
+	type IpLookupResult = (Option[IpLocation], Option[String], Option[String], Option[String], Option[String])
 
 }

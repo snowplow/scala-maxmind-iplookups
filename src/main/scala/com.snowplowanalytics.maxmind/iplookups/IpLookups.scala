@@ -136,6 +136,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       Await.result(aggregateFuture, 4.seconds)
     } catch {
       case te: TimeoutException => (None, None, None, None)
+      case iae: java.lang.IllegalArgumentException => (None, None, None, None)
       case e: Exception => throw e
     }
   }

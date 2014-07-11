@@ -38,6 +38,14 @@ object IpLookups {
 
   /**
    * Alternative constructor taking Strings rather than Files
+   *
+   * @param geoFile Geographic lookup database filepath
+   * @param ispFile ISP lookup database filepath
+   * @param orgFile Organization lookup database filepath
+   * @param domainFile Domain lookup database filepath
+   * @param netspeedFile Net speed lookup database filepath
+   * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
+   * @param lruCache Maximum size of LruMap cache   
    */
   def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None,
             domainFile: Option[String] = None, netspeedFile: Option[String] = None,
@@ -61,11 +69,11 @@ object IpLookups {
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  *
- * @param geoFile Geographic lookup file
- * @param ispFile ISP lookup file
- * @param orgFile Organization lookup file
- * @param domainFile Domain lookup file
- * @param netspeedFile Net speed lookup file
+ * @param geoFile Geographic lookup database file
+ * @param ispFile ISP lookup database file
+ * @param orgFile Organization lookup database file
+ * @param domainFile Domain lookup database file
+ * @param netspeedFile Net speed lookup database file
  * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
  * @param lruCache Maximum size of LruMap cache
  */
@@ -111,6 +119,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    *         LookupServices   
    */
   private def performLookupsWithoutLruCache(ip: String): IpLookupResult = {
+
     /**
      * Creates a Future boxing the result
      * of using a lookup service on the ip
@@ -131,10 +140,10 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
     }
 
     val aggregateFuture: Future[IpLookupResult] = for {
-      geoResult     <- geoFuture
-      ispResult     <- getLookupFuture(ispService)
-      orgResult     <- getLookupFuture(orgService)
-      domainResult  <- getLookupFuture(domainService)
+      geoResult       <- geoFuture
+      ispResult       <- getLookupFuture(ispService)
+      orgResult       <- getLookupFuture(orgService)
+      domainResult    <- getLookupFuture(domainService)
       netspeedResult  <- getLookupFuture(netspeedService)
     } yield (geoResult, ispResult, orgResult, domainResult, netspeedResult)
 

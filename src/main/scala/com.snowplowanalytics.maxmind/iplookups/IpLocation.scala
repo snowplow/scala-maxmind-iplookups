@@ -46,6 +46,13 @@ object IpLocation {
   // Option-box a MaxMind Int, where MaxMind uses 0 to indicate None
   private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
 
+  /**
+   * Constructs an IpLocation instance
+   * from a MaxMind Location instance
+   * 
+   * @param loc MaxMind Location object
+   * @return IpLocation
+   */
   def apply(loc: Location): IpLocation = IpLocation(
     countryCode = loc.countryCode,
     countryName = loc.countryName,

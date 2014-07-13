@@ -1,0 +1,13 @@
+Version 0.1.0 (2014-07-14)
+--------------------------
+Renamed project to scala-maxmind-iplookups (#18)
+Added support for MaxMind ISP lookup (#14)
+Added support for MaxMind domain lookup (#8)
+Added support for MaxMind region lookup (#6)
+Added support for MaxMind organization lookup (#5)
+Added support for MaxMind Netspeed lookup (#7)
+Made unit tests use test databases (#11)
+Parallelized lookups into various MaxMind databases (#15)
+Used MaxMind library from Maven (#9)
+Clarified and updated README (#2)
+Added CHANGELOG (#4)

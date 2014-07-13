@@ -1,16 +1,17 @@
-# Scala MaxMind Geo-IP [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-geoip.png)](https://travis-ci.org/snowplow/scala-maxmind-geoip)
+# Scala MaxMind IP Lookups [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-iplookups.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
 
 ## Introduction
 
 This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
-1. **Easier to setup/test** - the SBT project definition automatically pulls down the latest MaxMind Java code and `GeoLiteCity.dat`
-2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
-3. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
+1. **Provides a common interface to four MaxMind databases** - it works with MaxMind's databases for looking up geographic location, ISP, organization, and domain from an IP address
+2. **Easier to setup/test** - the SBT project definition makes it easy to download and test
+3. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
+4. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-geoip is **0.0.5** and is dual-published to be Scala 2.9 and 2.10 compatible.
+The latest version of scala-maxmind-iplookups is **0.1.0** and is compatible with Scala version 2.9.x, where x is at least 3, and Scala version 2.10.x.
 
 Add this to your SBT config:
 
@@ -20,23 +21,26 @@ val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
-val maxmindGeoip = "com.snowplowanalytics"  %% "scala-maxmind-geoip"  % "0.0.5"
+val maxmindIpLookups = "com.snowplowanalytics"  %% "scala-maxmind-iplookups"  % "0.1.0"
 ```
 
 Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.
 
 Retrieve the `GeoLiteCity.dat` file from the [MaxMind downloads page] [maxmind-downloads] ([direct link] [geolitecity-dat]).
 
+MaxMind also has databases for looking up [ISPs][maxmind-isp], [organizations][maxmind-org], and [domain names][maxmind-domain] from IP addresses. Scala MaxMind IP Lookups supports all of these.
+
 ## Usage
 
-Here is a simple usage example:
+Here is a simple usage example, performing just a geographic lookup and not the ISP, organization, or domain lookups:
 
 ```scala
-import com.snowplowanalytics.maxmind.geoip.IpGeo
+import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
-val ipGeo = IpGeo(dbFile = "/opt/maxmind/GeoLiteCity.dat", memCache = false, lruCache = 20000)
+val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLiteCity.dat"), ispFile = None,
+                  orgFile = None, domainFile = None, memCache = false, lruCache = 20000)
 
-for (loc <- ipGeo.getLocation("213.52.50.8")) {
+for (loc <- IpLookups.performLookups("213.52.50.8")._1) {
   println(loc.countryCode)   // => "NO"
   println(loc.countryName)   // => "Norway" 
 }
@@ -44,31 +48,41 @@ for (loc <- ipGeo.getLocation("213.52.50.8")) {
 
 Note that `GeoLiteCity.dat` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that pings MaxMind regularly to keep your local copy up-to-date.
 
-For further usage examples for Scala MaxMind Geo-IP, please see the tests in [`IpGeoTest.scala`] [ipgeotest-scala]. The test suite downloads its own copy of `GeoLiteCity.dat` from MaxMind for testing purposes.
+For further usage examples for Scala MaxMind IP Lookups, please see the tests in [`IpLookupsTest.scala`] [iplookupstest-scala]. The test suite uses test databases provided by MaxMind.
 
 ## Implementation details
 
-### IpGeo constructor
+### IpLookups constructor
 
 The signature is as follows:
 
 ```scala
-class IpGeo(dbFile: File, memCache: Boolean = true, lruCache: Int = 10000)
+class IpLookups(geoFile: Option(File), ispFile: Option(File), 
+                orgFile: Option(File), domainFile: Option(File), 
+                memCache: Boolean = true, lruCache: Int = 10000)
 ```
 
-In the `IpGeo` companion object there is an alternative constructor which takes a String `dbFile` instead:
+In the `IpLookups` companion object there is an alternative constructor which takes Option[String] as the time of the file arguments instead:
 
 ```scala
-def apply(dbFile: String, memCache: Boolean = true, lruCache: Int = 10000)
+def apply(geoFile: Option[String], ispFile: Option[String], 
+          orgFile: Option[String], domainFile: Option[String], 
+          memCache: Boolean = true, lruCache: Int = 10000)
 ```
+
+The first four arguments are the MaxMind databases from which the lookup should be performed. `geoFile`, `ispFile`, `orgFile`, and `domainFile` refer respectively to MaxMind's databases for looking up location, ISP, organization, and domain based on an IP address. They are all wrapped in `Option`, so if you don't have access to all of them, just pass in `None` as in the example above. The ones you do pass in must be wrapped in `Some`.
 
 In both signatures, the `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
 
-The `lruCache` value defaults to `10000` - meaning Scala MaxMind Geo-IP will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+The `lruCache` value defaults to `10000` - meaning Scala MaxMind IP Lookups will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
+
+### Returned value
+
+The `performLookups(ip)` method returns a `Tuple4[Option[IpLocation], Option[String], Option[String], Option[String]]`. The first element is the result of the geographic location lookup. It is either `None` (if no geographic lookup database was provided or if the lookup returned `null`) or `Some(ipLocation)`, where `ipLocation` is an instance of the `IpLocation` case class described below. The other three elements in the tuple are `Option`s wrapping the results of the other three possible lookups: ISP, organization, and domain.
 
 ### IpLocation case class
 
-The `getLocation(ip)` method returns an `IpLocation` case class with the following structure:
+The geographic lookup returns an `IpLocation` case class instance with the following structure:
 
 ```scala
 case class IpLocation(
@@ -81,8 +95,38 @@ case class IpLocation(
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],
-  metroCode: Option[Int]
+  metroCode: Option[Int],
+  regionName: Option[String]  
   )
+```
+
+### An example using multiple databases
+
+This example shows how to do a lookup using all four databases.
+
+```scala
+import com.snowplowanalytics.maxmind.iplookups.IpLookups
+
+val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLiteCity.dat"),
+                  ispFile = Some("/opt/maxmind/GeoIPISP.dat"),
+                  orgFile = Some("/opt/maxmind/GeoIPOrg.dat"),
+                  domainFile = Some("/opt/maxmind/GeoIPDomain.dat"),
+                  memCache = false, lruCache = 20000)
+
+val lookupResult = ipLookups.performLookups("70.46.123.145")
+
+// Geographic lookup
+println(lookupResult._1).map(_.countryName) //=> Some("United States")
+println(lookupResult._1).map(_.regionName)  // => Some("Florida")
+
+// ISP lookup
+println(lookupResult._2) // => Some("FDN Communications")
+
+// Organization lookup
+println(lookupResult._3) // => Some("DSLAM WAN Allocation")
+
+// Domain lookup
+println(lookupResult._4) // => Some("nuvox.net")
 ```
 
 ### LRU cache
@@ -95,19 +139,11 @@ Please note that the LRU cache is **not** thread-safe ([see this note] [twitter-
 
 Assuming you already have SBT installed:
 
-    $ git clone git://github.com/snowplow/scala-maxmind-geoip.git
-    $ cd scala-maxmind-geoip
+    $ git clone git://github.com/snowplow/scala-maxmind-iplookups.git
+    $ cd scala-maxmind-iplookups
     $ sbt test
     <snip>
-    [info] Passed: : Total 186, Failed 0, Errors 0, Passed 186, Skipped 0
-
-If you want to build a 'fat jar':
-
-    $ sbt assembly 
-
-The fat jar is now available as:
-
-    target/scala-maxmind-geoip-0.0.3-fat.jar
+    [info] Passed: : Total 276, Failed 0, Errors 0, Passed 276, Skipped 0
 
 ## Roadmap
 
@@ -128,11 +164,14 @@ limitations under the License.
 
 [java-lib]: http://www.maxmind.com/download/geoip/api/java/
 
-[ipgeotest-scala]: https://github.com/snowplow/scala-maxmind-geoip/blob/master/src/test/scala/com/snowplowanalytics/maxmind/geoip/IpGeoTest.scala
+[iplookupstest-scala]: https://github.com/snowplow/scala-maxmind-iplookups/blob/master/src/test/scala/com.snowplowanalytics.maxmind.iplookups/IpLookupsTest.scala
 
 [twitter-lru-cache]: http://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
 [maxmind-downloads]: http://dev.maxmind.com/geoip/legacy/geolite
+[maxmind-isp]: https://www.maxmind.com/en/isp
+[maxmind-org]: https://www.maxmind.com/en/organization
+[maxmind-domain]: https://www.maxmind.com/en/domain
 [geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
 [maxmind-geolite-update]: https://github.com/psychicbazaar/maxmind-geolite-update
 

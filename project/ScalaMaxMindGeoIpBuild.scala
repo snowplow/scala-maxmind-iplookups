@@ -28,8 +28,8 @@ object ScalaMaxMindGeoIpBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies <++= Dependencies.onVersion(
-        on292 = Seq(Libraries.collUtilsOld, Libraries.specs2Old),
-        on210 = Seq(Libraries.collUtils, Libraries.specs2)
+        on292 = Seq(Libraries.collUtilsOld, Libraries.specs2Old, Libraries.maxmind),
+        on210 = Seq(Libraries.collUtils, Libraries.specs2, Libraries.maxmind)
       )
     )
 }

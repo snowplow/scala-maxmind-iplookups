@@ -19,13 +19,8 @@ object Dependencies {
     "Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's util functions
   )
 
-  object Urls {
-    val maxmindJava  = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
-    val maxmindData  = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
-  }
-
   object V {
-    val maxmind      = "1.2.9" // Compiled in BuildSettings
+    val maxmind      = "1.2.11"
     val collUtilsOld = "5.3.10"
     val collUtils    = "6.3.4"
     val specs2Old    = "1.12.4.1"
@@ -35,6 +30,7 @@ object Dependencies {
   object Libraries {
     val collUtilsOld = "com.twitter"                %  "util-collection"     % V.collUtilsOld
     val collUtils    = "com.twitter"                %% "util-collection"     % V.collUtils
+    val maxmind      = "com.maxmind.geoip"          %  "geoip-api"           % V.maxmind
     val specs2Old    = "org.specs2"                 %% "specs2"              % V.specs2Old    % "test"
     val specs2       = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }

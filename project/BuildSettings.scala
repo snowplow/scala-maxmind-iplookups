@@ -20,43 +20,12 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.5",
+    version       := "0.1.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.9.2",
-    crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.0", "2.10.1"),
+    scalaVersion  := "2.9.3",
+    crossScalaVersions := Seq("2.9.3", "2.10.0", "2.10.4"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
-  )
-
-  // For MaxMind support
-  import Dependencies._
-  lazy val maxmindSettings = Seq(
-
-    // Download and compile the MaxMind GeoIP Java API from source
-    // Adapted from https://github.com/guardian/maxmind-geoip-build/blob/master/project/Build.scala
-    sourceGenerators in Compile <+= (sourceManaged in Compile) map { out =>
-      val zip = new URL(Urls.maxmindJava format (V.maxmind))
-      IO.unzipURL(zip, out)
-      (out / "GeoIPJava-%s".format(V.maxmind) / "source" ** ("*.java")).get
-    },
-
-    // Download the GeoLite City for our test suite
-    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
-      val gzRemote = new URL(Urls.maxmindData)
-      val datLocal = out / "maxmind" / "GeoLiteCity.dat"
-      
-      // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
-      if (!datLocal.exists()) {
-        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
-        val gzLocal = out / "GeoLiteCity.dat.gz"        
-        IO.download(gzRemote, gzLocal)
-        IO.createDirectory(out / "maxmind")
-        IO.gunzip(gzLocal, datLocal)
-        IO.delete(gzLocal)
-        // gunzipURL(gzRemote, out / "maxmind")
-      }
-      datLocal.get
-    }
   )
 
   // Publish settings
@@ -72,5 +41,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ maxmindSettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ publishSettings
 }

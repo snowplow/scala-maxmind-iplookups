@@ -10,10 +10,14 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.maxmind.geoip
+package com.snowplowanalytics.maxmind.iplookups
 
 // MaxMind
-import com.maxmind.geoip.Location
+import com.maxmind.geoip.{
+  LookupService,
+  Location,
+  regionName
+}
 
 /**
  * A case class wrapper around the
@@ -29,7 +33,8 @@ case class IpLocation(
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],
-  metroCode: Option[Int]
+  metroCode: Option[Int],
+  regionName: Option[String]  
   )
 
 /**
@@ -42,7 +47,11 @@ object IpLocation {
   private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
 
   /**
-   * Constructs an IpLocation from a MaxMind Location
+   * Constructs an IpLocation instance
+   * from a MaxMind Location instance
+   * 
+   * @param loc MaxMind Location object
+   * @return IpLocation
    */
   def apply(loc: Location): IpLocation = IpLocation(
     countryCode = loc.countryCode,
@@ -54,6 +63,8 @@ object IpLocation {
     postalCode = Option(loc.postalCode),
     dmaCode = optionify(loc.dma_code),
     areaCode = optionify(loc.area_code),
-    metroCode = optionify(loc.metro_code)
+    metroCode = optionify(loc.metro_code),
+    regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))
     )
+
 }

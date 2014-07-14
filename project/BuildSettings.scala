@@ -23,7 +23,7 @@ object BuildSettings {
     version       := "0.1.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
     scalaVersion  := "2.9.3",
-    crossScalaVersions := Seq("2.9.3", "2.10.0", "2.10.4"),
+    crossScalaVersions := Seq("2.9.3", "2.10.4"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
@@ -33,11 +33,10 @@ object BuildSettings {
   lazy val publishSettings = Seq[Setting[_]](
    
     publishTo <<= version { version =>
-      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
-      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
+      val basePath = "target/repo/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
       }
-      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
+      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
     }
   )
 

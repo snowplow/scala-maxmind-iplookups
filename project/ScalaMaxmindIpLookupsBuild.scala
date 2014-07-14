@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object ScalaMaxMindGeoIpBuild extends Build {
+object ScalaMaxmindIpLookupsBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,12 +24,13 @@ object ScalaMaxMindGeoIpBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("scala-maxmind-geoip", file("."))
+  lazy val project = Project("scala-maxmind-iplookups", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies <++= Dependencies.onVersion(
-        on292 = Seq(Libraries.collUtilsOld, Libraries.specs2Old, Libraries.maxmind),
-        on210 = Seq(Libraries.collUtils, Libraries.specs2, Libraries.maxmind)
+        on29 = Seq(Libraries.collUtils._29, Libraries.specs2._29, Libraries.maxmind),
+        on210 = Seq(Libraries.collUtils._210, Libraries.specs2._210, Libraries.maxmind),
+        on211 = Seq(Libraries.collUtils._211, Libraries.specs2._211, Libraries.maxmind)
       )
     )
 }

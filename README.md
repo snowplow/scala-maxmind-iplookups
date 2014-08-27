@@ -92,6 +92,7 @@ case class IpLocation(
   city: Option[String],
   latitude: Float,
   longitude: Float,
+  timezone: Option[String],
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],

@@ -23,7 +23,7 @@ object BuildSettings {
     version       := "0.1.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
     scalaVersion  := "2.9.3",
-    crossScalaVersions := Seq("2.9.3", "2.10.4"),
+    crossScalaVersions := Seq("2.9.3", "2.10.4", "2.11.2"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )

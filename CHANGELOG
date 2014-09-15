@@ -1,7 +1,7 @@
 Version 0.2.0 (2014-09-16)
 --------------------------
 Added MaxMind timezone lookup (thanks @pooya!) (#24)
-Enabled cross-publishing for 2.11 (thanks @csaltos!) (#23) (TODO)
+Enabled cross-publishing for 2.11 (thanks @csaltos!) (#23)
 
 Version 0.1.0 (2014-07-14)
 --------------------------

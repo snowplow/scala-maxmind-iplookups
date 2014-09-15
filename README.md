@@ -40,7 +40,7 @@ import com.snowplowanalytics.maxmind.iplookups.IpLookups
 val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLiteCity.dat"), ispFile = None,
                   orgFile = None, domainFile = None, memCache = false, lruCache = 20000)
 
-for (loc <- IpLookups.performLookups("213.52.50.8")._1) {
+for (loc <- ipLookups.performLookups("213.52.50.8")._1) {
   println(loc.countryCode)   // => "NO"
   println(loc.countryName)   // => "Norway" 
 }
@@ -92,6 +92,7 @@ case class IpLocation(
   city: Option[String],
   latitude: Float,
   longitude: Float,
+  timezone: Option[String],
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],

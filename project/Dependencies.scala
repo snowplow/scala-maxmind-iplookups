@@ -24,7 +24,7 @@ object Dependencies {
     object collUtils {
       val _29   = "5.3.10"
       val _210  = "6.3.4"
-      val _211  = "6.12.1"     
+      val _211  = "6.20.0"     
     }
     object specs2 {
       val _29   = "1.12.4.1"
@@ -38,7 +38,6 @@ object Dependencies {
     object collUtils {
       val _29   = "com.twitter"                %  "util-collection"      % V.collUtils._29
       val _210  = "com.twitter"                %% "util-collection"      % V.collUtils._210
-      // Not yet released
       val _211  = "com.twitter"                %% "util-collection"      % V.collUtils._211
     }
     object specs2 {

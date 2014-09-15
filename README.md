@@ -11,7 +11,7 @@ This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The ma
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.1.0** and is compatible with Scala version 2.9.x, where x is at least 3, and Scala version 2.10.x.
+The latest version of scala-maxmind-iplookups is **0.2.0** and is compatible with Scala version 2.9.x, where x is at least 3, and Scala version 2.10.x.
 
 Add this to your SBT config:
 
@@ -21,7 +21,7 @@ val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 val twitterRepo  = "Twitter Maven Repo" at "http://maven.twttr.com/"
 
 // Dependency
-val maxmindIpLookups = "com.snowplowanalytics"  %% "scala-maxmind-iplookups"  % "0.1.0"
+val maxmindIpLookups = "com.snowplowanalytics"  %% "scala-maxmind-iplookups"  % "0.2.0"
 ```
 
 Note the double percent (`%%`) between the group and artifactId. That'll ensure you get the right package for your Scala version.

@@ -142,6 +142,9 @@ class IpLookupsTest extends Specification {
               "have longitude = %s".format(e.longitude) in {
                 a.longitude must_== e.longitude
               }
+              "have timezone = %s".format(e.timezone) in {
+                a.timezone must_== e.timezone
+              }
               "have postalCode = %s".format(e.postalCode) in {
                 a.postalCode must_== e.postalCode
               }

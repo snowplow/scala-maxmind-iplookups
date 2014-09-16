@@ -11,7 +11,7 @@ This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The ma
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.2.0** and is compatible with Scala version 2.9.x, where x is at least 3, and Scala version 2.10.x.
+The latest version of scala-maxmind-iplookups is **0.2.0** and is compatible with all Scala versions from 2.9.3 onwards.
 
 Add this to your SBT config:
 

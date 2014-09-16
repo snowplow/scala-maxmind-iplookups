@@ -93,7 +93,7 @@ object IpLookupsTest {
 
 class IpLookupsTest extends Specification {
 
-  "Looking up some IP address locations should match their expected locations" >> {
+  "Looking up some IP address locations should match their expected locations" should {
 
     val mcf: Boolean => String = mc => if (mc) "using" else "without using"
     val lcf: Int => String = lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"

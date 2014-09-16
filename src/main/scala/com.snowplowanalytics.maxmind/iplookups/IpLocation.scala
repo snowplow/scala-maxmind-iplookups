@@ -16,6 +16,7 @@ package com.snowplowanalytics.maxmind.iplookups
 import com.maxmind.geoip.{
   LookupService,
   Location,
+  timeZone,
   regionName
 }
 
@@ -30,6 +31,7 @@ case class IpLocation(
   city: Option[String],
   latitude: Float,
   longitude: Float,
+  timezone: Option[String],
   postalCode: Option[String],
   dmaCode: Option[Int],
   areaCode: Option[Int],
@@ -60,6 +62,7 @@ object IpLocation {
     city = Option(loc.city),
     latitude = loc.latitude,
     longitude = loc.longitude,
+    timezone =  Option(timeZone.timeZoneByCountryAndRegion(loc.countryCode, loc.region)),
     postalCode = Option(loc.postalCode),
     dmaCode = optionify(loc.dma_code),
     areaCode = optionify(loc.area_code),

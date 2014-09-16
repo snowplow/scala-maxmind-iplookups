@@ -46,6 +46,7 @@ object IpLookupsTest {
       city = Some("Delray Beach"),
       latitude = 26.461502F,
       longitude = -80.0728F,
+      timezone = Some("America/New_York"),
       postalCode = None,
       dmaCode = Some(548),
       areaCode = Some(561),
@@ -61,6 +62,7 @@ object IpLookupsTest {
       city = Some("Lille"),
       latitude = 50.632996F,
       longitude = 3.0585938F,
+      timezone = Some("Europe/Paris"),
       postalCode = None,
       dmaCode = None,
       areaCode = None,
@@ -76,6 +78,7 @@ object IpLookupsTest {
       city = None,
       latitude = 0.0F,
       longitude = 0.0F,
+      timezone = None,
       postalCode = None,
       dmaCode = None,
       areaCode = None,
@@ -90,7 +93,7 @@ object IpLookupsTest {
 
 class IpLookupsTest extends Specification {
 
-  "Looking up some IP address locations should match their expected locations" >> {
+  "Looking up some IP address locations should match their expected locations" should {
 
     val mcf: Boolean => String = mc => if (mc) "using" else "without using"
     val lcf: Int => String = lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
@@ -138,6 +141,9 @@ class IpLookupsTest extends Specification {
               }
               "have longitude = %s".format(e.longitude) in {
                 a.longitude must_== e.longitude
+              }
+              "have timezone = %s".format(e.timezone) in {
+                a.timezone must_== e.timezone
               }
               "have postalCode = %s".format(e.postalCode) in {
                 a.postalCode must_== e.postalCode

@@ -16,7 +16,7 @@ package com.snowplowanalytics.maxmind.iplookups
 import java.io.File
 
 // LRU
-import com.twitter.util.LruMap
+import com.twitter.util.SynchronizedLruMap
 
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
@@ -45,7 +45,7 @@ object IpLookups {
    * @param domainFile Domain lookup database filepath
    * @param netspeedFile Net speed lookup database filepath
    * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
-   * @param lruCache Maximum size of LruMap cache   
+   * @param lruCache Maximum size of SynchronizedLruMap cache
    */
   def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None,
             domainFile: Option[String] = None, netspeedFile: Option[String] = None,
@@ -75,14 +75,14 @@ object IpLookups {
  * @param domainFile Domain lookup database file
  * @param netspeedFile Net speed lookup database file
  * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
- * @param lruCache Maximum size of LruMap cache
+ * @param lruCache Maximum size of SynchronizedLruMap cache
  */
 class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgFile: Option[File] = None, 
                 domainFile: Option[File] = None, netspeedFile: Option[File] = None,
                 memCache: Boolean = true, lruCache: Int = 10000) {
 
   // Initialise the cache
-  private val lru = if (lruCache > 0) new LruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]
+  private val lru = if (lruCache > 0) new SynchronizedLruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD

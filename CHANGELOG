@@ -1,3 +1,8 @@
+Version 0.3.0 (2015-06-20)
+--------------------------
+Switched from LruMap to SynchronizedLruMap (#28)
+Added dedicated Vagrant setup (#30)
+
 Version 0.2.0 (2014-09-16)
 --------------------------
 Added MaxMind timezone lookup (thanks @pooya!) (#24)

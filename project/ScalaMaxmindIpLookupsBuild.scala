@@ -28,9 +28,10 @@ object ScalaMaxmindIpLookupsBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies <++= Dependencies.onVersion(
-        on29 = Seq(Libraries.collUtils._29, Libraries.specs2._29, Libraries.maxmind),
-        on210 = Seq(Libraries.collUtils._210, Libraries.specs2._210, Libraries.maxmind),
-        on211 = Seq(Libraries.collUtils._211, Libraries.specs2._211, Libraries.maxmind)
+        all   = Libraries.maxmind +: Libraries.specs2,
+        on210 = Seq(Libraries.collUtils._210),
+        on211 = Seq(Libraries.collUtils._211),
+        on212 = Seq(Libraries.collUtils._212)
       )
     )
 }

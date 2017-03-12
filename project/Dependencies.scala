@@ -21,38 +21,32 @@ object Dependencies {
 
   object V {
     val maxmind = "1.2.11"
+    val specs2  = "3.8.9"
     object collUtils {
-      val _29   = "5.3.10"
-      val _210  = "6.3.4"
-      val _211  = "6.20.0"     
-    }
-    object specs2 {
-      val _29   = "1.12.4.1"
-      val _210  = "1.14"
-      val _211  = "2.3.13"
+      val _210  = "6.34.0"
+      val _211  = "6.42.0"     
+      val _212  = "6.42.0"
     }
   }
 
   object Libraries {
-    val maxmind = "com.maxmind.geoip"          %  "geoip-api"            % V.maxmind
+    val maxmind = "com.maxmind.geoip" % "geoip-api" % V.maxmind
     object collUtils {
-      val _29   = "com.twitter"                %  "util-collection"      % V.collUtils._29
-      val _210  = "com.twitter"                %% "util-collection"      % V.collUtils._210
-      val _211  = "com.twitter"                %% "util-collection"      % V.collUtils._211
+      val _210  = "com.twitter" %% "util-collection" % V.collUtils._210
+      val _211  = "com.twitter" %% "util-collection" % V.collUtils._211
+      val _212  = "com.twitter" %% "util-collection" % V.collUtils._212
     }
-    object specs2 {
-      val _29   = "org.specs2"                 %% "specs2"               % V.specs2._29        % "test"
-      val _210  = "org.specs2"                 %% "specs2"               % V.specs2._210       % "test"
-      val _211  = "org.specs2"                 %% "specs2"               % V.specs2._211       % "test"
-    }
+    val specs2  = Seq("org.specs2" %% "specs2-core"  % V.specs2 % "test",
+                      "org.specs2" %% "specs2-junit" % V.specs2 % "test",
+                      "org.specs2" %% "specs2-mock"  % V.specs2 % "test")
   }
 
-  def onVersion[A](all: Seq[A] = Seq(), on29: => Seq[A] = Seq(), on210: => Seq[A] = Seq(), on211: => Seq[A] = Seq()) =
-    scalaVersion(v => all ++ (if (v.contains("2.9.")) {
-      on29
-    } else if (v.contains("2.10.")) {
+  def onVersion[A](all: Seq[A] = Seq(), on210: => Seq[A] = Seq(), on211: => Seq[A] = Seq(), on212: => Seq[A] = Seq()) =
+    scalaVersion(v => all ++ (if (v.contains("2.10.")) {
       on210
-    } else {
+    } else if (v.contains("2.11.")) {
       on211
+    } else {
+      on212
     }))
 }

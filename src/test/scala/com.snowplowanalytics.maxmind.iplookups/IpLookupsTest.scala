@@ -20,6 +20,7 @@ import scala.io.Source
 
 // Specs2
 import org.specs2.mutable.Specification
+import org.specs2.specification.core.{Fragment, Fragments}
 
 object IpLookupsTest {
 
@@ -101,12 +102,12 @@ class IpLookupsTest extends Specification {
       (ip, mcache, lcache) => "The IP address %s looked up (%s memory cache and with %s)".format(ip, mcf(mcache), lcf(lcache))
 
     import IpLookupsTest._
-    for (memCache <- Seq(true, false);
-         lruCache <- Seq(0, 1000, 10000)) {
+    val tests = for (memCache <- Seq(true, false);
+         lruCache <- Seq(0, 1000, 10000)) yield {
 
       val ipLookups = GeoLiteCity(memCache, lruCache)
 
-      testData foreach { case (ip, expected) =>
+      testData.toSeq map { case (ip, expected) =>
 
         formatter(ip, memCache, lruCache) should {
 
@@ -177,5 +178,12 @@ class IpLookupsTest extends Specification {
         }
       }
     }
+    toSpecs2ResultFragments(tests)
+  }
+
+  private def toSpecs2ResultFragments(tests: Seq[Seq[Fragment]]): Fragments = {
+    val testsFlatten = tests.flatten
+    val initialFragments = fragmentToFragments(testsFlatten(0))
+    (testsFlatten foldLeft initialFragments)(_ ^ _)
   }
 }

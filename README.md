@@ -12,7 +12,7 @@ The main benefits of using this wrapper over directly calling the Java library f
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.3.0** and is compatible with all Scala versions from 2.11 onwards.
+The latest version of scala-maxmind-iplookups is **0.4.0** and is compatible with all Scala versions from 2.11 onwards.
 
 Add this to your SBT config:
 
@@ -21,7 +21,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val maxmindIpLookups = "com.snowplowanalytics"  %% "scala-maxmind-iplookups"  % "0.3.0"
+val maxmindIpLookups = "com.snowplowanalytics"  %% "scala-maxmind-iplookups"  % "0.4.0"
 ```
 
 Note the double percent (`%%`) between the group and artifactId. 

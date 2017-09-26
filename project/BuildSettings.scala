@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 Snowplow Analytics Ltd and Micronautics Research Corporation. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -8,30 +8,24 @@
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the Apache License Version 2.0 is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
- */
+ * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under. */
 
-// SBT
 import sbt._
 import Keys._
 
 object BuildSettings {
-
-  // Basic settings for our app
-  lazy val basicSettings = Seq[Setting[_]](
+  lazy val basicSettings: Seq[Setting[_]] = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.3.0",
+    version       := "0.4.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.9.3",
-    crossScalaVersions := Seq("2.10.5", "2.11.8", "2.12.1"),
+    scalaVersion  := "2.12.3",
+    crossScalaVersions := Seq("2.11.11", "2.12.3"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
 
-  // Publish settings
-  // TODO: update with ivy credentials etc when we start using Nexus
-  lazy val publishSettings = Seq[Setting[_]](
-   
+  // TODO: update with ivy credentials etc if we start using Nexus
+  lazy val publishSettings: Seq[Setting[_]] = Seq[Setting[_]](
     publishTo <<= version { version =>
       val basePath = "target/repo/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
@@ -40,5 +34,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ publishSettings
+  lazy val buildSettings: Seq[Setting[_]] = basicSettings ++ publishSettings
 }

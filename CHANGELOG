@@ -1,3 +1,14 @@
+Version 0.4.0 (2017-09-25)
+--------------------------
+Updated to Scala 2.12
+Dropped Scala 2.9 and 2.10
+Updated dependencies
+Moved Scala files to directories corresponding to their package
+Using Google Guava's concurrent map instead of Twitter's util-collection as the basis for SynchronizedLruMap
+Results are returned in the new IpLookupResult case class, instead of a tuple.
+An implicit ExecutionContext must be in scope, instead of always using scala.concurrent.ExecutionContext.Implicits.global
+Moved the classes inside the package com.snowplowanalytics.maxmind.iplookups up one level to com.snowplowanalytics.maxmind
+
 Version 0.3.0 (2015-06-20)
 --------------------------
 Switched from LruMap to SynchronizedLruMap (#28)

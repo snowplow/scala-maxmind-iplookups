@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-import sbt._
+import sbt.{Def, _}
 import Keys._
 
 object ScalaMaxmindIpLookupsBuild extends Build {
@@ -19,7 +19,7 @@ object ScalaMaxmindIpLookupsBuild extends Build {
   import BuildSettings._
 
   // Configure prompt to show current project
-  override lazy val settings = super.settings :+ {
+  override lazy val settings: Seq[Def.Setting[_]] = super.settings :+ {
     shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
   }
 
@@ -28,10 +28,9 @@ object ScalaMaxmindIpLookupsBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies <++= Dependencies.onVersion(
-        all   = Libraries.maxmind +: Libraries.specs2,
-        on210 = Seq(Libraries.collUtils._210),
-        on211 = Seq(Libraries.collUtils._211),
-        on212 = Seq(Libraries.collUtils._212)
+        all   = Libraries.maxMind +: Libraries.specs2,
+        on211 = Seq(Libraries.collUtils.all),
+        on212 = Seq(Libraries.collUtils.all)
       )
     )
 }

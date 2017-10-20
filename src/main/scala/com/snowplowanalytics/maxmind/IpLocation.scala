@@ -10,20 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.maxmind.iplookups
+package com.snowplowanalytics.maxmind
 
-// MaxMind
-import com.maxmind.geoip.{
-  LookupService,
-  Location,
-  timeZone,
-  regionName
-}
+import com.maxmind.geoip.{Location, timeZone, regionName}
 
-/**
- * A case class wrapper around the
- * MaxMind Location class.
- */
+/** A case class wrapper around the MaxMind Location class. */
 case class IpLocation(
   countryCode: String,
   countryName: String,
@@ -36,22 +27,19 @@ case class IpLocation(
   dmaCode: Option[Int],
   areaCode: Option[Int],
   metroCode: Option[Int],
-  regionName: Option[String]  
-  )
+  regionName: Option[String]
+)
 
-/**
- * Companion class contains a constructor
- * which takes a MaxMind Location class.
- */
+/** Companion class contains a constructor which takes a MaxMind Location class. */
 object IpLocation {
-
   // Option-box a MaxMind Int, where MaxMind uses 0 to indicate None
-  private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
+  private val optionify: Int => Option[Int] =
+    i => if (i == 0) None else Some(i)
 
   /**
    * Constructs an IpLocation instance
    * from a MaxMind Location instance
-   * 
+   *
    * @param loc MaxMind Location object
    * @return IpLocation
    */
@@ -68,6 +56,5 @@ object IpLocation {
     areaCode = optionify(loc.area_code),
     metroCode = optionify(loc.metro_code),
     regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))
-    )
-
+  )
 }

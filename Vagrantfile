@@ -1,5 +1,4 @@
 Vagrant.configure("2") do |config|
-
   config.vm.box = "ubuntu/trusty64"
   config.vm.hostname = "scala-maxmind-iplookups"
   config.ssh.forward_agent = true
@@ -15,5 +14,4 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell do |sh|
     sh.path = "vagrant/up.bash"
   end
-
 end

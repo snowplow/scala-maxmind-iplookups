@@ -18,8 +18,8 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.4.0",
     description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.12.3",
-    crossScalaVersions := Seq("2.11.11", "2.12.3"),
+    scalaVersion  := "2.12.4",
+    crossScalaVersions := Seq("2.11.11", "2.12.4"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )

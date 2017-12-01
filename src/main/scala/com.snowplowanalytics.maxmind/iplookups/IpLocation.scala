@@ -13,12 +13,7 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 // MaxMind
-import com.maxmind.geoip.{
-  LookupService,
-  Location,
-  timeZone,
-  regionName
-}
+import com.maxmind.geoip2.model.CityResponse
 
 /**
  * A case class wrapper around the
@@ -44,10 +39,6 @@ case class IpLocation(
  * which takes a MaxMind Location class.
  */
 object IpLocation {
-
-  // Option-box a MaxMind Int, where MaxMind uses 0 to indicate None
-  private val optionify: Int => Option[Int] = i => if (i == 0) None else Some(i)
-
   /**
    * Constructs an IpLocation instance
    * from a MaxMind Location instance
@@ -55,19 +46,19 @@ object IpLocation {
    * @param loc MaxMind Location object
    * @return IpLocation
    */
-  def apply(loc: Location): IpLocation = IpLocation(
-    countryCode = loc.countryCode,
-    countryName = loc.countryName,
-    region = Option(loc.region),
-    city = Option(loc.city),
-    latitude = loc.latitude,
-    longitude = loc.longitude,
-    timezone =  Option(timeZone.timeZoneByCountryAndRegion(loc.countryCode, loc.region)),
-    postalCode = Option(loc.postalCode),
-    dmaCode = optionify(loc.dma_code),
-    areaCode = optionify(loc.area_code),
-    metroCode = optionify(loc.metro_code),
-    regionName = Option(regionName.regionNameByCode(loc.countryCode, loc.region))
+  def apply(loc: CityResponse): IpLocation =
+    IpLocation(
+      countryCode = loc.getCountry.getIsoCode,
+      countryName = loc.getCountry.getName,
+      region = Option(loc.getMostSpecificSubdivision.getIsoCode),
+      city = Option(loc.getCity.getName),
+      latitude = Option(loc.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
+      longitude = Option(loc.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
+      timezone =  Option(loc.getLocation.getTimeZone),
+      postalCode = Option(loc.getPostal.getCode),
+      dmaCode = None,
+      areaCode = None,
+      metroCode = Option(loc.getLocation.getMetroCode).map(_.toInt),
+      regionName = Option(loc.getMostSpecificSubdivision.getName)
     )
-
 }

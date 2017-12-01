@@ -14,18 +14,21 @@ package com.snowplowanalytics.maxmind.iplookups
 
 // Java
 import java.io.File
+import java.net.InetAddress
+
+import com.maxmind.db.CHMCache
 
 // LRU
 import com.twitter.util.SynchronizedLruMap
 
 // MaxMind
-import com.maxmind.geoip.{Location, LookupService}
+import com.maxmind.geoip2.DatabaseReader
+import com.maxmind.geoip2.exception.GeoIp2Exception
 
 // Concurrency
 import scala.concurrent._
 import scala.concurrent.duration._
 import ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
 
 // This library
 import IpLocation._
@@ -57,7 +60,7 @@ object IpLookups {
 }
 
 /**
- * IpLookups is a Scala wrapper around MaxMind's own LookupService Java class.
+ * IpLookups is a Scala wrapper around MaxMind's own DatabaseReader Java class.
  *
  * Two main differences:
  *
@@ -85,12 +88,11 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
   private val lru = if (lruCache > 0) new SynchronizedLruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
-  private val options = if (memCache) LookupService.GEOIP_MEMORY_CACHE else LookupService.GEOIP_STANDARD
   private val geoService = getService(geoFile)
-  private val ispService = getService(ispFile)
-  private val orgService = getService(orgFile)
-  private val domainService = getService(domainFile)
-  private val netspeedService = getService(netspeedFile)
+  private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
+  private val orgService = getService(orgFile).map(SpecializedReader(_, ReaderFunctions.org))
+  private val domainService = getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
+  private val netspeedService = getService(netspeedFile).map(SpecializedReader(_, ReaderFunctions.netSpeed))
 
   /**
    * Get a LookupService from a database file
@@ -98,8 +100,16 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * @param serviceFile The database file
    * @return LookupService
    */
-  private def getService(serviceFile: Option[File]): Option[LookupService] = 
-    serviceFile.map(new LookupService(_, options))
+  private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
+    serviceFile.map(f => {
+      val builder = new DatabaseReader.Builder(f)
+      (
+        if (memCache)
+          builder.withCache(new CHMCache())
+        else
+          builder
+      ).build()
+    })
 
   /**
    * Returns the MaxMind location for this IP address
@@ -128,15 +138,14 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
      *        domain or net speed LookupService
      * @return the result of the lookup
      */
-    def getLookupFuture(service: Option[LookupService]): Future[Option[String]] = 
+    def getLookupFuture(service: Option[SpecializedReader]): Future[Option[String]] =
       Future {
-        service.map(_.getOrg(ip)).filter(_ != null)
+        service.flatMap(_.getValue(getIpAddress(ip)))
       }
 
     val geoFuture: Future[Option[IpLocation]] = Future {
-
       // gs.getLocation(ip) must be wrapped in a Option in case it is null
-      geoService.flatMap(gs => Option(gs.getLocation(ip))).map(IpLocation.apply(_))
+      geoService.flatMap(gs => Option(gs.city(getIpAddress(ip)))).map(IpLocation.apply(_))
     }
 
     val aggregateFuture: Future[IpLookupResult] = for {
@@ -150,6 +159,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
     try {
       Await.result(aggregateFuture, 4.seconds)
     } catch {
+      case ge: GeoIp2Exception => (None, None, None, None, None)
       case te: TimeoutException => (None, None, None, None, None)
       case iae: IllegalArgumentException => (None, None, None, None, None)
       case e: Exception => throw e
@@ -174,4 +184,9 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       lru.put(ip, result)
       result
   }
+
+  /**
+    * Transforms a String into an InetAddress
+    */
+  private def getIpAddress(ip: String): InetAddress = InetAddress.getByName(ip)
 }

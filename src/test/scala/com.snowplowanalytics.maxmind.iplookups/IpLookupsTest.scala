@@ -26,11 +26,11 @@ object IpLookupsTest {
   type DataGrid = scala.collection.immutable.Map[String, IpLookupResult]
 
   def GeoLiteCity(memCache: Boolean, lruCache: Int): IpLookups = {
-    val geoFile    = getClass.getResource("GeoIPCity.dat").getFile
-    val ispFile    = getClass.getResource("GeoIPISP.dat").getFile
-    val orgFile    = getClass.getResource("GeoIPOrg.dat").getFile
-    val domainFile = getClass.getResource("GeoIPDomain.dat").getFile
-    val netspeedFile = getClass.getResource("GeoIPNetSpeedCell.dat").getFile
+    val geoFile    = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
+    val ispFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
+    val orgFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
+    val domainFile = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
+    val netspeedFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
   
     IpLookups(Some(geoFile), Some(ispFile), Some(orgFile), Some(domainFile), Some(netspeedFile), memCache, lruCache)
   }
@@ -38,53 +38,54 @@ object IpLookupsTest {
   // TODO: replace with Specs2 DataTables, https://github.com/snowplow/scala-maxmind-geoip/issues/17
   val testData: DataGrid = Map(
 
-    "70.46.123.145" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/OrgLookupTest.java
+    // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
+    "175.16.199.0" ->
     (Some(IpLocation(
-      countryCode = "US",
-      countryName = "United States",
-      region = Some("FL"),
-      city = Some("Delray Beach"),
-      latitude = 26.461502F,
-      longitude = -80.0728F,
-      timezone = Some("America/New_York"),
-      postalCode = None,
-      dmaCode = Some(548),
-      areaCode = Some(561),
-      metroCode = Some(548),
-      regionName = Some("Florida")
-    )), Some("FDN Communications"), Some("DSLAM WAN Allocation"), Some("nuvox.net"), Some("Cable/DSL")),
-
-    "89.92.213.32" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/resources/GeoIP/GeoIP.csv
-    (Some(IpLocation(
-      countryCode = "FR",
-      countryName = "France",
-      region = Some("B4"),
-      city = Some("Lille"),
-      latitude = 50.632996F,
-      longitude = 3.0585938F,
-      timezone = Some("Europe/Paris"),
+      countryCode = "CN",
+      countryName = "China",
+      region = Some("22"),
+      city = Some("Changchun"),
+      latitude = 43.88F,
+      longitude = 125.3228F,
+      timezone = Some("Asia/Harbin"),
       postalCode = None,
       dmaCode = None,
       areaCode = None,
       metroCode = None,
-      regionName = Some("Nord-Pas-de-Calais")
-    )), Some("Bouygues Telecom"), Some("Bouygues Telecom"), Some("bbox.fr"), Some("Cable/DSL")),
+      regionName = Some("Jilin Sheng")
+    )), None, None, None, Some("Dialup")),
 
-    "67.43.156.0" -> // ISP, organization, and domain, and net speed lookup example from https://github.com/maxmind/geoip-api-java/blob/892ad0f8d49dc4eeeec6fece1309d6ff620c7737/src/test/java/com/maxmind/geoip/DomainLookupTest.java
+    "216.160.83.56" ->
     (Some(IpLocation(
-      countryCode = "A1",
-      countryName = "Anonymous Proxy",
+      countryCode = "US",
+      countryName = "United States",
+      region = Some("WA"),
+      city = Some("Milton"),
+      latitude = 47.2513F,
+      longitude = -122.3149F,
+      timezone = Some("America/Los_Angeles"),
+      postalCode = Some("98354"),
+      dmaCode = None,
+      areaCode = None,
+      metroCode = Some(819),
+      regionName = Some("Washington")
+    )), Some("Century Link"), Some("Lariat Software"), None, None),
+
+    "67.43.156.0" ->
+    (Some(IpLocation(
+      countryCode = "BT",
+      countryName = "Bhutan",
       region = None,
       city = None,
-      latitude = 0.0F,
-      longitude = 0.0F,
-      timezone = None,
+      latitude = 27.5F,
+      longitude = 90.5F,
+      timezone = Some("Asia/Thimphu"),
       postalCode = None,
       dmaCode = None,
       areaCode = None,
       metroCode = None,
       regionName = None
-    )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET"), Some("Corporate")),
+    )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET"), None),
 
     "192.0.2.0" -> // Invalid IP address, as per http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     (None, None, None, None, None)

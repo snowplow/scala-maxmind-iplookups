@@ -28,8 +28,6 @@ case class IpLocation(
   longitude: Float,
   timezone: Option[String],
   postalCode: Option[String],
-  dmaCode: Option[Int],
-  areaCode: Option[Int],
   metroCode: Option[Int],
   regionName: Option[String]  
   )
@@ -56,8 +54,6 @@ object IpLocation {
       longitude = Option(loc.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
       timezone =  Option(loc.getLocation.getTimeZone),
       postalCode = Option(loc.getPostal.getCode),
-      dmaCode = None,
-      areaCode = None,
       metroCode = Option(loc.getLocation.getMetroCode).map(_.toInt),
       regionName = Option(loc.getMostSpecificSubdivision.getName)
     )

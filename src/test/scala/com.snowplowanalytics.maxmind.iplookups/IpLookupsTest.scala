@@ -12,12 +12,6 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-// Java
-import java.io.File
-
-// Scala
-import scala.io.Source
-
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -49,8 +43,6 @@ object IpLookupsTest {
       longitude = 125.3228F,
       timezone = Some("Asia/Harbin"),
       postalCode = None,
-      dmaCode = None,
-      areaCode = None,
       metroCode = None,
       regionName = Some("Jilin Sheng")
     )), None, None, None, Some("Dialup")),
@@ -65,8 +57,6 @@ object IpLookupsTest {
       longitude = -122.3149F,
       timezone = Some("America/Los_Angeles"),
       postalCode = Some("98354"),
-      dmaCode = None,
-      areaCode = None,
       metroCode = Some(819),
       regionName = Some("Washington")
     )), Some("Century Link"), Some("Lariat Software"), None, None),
@@ -81,8 +71,6 @@ object IpLookupsTest {
       longitude = 90.5F,
       timezone = Some("Asia/Thimphu"),
       postalCode = None,
-      dmaCode = None,
-      areaCode = None,
       metroCode = None,
       regionName = None
     )), Some("Loud Packet"), Some("zudoarichikito_"), Some("shoesfin.NET"), None),
@@ -148,12 +136,6 @@ class IpLookupsTest extends Specification {
               }
               "have postalCode = %s".format(e.postalCode) in {
                 a.postalCode must_== e.postalCode
-              }
-              "have dmaCode = %s".format(e.dmaCode) in {
-                a.dmaCode must_== e.dmaCode
-              }
-              "have areaCode = %s".format(e.areaCode) in {
-                a.areaCode must_== e.areaCode
               }
               "have metroCode = %s".format(e.metroCode) in {
                 a.metroCode must_== e.metroCode

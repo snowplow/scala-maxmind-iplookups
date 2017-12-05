@@ -3,21 +3,12 @@ package com.snowplowanalytics.maxmind.iplookups
 import java.net.InetAddress
 
 import com.maxmind.geoip2.DatabaseReader
-import com.maxmind.geoip2.exception.AddressNotFoundException
 import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
 
-trait GeoIp2Db
-object Isp extends GeoIp2Db
-object Org extends GeoIp2Db
-object Domain extends GeoIp2Db
-object NetSpeed extends GeoIp2Db
+import scala.util.Try
 
 case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue(ip: InetAddress): Option[String] = try {
-    Option(f(db, ip))
-  } catch {
-    case e: AddressNotFoundException => None
-  }
+  def getValue(ip: InetAddress): Option[String] = Try{f(db,ip)}.toOption
 }
 
 object ReaderFunctions {

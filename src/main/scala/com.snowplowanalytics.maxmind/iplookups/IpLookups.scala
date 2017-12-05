@@ -16,12 +16,13 @@ package com.snowplowanalytics.maxmind.iplookups
 import java.io.File
 import java.net.InetAddress
 
-import com.maxmind.db.CHMCache
+import scala.util.Try
 
 // LRU
 import com.twitter.util.SynchronizedLruMap
 
 // MaxMind
+import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.exception.GeoIp2Exception
 
@@ -64,7 +65,7 @@ object IpLookups {
  *
  * Two main differences:
  *
- * 1. getLocation(ip: String) now returns an IpLocation
+ * 1. getLocation(ipS: String) now returns an IpLocation
  *    case class, not a raw MaxMind Location
  * 2. IpLookups introduces an LRU cache to improve
  *    lookup performance
@@ -124,15 +125,15 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * based on an IP address from one or
    * more MaxMind LookupServices
    *
-   * @param ip IP address
+   * @param ipS IP address
    * @return Tuple containing the results of the
    *         LookupServices   
    */
-  private def performLookupsWithoutLruCache(ip: String): IpLookupResult = {
+  private def performLookupsWithoutLruCache(ipS: String): IpLookupResult = {
 
     /**
      * Creates a Future boxing the result
-     * of using a lookup service on the ip
+     * of using a lookup service on the ipS
      *
      * @param service ISP, organization,
      *        domain or net speed LookupService
@@ -140,12 +141,19 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
      */
     def getLookupFuture(service: Option[SpecializedReader]): Future[Option[String]] =
       Future {
-        service.flatMap(_.getValue(getIpAddress(ip)))
+        for {
+          s <- service
+          ip <- getIpAddress(ipS)
+          v <- s.getValue(ip)
+        } yield v
       }
 
     val geoFuture: Future[Option[IpLocation]] = Future {
-      // gs.getLocation(ip) must be wrapped in a Option in case it is null
-      geoService.flatMap(gs => Option(gs.city(getIpAddress(ip)))).map(IpLocation.apply(_))
+      for {
+        gs <- geoService
+        ip <- getIpAddress(ipS)
+        v <- Try{gs.city(ip)}.toOption
+      } yield IpLocation.apply(v)
     }
 
     val aggregateFuture: Future[IpLookupResult] = for {
@@ -186,7 +194,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
   }
 
   /**
-    * Transforms a String into an InetAddress
+    * Transforms a String into an Option[InetAddress]
     */
-  private def getIpAddress(ip: String): InetAddress = InetAddress.getByName(ip)
+  private def getIpAddress(ip: String): Option[InetAddress] = Try{InetAddress.getByName(ip)}.toOption
 }

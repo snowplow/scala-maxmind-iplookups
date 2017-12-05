@@ -8,7 +8,7 @@ import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
 import scala.util.Try
 
 case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue(ip: InetAddress): Option[String] = Try{f(db,ip)}.toOption
+  def getValue(ip: InetAddress): Option[String] = Try(f(db,ip)).toOption
 }
 
 object ReaderFunctions {

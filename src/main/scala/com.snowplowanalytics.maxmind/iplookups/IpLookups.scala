@@ -152,7 +152,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       for {
         gs <- geoService
         ip <- getIpAddress(ipS)
-        v <- Try{gs.city(ip)}.toOption
+        v <- Try(gs.city(ip)).toOption
       } yield IpLocation.apply(v)
     }
 
@@ -196,5 +196,5 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
   /**
     * Transforms a String into an Option[InetAddress]
     */
-  private def getIpAddress(ip: String): Option[InetAddress] = Try{InetAddress.getByName(ip)}.toOption
+  private def getIpAddress(ip: String): Option[InetAddress] = Try(InetAddress.getByName(ip)).toOption
 }

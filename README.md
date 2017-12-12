@@ -2,12 +2,12 @@
 
 ## Introduction
 
-This is a Scala wrapper for the MaxMind [Java Geo-IP] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
+This is a Scala wrapper for the MaxMind [Java Geo-IP2] [java-lib] library. The main benefits of using this wrapper over directly calling the Java library from Scala are:
 
 1. **Provides a common interface to four MaxMind databases** - it works with MaxMind's databases for looking up geographic location, ISP, organization, and domain from an IP address
 2. **Easier to setup/test** - the SBT project definition makes it easy to download and test
 3. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses Option boxing wherever possible
-4. **Better performance** - as well as or instead of using MaxMind's own caching (`GEOIP_MEMORY_CACHE`), you can also configure an LRU (Least Recently Used) cache of variable size
+4. **Better performance** - as well as or instead of using MaxMind's own caching (`CHMCache`), you can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
@@ -37,7 +37,7 @@ Here is a simple usage example, performing just a geographic lookup and not the 
 ```scala
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
-val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLiteCity.dat"), ispFile = None,
+val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLiteCity.mmdb"), ispFile = None,
                   orgFile = None, domainFile = None, memCache = false, lruCache = 20000)
 
 for (loc <- ipLookups.performLookups("213.52.50.8")._1) {
@@ -46,7 +46,7 @@ for (loc <- ipLookups.performLookups("213.52.50.8")._1) {
 }
 ```
 
-Note that `GeoLiteCity.dat` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that pings MaxMind regularly to keep your local copy up-to-date.
+Note that `GeoLiteCity.mmdb` is updated by MaxMind each month - see [maxmind-geolite-update] [maxmind-geolite-update] for a Python script that pings MaxMind regularly to keep your local copy up-to-date.
 
 For further usage examples for Scala MaxMind IP Lookups, please see the tests in [`IpLookupsTest.scala`] [iplookupstest-scala]. The test suite uses test databases provided by MaxMind.
 
@@ -72,7 +72,7 @@ def apply(geoFile: Option[String], ispFile: Option[String],
 
 The first four arguments are the MaxMind databases from which the lookup should be performed. `geoFile`, `ispFile`, `orgFile`, and `domainFile` refer respectively to MaxMind's databases for looking up location, ISP, organization, and domain based on an IP address. They are all wrapped in `Option`, so if you don't have access to all of them, just pass in `None` as in the example above. The ones you do pass in must be wrapped in `Some`.
 
-In both signatures, the `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`GEOIP_MEMORY_CACHE`).
+In both signatures, the `memCache` flag is set to `true` by default. This flag enables MaxMind's own caching (`CHMCache`).
 
 The `lruCache` value defaults to `10000` - meaning Scala MaxMind IP Lookups will maintain an LRU cache of 10,000 values, which it will check prior to making a MaxMind lookup. To disable the LRU cache, set its size to zero, i.e. `lruCache = 0`.
 
@@ -94,8 +94,6 @@ case class IpLocation(
   longitude: Float,
   timezone: Option[String],
   postalCode: Option[String],
-  dmaCode: Option[Int],
-  areaCode: Option[Int],
   metroCode: Option[Int],
   regionName: Option[String]  
   )

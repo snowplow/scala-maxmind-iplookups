@@ -20,7 +20,7 @@ object Dependencies {
   )
 
   object V {
-    val maxmind = "1.2.11"
+    val maxmind = "2.10.0"
     object collUtils {
       val _29   = "5.3.10"
       val _210  = "6.3.4"
@@ -34,7 +34,7 @@ object Dependencies {
   }
 
   object Libraries {
-    val maxmind = "com.maxmind.geoip"          %  "geoip-api"            % V.maxmind
+    val maxmind = "com.maxmind.geoip2"         %  "geoip2"               % V.maxmind
     object collUtils {
       val _29   = "com.twitter"                %  "util-collection"      % V.collUtils._29
       val _210  = "com.twitter"                %% "util-collection"      % V.collUtils._210

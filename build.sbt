@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,14 +10,17 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-import sbt._
 
-object Dependencies {
-  val resolutionRepos = Seq(
-    "Scalaz Releases" at "https://dl.bintray.com/scalaz/releases/"
+import Dependencies._
+
+lazy val project = Project("scala-maxmind-iplookups", file("."))
+  .settings(
+    organization  := "com.snowplowanalytics",
+    version       := "0.4.0",
+    description   := "Scala wrapper for MaxMind GeoIP library",
+    scalaVersion  := "2.11.12",
+    crossScalaVersions := Seq("2.11.12", "2.12.4"),
+    scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    resolvers     ++= resolutionRepos,
+    libraryDependencies ++= Seq(maxmind, collUtils, specs2)
   )
-
-  val maxmind   = "com.maxmind.geoip2" %  "geoip2"          % "2.11.0"
-  val collUtils = "com.twitter"        %% "util-collection" % "18.2.0"
-  val specs2    = "org.specs2"         %% "specs2"          % "2.5"    % "test"
-}

@@ -11,48 +11,13 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 import sbt._
-import Keys._
 
 object Dependencies {
   val resolutionRepos = Seq(
-    "ScalaTools snapshots at Sonatype" at "https://oss.sonatype.org/content/repositories/snapshots/",
-    "Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's util functions
+    "Scalaz Releases" at "https://dl.bintray.com/scalaz/releases/"
   )
 
-  object V {
-    val maxmind = "2.10.0"
-    object collUtils {
-      val _29   = "5.3.10"
-      val _210  = "6.3.4"
-      val _211  = "6.20.0"     
-    }
-    object specs2 {
-      val _29   = "1.12.4.1"
-      val _210  = "1.14"
-      val _211  = "2.3.13"
-    }
-  }
-
-  object Libraries {
-    val maxmind = "com.maxmind.geoip2"         %  "geoip2"               % V.maxmind
-    object collUtils {
-      val _29   = "com.twitter"                %  "util-collection"      % V.collUtils._29
-      val _210  = "com.twitter"                %% "util-collection"      % V.collUtils._210
-      val _211  = "com.twitter"                %% "util-collection"      % V.collUtils._211
-    }
-    object specs2 {
-      val _29   = "org.specs2"                 %% "specs2"               % V.specs2._29        % "test"
-      val _210  = "org.specs2"                 %% "specs2"               % V.specs2._210       % "test"
-      val _211  = "org.specs2"                 %% "specs2"               % V.specs2._211       % "test"
-    }
-  }
-
-  def onVersion[A](all: Seq[A] = Seq(), on29: => Seq[A] = Seq(), on210: => Seq[A] = Seq(), on211: => Seq[A] = Seq()) =
-    scalaVersion(v => all ++ (if (v.contains("2.9.")) {
-      on29
-    } else if (v.contains("2.10.")) {
-      on210
-    } else {
-      on211
-    }))
+  val maxmind   = "com.maxmind.geoip2" %  "geoip2"          % "2.11.0"
+  val collUtils = "com.twitter"        %% "util-collection" % "18.2.0"
+  val specs2    = "org.specs2"         %% "specs2"          % "2.5"    % "test"
 }

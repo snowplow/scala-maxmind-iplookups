@@ -148,9 +148,19 @@ Assuming you already have SBT installed:
 
 Nothing planned currently, although we want to look into Specs2's data tables and see if they would be a better fit for the unit tests.
 
+## GeoLite Legacy discontinuation
+
+Maxmind are [discontinuing updates](https://dev.maxmind.com/geoip/geoip2/geolite2/) for the GeoLite Legacy databases in April 2018.
+
+> We will be discontinuing updates to the GeoLite Legacy databases as of April 1, 2018. You will still be able to download the April 2018 release until January 2, 2019. GeoLite Legacy users will need to update their integrations in order to switch to the free GeoLite2 or commercial GeoIP databases by April 2018.
+
+> For more information, please visit our Support Center.
+
+> In addition, in 2019, latitude and longitude coordinates in the GeoLite2 databases will be removed.* Latitude and longitude coordinates will continue to be provided in GeoIP2 databases. Please check back for updates.
+
 ## Copyright and license
 
-Copyright 2012-2013 Snowplow Analytics Ltd.
+Copyright 2012-2018 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.

@@ -22,5 +22,5 @@ lazy val project = Project("scala-maxmind-iplookups", file("."))
     crossScalaVersions := Seq("2.11.12", "2.12.5"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= resolutionRepos,
-    libraryDependencies ++= Seq(maxmind, collUtils, specs2)
+    libraryDependencies ++= Seq(maxmind, collUtils, scalaz, specs2)
   )

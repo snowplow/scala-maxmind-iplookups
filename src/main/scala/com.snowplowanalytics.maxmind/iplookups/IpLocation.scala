@@ -29,8 +29,8 @@ case class IpLocation(
   timezone: Option[String],
   postalCode: Option[String],
   metroCode: Option[Int],
-  regionName: Option[String]  
-  )
+  regionName: Option[String]
+)
 
 /**
  * Companion class contains a constructor
@@ -40,7 +40,7 @@ object IpLocation {
   /**
    * Constructs an IpLocation instance
    * from a MaxMind Location instance
-   * 
+   *
    * @param loc MaxMind Location object
    * @return IpLocation
    */
@@ -52,7 +52,7 @@ object IpLocation {
       city = Option(loc.getCity.getName),
       latitude = Option(loc.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
       longitude = Option(loc.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
-      timezone =  Option(loc.getLocation.getTimeZone),
+      timezone = Option(loc.getLocation.getTimeZone),
       postalCode = Option(loc.getPostal.getCode),
       metroCode = Option(loc.getLocation.getMetroCode).map(_.toInt),
       regionName = Option(loc.getMostSpecificSubdivision.getName)

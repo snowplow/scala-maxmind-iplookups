@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.maxmind
 
+import scalaz._
 
 /**
  * Scala package object to hold types,
@@ -22,9 +23,14 @@ package com.snowplowanalytics.maxmind
  */
 package object iplookups {
 
-	/**
-	 * Result of MaxMind lookups
-	 */
-	type IpLookupResult = (Option[IpLocation], Option[String], Option[String], Option[String], Option[String])
-
+  /**
+   * Result of MaxMind lookups
+   */
+  type IpLookupResult = (
+    Option[ValidationNel[Throwable, IpLocation]],
+    Option[ValidationNel[Throwable, String]],
+    Option[ValidationNel[Throwable, String]],
+    Option[ValidationNel[Throwable, String]],
+    Option[ValidationNel[Throwable, String]]
+  )
 }

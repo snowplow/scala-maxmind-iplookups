@@ -151,35 +151,29 @@ class IpLookups(
      *        domain or net speed LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Future[Option[ValidationNel[Throwable, String]]] =
-      Future {
-        service.map { s =>
-          for {
-            ipA <- ipAddress
-            v <- s.getValue(ipA)
-          } yield v
-        }
+    def getLookup(service: Option[SpecializedReader]): Option[ValidationNel[Throwable, String]] =
+      service.map { s =>
+        for {
+          ipA <- ipAddress
+          v <- s.getValue(ipA)
+        } yield v
       }
 
-    val ipLocation: Future[Option[ValidationNel[Throwable, IpLocation]]] =
-      Future {
-        geoService.map { gs =>
-          for {
-            ipA <- ipAddress
-            v <- Validation.fromTryCatch(gs.city(ipA)).toValidationNel[Throwable, CityResponse]
-          } yield IpLocation.apply(v)
-        }
+    val ipLocation: Option[ValidationNel[Throwable, IpLocation]] =
+      geoService.map { gs =>
+        for {
+          ipA <- ipAddress
+          v <- Validation.fromTryCatch(gs.city(ipA)).toValidationNel[Throwable, CityResponse]
+        } yield IpLocation.apply(v)
       }
 
-    val agg = for {
-      ip <- ipLocation,
-      isp <- getLookup(ispService),
-      org <- getLookup(orgService),
-      domain <- getLookup(domainService),
-      netspeed <- getLookup(netspeedService)
-    } yield (ip, isp, org, domain, netspeed)
-
-    Await.result(agg)
+    (
+      ipLocation,
+      getLookup(ispService),
+      getLookup(orgService),
+      getLookup(domainService),
+      getLookup(netspeedService)
+    )
   }
 
   /**

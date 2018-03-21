@@ -12,32 +12,21 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-// Java
 import java.io.File
 import java.net.InetAddress
+import java.util.NoSuchElementException
 
-import scala.util.Try
-
-// LRU
-import com.twitter.util.SynchronizedLruMap
-
-// MaxMind
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.exception.GeoIp2Exception
+import com.maxmind.geoip2.model.CityResponse
+import com.twitter.util.SynchronizedLruMap
+import scalaz._
+import Scalaz._
 
-// Concurrency
-import scala.concurrent._
-import scala.concurrent.duration._
-import ExecutionContext.Implicits.global
-
-// This library
 import IpLocation._
 
-/**
- * Companion object to hold alternative constructors.
- *
- */
+/** Companion object to hold alternative constructors. */
 object IpLookups {
 
   /**
@@ -51,13 +40,24 @@ object IpLookups {
    * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
    * @param lruCache Maximum size of SynchronizedLruMap cache
    */
-  def apply(geoFile: Option[String] = None, ispFile: Option[String] = None, orgFile: Option[String] = None,
-            domainFile: Option[String] = None, netspeedFile: Option[String] = None,
-            memCache: Boolean = true, lruCache: Int = 10000) = {    
-    new IpLookups(geoFile.map(new File(_)), ispFile.map(new File(_)), orgFile.map(new File(_)), 
-                  domainFile.map(new File(_)), netspeedFile.map(new File(_)),
-                  memCache, lruCache)
-  }
+  def apply(
+    geoFile: Option[String] = None,
+    ispFile: Option[String] = None,
+    orgFile: Option[String] = None,
+    domainFile: Option[String] = None,
+    netspeedFile: Option[String] = None,
+    memCache: Boolean = true,
+    lruCache: Int = 10000
+  ): IpLookups =
+    new IpLookups(
+      geoFile.map(new File(_)),
+      ispFile.map(new File(_)),
+      orgFile.map(new File(_)),
+      domainFile.map(new File(_)),
+      netspeedFile.map(new File(_)),
+      memCache,
+      lruCache
+    )
 }
 
 /**
@@ -81,19 +81,29 @@ object IpLookups {
  * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
  * @param lruCache Maximum size of SynchronizedLruMap cache
  */
-class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgFile: Option[File] = None, 
-                domainFile: Option[File] = None, netspeedFile: Option[File] = None,
-                memCache: Boolean = true, lruCache: Int = 10000) {
+class IpLookups(
+  geoFile: Option[File] = None,
+  ispFile: Option[File] = None,
+  orgFile: Option[File] = None,
+  domainFile: Option[File] = None,
+  netspeedFile: Option[File] = None,
+  memCache: Boolean = true,
+  lruCache: Int = 10000
+) {
 
   // Initialise the cache
-  private val lru = if (lruCache > 0) new SynchronizedLruMap[String, IpLookupResult](lruCache) else null // Of type mutable.Map[String, LookupData]
+  private val lru =
+    if (lruCache > 0) Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
+    else None // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val geoService = getService(geoFile)
   private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
   private val orgService = getService(orgFile).map(SpecializedReader(_, ReaderFunctions.org))
-  private val domainService = getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
-  private val netspeedService = getService(netspeedFile).map(SpecializedReader(_, ReaderFunctions.netSpeed))
+  private val domainService =
+    getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
+  private val netspeedService =
+    getService(netspeedFile).map(SpecializedReader(_, ReaderFunctions.netSpeed))
 
   /**
    * Get a LookupService from a database file
@@ -102,22 +112,22 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * @return LookupService
    */
   private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
-    serviceFile.map(f => {
+    serviceFile.map { f =>
       val builder = new DatabaseReader.Builder(f)
       (
-        if (memCache)
-          builder.withCache(new CHMCache())
-        else
-          builder
+        if (memCache) builder.withCache(new CHMCache())
+        else builder
       ).build()
-    })
+    }
 
   /**
    * Returns the MaxMind location for this IP address
    * as an IpLocation, or None if MaxMind cannot find
    * the location.
    */
-  def performLookups = if (lruCache <= 0) performLookupsWithoutLruCache _ else performLookupsWithLruCache _
+  val performLookups: String => IpLookupResult = (s: String) =>
+    lru.map(performLookupsWithLruCache(_, s))
+      .getOrElse(performLookupsWithoutLruCache(s))
 
   /**
    * This version does not use the LRU cache.
@@ -125,11 +135,13 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * based on an IP address from one or
    * more MaxMind LookupServices
    *
-   * @param ipS IP address
+   * @param ip IP address
    * @return Tuple containing the results of the
-   *         LookupServices   
+   *         LookupServices
    */
-  private def performLookupsWithoutLruCache(ipS: String): IpLookupResult = {
+  private def performLookupsWithoutLruCache(ip: String): IpLookupResult = {
+
+    val ipAddress = getIpAddress(ip)
 
     /**
      * Creates a Future boxing the result
@@ -139,39 +151,35 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
      *        domain or net speed LookupService
      * @return the result of the lookup
      */
-    def getLookupFuture(service: Option[SpecializedReader]): Future[Option[String]] =
+    def getLookup(service: Option[SpecializedReader]): Future[Option[ValidationNel[Throwable, String]]] =
       Future {
-        for {
-          s <- service
-          ip <- getIpAddress(ipS)
-          v <- s.getValue(ip)
-        } yield v
+        service.map { s =>
+          for {
+            ipA <- ipAddress
+            v <- s.getValue(ipA)
+          } yield v
+        }
       }
 
-    val geoFuture: Future[Option[IpLocation]] = Future {
-      for {
-        gs <- geoService
-        ip <- getIpAddress(ipS)
-        v <- Try(gs.city(ip)).toOption
-      } yield IpLocation.apply(v)
-    }
+    val ipLocation: Future[Option[ValidationNel[Throwable, IpLocation]]] =
+      Future {
+        geoService.map { gs =>
+          for {
+            ipA <- ipAddress
+            v <- Validation.fromTryCatch(gs.city(ipA)).toValidationNel[Throwable, CityResponse]
+          } yield IpLocation.apply(v)
+        }
+      }
 
-    val aggregateFuture: Future[IpLookupResult] = for {
-      geoResult       <- geoFuture
-      ispResult       <- getLookupFuture(ispService)
-      orgResult       <- getLookupFuture(orgService)
-      domainResult    <- getLookupFuture(domainService)
-      netspeedResult  <- getLookupFuture(netspeedService)
-    } yield (geoResult, ispResult, orgResult, domainResult, netspeedResult)
+    val agg = for {
+      ip <- ipLocation,
+      isp <- getLookup(ispService),
+      org <- getLookup(orgService),
+      domain <- getLookup(domainService),
+      netspeed <- getLookup(netspeedService)
+    } yield (ip, isp, org, domain, netspeed)
 
-    try {
-      Await.result(aggregateFuture, 4.seconds)
-    } catch {
-      case ge: GeoIp2Exception => (None, None, None, None, None)
-      case te: TimeoutException => (None, None, None, None, None)
-      case iae: IllegalArgumentException => (None, None, None, None, None)
-      case e: Exception => throw e
-    }
+    Await.result(agg)
   }
 
   /**
@@ -185,7 +193,10 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
    * cache entry could be found), versus an extant cache entry
    * containing None (meaning that the IP address is unknown).
    */
-  private def performLookupsWithLruCache(ip: String): IpLookupResult = lru.get(ip) match {
+  private def performLookupsWithLruCache(
+    lru: SynchronizedLruMap[String, IpLookupResult],
+    ip: String
+  ): IpLookupResult = lru.get(ip) match {
     case Some(result) => result // In the LRU cache
     case None => // Not in the LRU cache
       val result = performLookupsWithoutLruCache(ip)
@@ -193,8 +204,7 @@ class IpLookups(geoFile: Option[File] = None, ispFile: Option[File] = None, orgF
       result
   }
 
-  /**
-    * Transforms a String into an Option[InetAddress]
-    */
-  private def getIpAddress(ip: String): Option[InetAddress] = Try(InetAddress.getByName(ip)).toOption
+  /** Transforms a String into an Validation[Throwable, InetAddress] */
+  private def getIpAddress(ip: String): ValidationNel[Throwable, InetAddress] =
+    Validation.fromTryCatch(InetAddress.getByName(ip)).toValidationNel
 }

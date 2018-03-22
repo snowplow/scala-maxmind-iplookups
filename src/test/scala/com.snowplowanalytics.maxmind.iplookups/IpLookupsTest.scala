@@ -27,9 +27,10 @@ object IpLookupsTest {
     val geoFile    = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
     val ispFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
     val domainFile = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
-    val netspeedFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
+    val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
-    IpLookups(Some(geoFile), Some(ispFile), Some(domainFile), Some(netspeedFile), memCache, lruCache)
+    IpLookups(Some(geoFile), Some(ispFile), Some(domainFile), Some(connectionTypeFile),
+      memCache, lruCache)
   }
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data

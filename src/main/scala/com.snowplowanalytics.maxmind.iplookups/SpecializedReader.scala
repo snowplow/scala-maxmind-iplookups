@@ -29,6 +29,6 @@ object ReaderFunctions {
   val isp = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getIsp
   val org = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getOrganization
   val domain = (db: DatabaseReader, ip: InetAddress) => db.domain(ip).getDomain
-  val netSpeed = (db: DatabaseReader, ip: InetAddress) =>
+  val connectionType = (db: DatabaseReader, ip: InetAddress) =>
     db.connectionType(ip).getConnectionType.toString
 }

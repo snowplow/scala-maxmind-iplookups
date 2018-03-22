@@ -14,15 +14,11 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
-import java.util.NoSuchElementException
 
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
-import com.maxmind.geoip2.exception.GeoIp2Exception
-import com.maxmind.geoip2.model.CityResponse
 import com.twitter.util.SynchronizedLruMap
 import scalaz._
-import Scalaz._
 
 import model._
 
@@ -35,15 +31,15 @@ object IpLookups {
    * @param geoFile Geographic lookup database filepath
    * @param ispFile ISP lookup database filepath
    * @param domainFile Domain lookup database filepath
-   * @param netspeedFile Net speed lookup database filepath
-   * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
+   * @param connectionTypeFile Connection type lookup database filepath
+   * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCache Maximum size of SynchronizedLruMap cache
    */
   def apply(
     geoFile: Option[String] = None,
     ispFile: Option[String] = None,
     domainFile: Option[String] = None,
-    netspeedFile: Option[String] = None,
+    connectionTypeFile: Option[String] = None,
     memCache: Boolean = true,
     lruCache: Int = 10000
   ): IpLookups =
@@ -51,7 +47,7 @@ object IpLookups {
       geoFile.map(new File(_)),
       ispFile.map(new File(_)),
       domainFile.map(new File(_)),
-      netspeedFile.map(new File(_)),
+      connectionTypeFile.map(new File(_)),
       memCache,
       lruCache
     )
@@ -73,15 +69,15 @@ object IpLookups {
  * @param geoFile Geographic lookup database file
  * @param ispFile ISP lookup database file
  * @param domainFile Domain lookup database file
- * @param netspeedFile Net speed lookup database file
- * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
+ * @param connectionTypeFile Connection type lookup database file
+ * @param memCache Whether to use MaxMind's CHMCache
  * @param lruCache Maximum size of SynchronizedLruMap cache
  */
 class IpLookups(
   geoFile: Option[File] = None,
   ispFile: Option[File] = None,
   domainFile: Option[File] = None,
-  netspeedFile: Option[File] = None,
+  connectionTypeFile: Option[File] = None,
   memCache: Boolean = true,
   lruCache: Int = 10000
 ) {
@@ -97,8 +93,8 @@ class IpLookups(
   private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
   private val domainService =
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
-  private val netspeedService =
-    getService(netspeedFile).map(SpecializedReader(_, ReaderFunctions.netSpeed))
+  private val connectionTypeService =
+    getService(connectionTypeFile).map(SpecializedReader(_, ReaderFunctions.connectionType))
 
   /**
    * Get a LookupService from a database file
@@ -139,11 +135,8 @@ class IpLookups(
     val ipAddress = getIpAddress(ip)
 
     /**
-     * Creates a Future boxing the result
-     * of using a lookup service on the ipS
-     *
-     * @param service ISP, organization,
-     *        domain or net speed LookupService
+     * Creates a Validation boxing the result of using a lookup service on the ip
+     * @param service ISP, domain or connection type LookupService
      * @return the result of the lookup
      */
     def getLookup(service: Option[SpecializedReader]): Option[Validation[Throwable, String]] =
@@ -167,7 +160,7 @@ class IpLookups(
       getLookup(ispService),
       getLookup(orgService),
       getLookup(domainService),
-      getLookup(netspeedService)
+      getLookup(connectionTypeService)
     )
   }
 

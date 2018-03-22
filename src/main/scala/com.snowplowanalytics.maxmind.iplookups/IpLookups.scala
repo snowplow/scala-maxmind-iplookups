@@ -24,7 +24,7 @@ import com.twitter.util.SynchronizedLruMap
 import scalaz._
 import Scalaz._
 
-import IpLocation._
+import model._
 
 /** Companion object to hold alternative constructors. */
 object IpLookups {
@@ -146,7 +146,7 @@ class IpLookups(
      *        domain or net speed LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Option[ValidationNel[Throwable, String]] =
+    def getLookup(service: Option[SpecializedReader]): Option[Validation[Throwable, String]] =
       service.map { s =>
         for {
           ipA <- ipAddress
@@ -154,15 +154,15 @@ class IpLookups(
         } yield v
       }
 
-    val ipLocation: Option[ValidationNel[Throwable, IpLocation]] =
+    val ipLocation: Option[Validation[Throwable, IpLocation]] =
       geoService.map { gs =>
         for {
           ipA <- ipAddress
-          v <- Validation.fromTryCatch(gs.city(ipA)).toValidationNel[Throwable, CityResponse]
+          v <- Validation.fromTryCatch(gs.city(ipA))
         } yield IpLocation.apply(v)
       }
 
-    (
+    IpLookupResult(
       ipLocation,
       getLookup(ispService),
       getLookup(orgService),
@@ -194,6 +194,6 @@ class IpLookups(
   }
 
   /** Transforms a String into an Validation[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): ValidationNel[Throwable, InetAddress] =
-    Validation.fromTryCatch(InetAddress.getByName(ip)).toValidationNel
+  private def getIpAddress(ip: String): Validation[Throwable, InetAddress] =
+    Validation.fromTryCatch(InetAddress.getByName(ip))
 }

@@ -18,9 +18,9 @@ import com.maxmind.geoip2.DatabaseReader
 import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
 import scalaz._
 
-case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue(ip: InetAddress): ValidationNel[Throwable, String] =
-    Validation.fromTryCatch(f(db, ip)).toValidationNel
+final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
+  def getValue(ip: InetAddress): Validation[Throwable, String] =
+    Validation.fromTryCatch(f(db, ip))
 }
 
 object ReaderFunctions {

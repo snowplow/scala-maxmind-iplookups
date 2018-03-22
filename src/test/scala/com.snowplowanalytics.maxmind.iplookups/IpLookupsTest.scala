@@ -24,11 +24,10 @@ object IpLookupsTest {
   def ipLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups = {
     val geoFile    = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
     val ispFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
-    val orgFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
     val domainFile = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
     val netspeedFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
-    IpLookups(Some(geoFile), Some(ispFile), Some(orgFile), Some(domainFile), Some(netspeedFile), memCache, lruCache)
+    IpLookups(Some(geoFile), Some(ispFile), Some(domainFile), Some(netspeedFile), memCache, lruCache)
   }
 
   val testData: Map[String, IpLookupResult] = Map(
@@ -132,7 +131,7 @@ class IpLookupsTest extends Specification {
     }
 
     "providing no files should return Nones" in {
-      val ipLookups = IpLookups(None, None, None, None, None, true, 0)
+      val ipLookups = IpLookups(None, None, None, None, true, 0)
       val expected = (None, None, None, None, None)
       val actual = ipLookups.performLookups("67.43.156.0")
       matchIpLookupResult(actual, expected)

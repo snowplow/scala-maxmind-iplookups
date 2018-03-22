@@ -20,7 +20,7 @@ import scalaz._
 
 case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
   def getValue(ip: InetAddress): ValidationNel[Throwable, String] =
-    Validation.fromTryCatch(f(db,ip)).toValidationNel
+    Validation.fromTryCatch(f(db, ip)).toValidationNel
 }
 
 object ReaderFunctions {

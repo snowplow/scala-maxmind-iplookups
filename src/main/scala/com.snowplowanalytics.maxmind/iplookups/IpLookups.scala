@@ -34,7 +34,6 @@ object IpLookups {
    *
    * @param geoFile Geographic lookup database filepath
    * @param ispFile ISP lookup database filepath
-   * @param orgFile Organization lookup database filepath
    * @param domainFile Domain lookup database filepath
    * @param netspeedFile Net speed lookup database filepath
    * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
@@ -43,7 +42,6 @@ object IpLookups {
   def apply(
     geoFile: Option[String] = None,
     ispFile: Option[String] = None,
-    orgFile: Option[String] = None,
     domainFile: Option[String] = None,
     netspeedFile: Option[String] = None,
     memCache: Boolean = true,
@@ -52,7 +50,6 @@ object IpLookups {
     new IpLookups(
       geoFile.map(new File(_)),
       ispFile.map(new File(_)),
-      orgFile.map(new File(_)),
       domainFile.map(new File(_)),
       netspeedFile.map(new File(_)),
       memCache,
@@ -75,7 +72,6 @@ object IpLookups {
  *
  * @param geoFile Geographic lookup database file
  * @param ispFile ISP lookup database file
- * @param orgFile Organization lookup database file
  * @param domainFile Domain lookup database file
  * @param netspeedFile Net speed lookup database file
  * @param memCache Whether to use the GEO_IP_MEMORY_CACHE
@@ -84,7 +80,6 @@ object IpLookups {
 class IpLookups(
   geoFile: Option[File] = None,
   ispFile: Option[File] = None,
-  orgFile: Option[File] = None,
   domainFile: Option[File] = None,
   netspeedFile: Option[File] = None,
   memCache: Boolean = true,
@@ -99,7 +94,7 @@ class IpLookups(
   // Configure the lookup services
   private val geoService = getService(geoFile)
   private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
-  private val orgService = getService(orgFile).map(SpecializedReader(_, ReaderFunctions.org))
+  private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
   private val domainService =
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
   private val netspeedService =

@@ -3,4 +3,13 @@ scala:
    - 2.11.12
    - 2.12.5
 jdk:
-  - openjdk8
+  - oraclejdk8
+cript:
+    - sbt test
+deploy:
+    skip_cleanup: true
+    provider: script
+    script: ./.travis/deploy.sh $TRAVIS_TAG
+    on:
+        condition: '"${TRAVIS_SCALA_VERSION}" == "2.12.5"'
+        tags: true

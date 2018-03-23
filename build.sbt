@@ -11,16 +11,23 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-import Dependencies._
-
 lazy val project = Project("scala-maxmind-iplookups", file("."))
   .settings(
-    organization  := "com.snowplowanalytics",
-    version       := "0.3.0",
-    description   := "Scala wrapper for MaxMind GeoIP library",
-    scalaVersion  := "2.11.12",
-    crossScalaVersions := Seq("2.11.12", "2.12.5"),
-    scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
-    resolvers     ++= resolutionRepos,
-    libraryDependencies ++= Seq(maxmind, collUtils, scalaz, specs2)
+    organization       :=  "com.snowplowanalytics",
+    version            :=  "0.3.0",
+    description        :=  "Scala wrapper for MaxMind GeoIP2 library",
+    scalaVersion       :=  "2.11.12",
+    crossScalaVersions :=  Seq("2.11.12", "2.12.5"),
+    scalacOptions      :=  BuildSettings.compilerOptions,
+    javacOptions       :=  BuildSettings.javaCompilerOptions,
+    resolvers          ++= Dependencies.resolutionRepos
+  )
+  .settings(BuildSettings.publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.maxmind,
+      Dependencies.collUtils,
+      Dependencies.scalaz,
+      Dependencies.specs2
+    )
   )

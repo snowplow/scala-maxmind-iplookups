@@ -1,4 +1,7 @@
-# Scala MaxMind IP Lookups [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-iplookups.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
+# Scala MaxMind IP Lookups
+
+[![Build Status](https://travis-ci.org/snowplow/scala-maxmind-iplookups.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
+[![Maven Central](https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-maxmind-iplookups_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.12)
 
 ## Introduction
 

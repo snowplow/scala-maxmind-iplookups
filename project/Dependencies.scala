@@ -13,10 +13,6 @@
 import sbt._
 
 object Dependencies {
-  val resolutionRepos = Seq(
-    "Scalaz Releases" at "https://dl.bintray.com/scalaz/releases/"
-  )
-
   val maxmind   = "com.maxmind.geoip2" %  "geoip2"          % "2.11.0"
   val collUtils = "com.twitter"        %% "util-collection" % "18.2.0"
   val scalaz    = "org.scalaz"         %% "scalaz-core"     % "7.0.9"

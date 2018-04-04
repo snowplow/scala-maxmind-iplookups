@@ -1,3 +1,22 @@
+Version 0.4.0 (2018-04-04)
+--------------------------
+Upgrade to Maxmind's GeoIP2 databases (#35)
+Turn IpLookupResult into a case class (#47)
+Remove organization file argument (#48)
+Add Maxmind discontinuation notice to the README (#36)
+Differentiate between absent MaxMind file and failed lookup (#46)
+Remove useless Future (#44)
+Upgrade to Scala 2.12 (#38)
+Bump SBT to 1.1.1 (#52)
+Add CI/CD (#50)
+Bump specs2 to 4.0.3 (#49)
+Remove dependency resolvers (#37)
+Update README markdown in according with CommonMark (#45)
+Extend copyright notice to 2018 (#43)
+Add Bintray credentials to .travis.yml (#51)
+Add Sonatype credentials to .travis.yml (#54)
+Add maven central badge (#53)
+
 Version 0.3.0 (2015-06-20)
 --------------------------
 Switched from LruMap to SynchronizedLruMap (#28)

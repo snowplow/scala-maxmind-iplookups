@@ -19,33 +19,38 @@ object model {
 
   /** A case class wrapper around the MaxMind CityResponse class. */
   final case class IpLocation(
-    countryCode: String,
-    countryName: String,
-    region: Option[String],
-    city: Option[String],
-    latitude: Float,
-    longitude: Float,
-    timezone: Option[String],
-    postalCode: Option[String],
-    metroCode: Option[Int],
-    regionName: Option[String]
+      countryCode: String,
+      countryName: String,
+      region: Option[String],
+      city: Option[String],
+      latitude: Float,
+      longitude: Float,
+      timezone: Option[String],
+      postalCode: Option[String],
+      metroCode: Option[Int],
+      regionName: Option[String]
   )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
   object IpLocation {
+
     /**
-    * Constructs an IpLocation instance from a MaxMind CityResponse instance.
-    * @param cityResponse MaxMind CityResponse object
-    * @return IpLocation
-    */
+      * Constructs an IpLocation instance from a MaxMind CityResponse instance.
+      * @param cityResponse MaxMind CityResponse object
+      * @return IpLocation
+      */
     def apply(cityResponse: CityResponse): IpLocation =
       IpLocation(
         countryCode = cityResponse.getCountry.getIsoCode,
         countryName = cityResponse.getCountry.getName,
         region = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
         city = Option(cityResponse.getCity.getName),
-        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
-        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
+        latitude = Option(cityResponse.getLocation.getLatitude)
+          .map(_.toFloat)
+          .getOrElse(0F),
+        longitude = Option(cityResponse.getLocation.getLongitude)
+          .map(_.toFloat)
+          .getOrElse(0F),
         timezone = Option(cityResponse.getLocation.getTimeZone),
         postalCode = Option(cityResponse.getPostal.getCode),
         metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),
@@ -55,10 +60,10 @@ object model {
 
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
-    ipLocation: Option[Validation[Throwable, IpLocation]],
-    isp: Option[Validation[Throwable, String]],
-    organization: Option[Validation[Throwable, String]],
-    domain: Option[Validation[Throwable, String]],
-    connectionType: Option[Validation[Throwable, String]]
+      ipLocation: Option[Validation[Throwable, IpLocation]],
+      isp: Option[Validation[Throwable, String]],
+      organization: Option[Validation[Throwable, String]],
+      domain: Option[Validation[Throwable, String]],
+      connectionType: Option[Validation[Throwable, String]]
   )
 }

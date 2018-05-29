@@ -4,7 +4,7 @@ scala:
 - 2.12.5
 jdk:
 - oraclejdk8
-cript:
+script:
 - sbt test
 deploy:
   skip_cleanup: true

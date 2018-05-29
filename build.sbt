@@ -20,7 +20,9 @@ lazy val root = project.in(file("."))
     scalaVersion       :=  "2.11.12",
     crossScalaVersions :=  Seq("2.11.12", "2.12.5"),
     scalacOptions      :=  BuildSettings.compilerOptions,
-    javacOptions       :=  BuildSettings.javaCompilerOptions
+    javacOptions       :=  BuildSettings.javaCompilerOptions,
+
+    scalafmtOnCompile  := true
   )
   .settings(BuildSettings.publishSettings)
   .settings(

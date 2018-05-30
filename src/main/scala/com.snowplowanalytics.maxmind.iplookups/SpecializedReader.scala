@@ -16,11 +16,12 @@ import java.net.InetAddress
 
 import com.maxmind.geoip2.DatabaseReader
 import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
-import scalaz._
+import cats.data.Validated
+import scala.util.Try
 
 final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue(ip: InetAddress): Validation[Throwable, String] =
-    Validation.fromTryCatch(f(db, ip))
+  def getValue(ip: InetAddress): Validated[Throwable, String] =
+    Validated.fromTry(Try(f(db, ip)))
 }
 
 object ReaderFunctions {

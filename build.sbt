@@ -29,7 +29,7 @@ lazy val root = project
     libraryDependencies ++= Seq(
       Dependencies.maxmind,
       Dependencies.collUtils,
-      Dependencies.scalaz,
+      Dependencies.cats,
       Dependencies.specs2
     )
   )

@@ -13,7 +13,7 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import com.maxmind.geoip2.model.CityResponse
-import scalaz._
+import cats.data.Validated
 
 object model {
 
@@ -45,12 +45,8 @@ object model {
         countryName = cityResponse.getCountry.getName,
         region = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
         city = Option(cityResponse.getCity.getName),
-        latitude = Option(cityResponse.getLocation.getLatitude)
-          .map(_.toFloat)
-          .getOrElse(0F),
-        longitude = Option(cityResponse.getLocation.getLongitude)
-          .map(_.toFloat)
-          .getOrElse(0F),
+        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
+        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
         timezone = Option(cityResponse.getLocation.getTimeZone),
         postalCode = Option(cityResponse.getPostal.getCode),
         metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),
@@ -60,10 +56,10 @@ object model {
 
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
-    ipLocation: Option[Validation[Throwable, IpLocation]],
-    isp: Option[Validation[Throwable, String]],
-    organization: Option[Validation[Throwable, String]],
-    domain: Option[Validation[Throwable, String]],
-    connectionType: Option[Validation[Throwable, String]]
+    ipLocation: Option[Validated[Throwable, IpLocation]],
+    isp: Option[Validated[Throwable, String]],
+    organization: Option[Validated[Throwable, String]],
+    domain: Option[Validated[Throwable, String]],
+    connectionType: Option[Validated[Throwable, String]]
   )
 }

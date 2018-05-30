@@ -110,11 +110,11 @@ The `performLookups(ip)` method returns a:
 
 ```scala
 case class IpLookupResult(
-  ipLocation: Option[Validation[Throwable, IpLocation]],
-  isp: Option[Validation[Throwable, String]],
-  organization: Option[Validation[Throwable, String]],
-  domain: Option[Validation[Throwable, String]],
-  connectionType: Option[Validation[Throwable, String]]
+  ipLocation: Option[Validated[Throwable, IpLocation]],
+  isp: Option[Validated[Throwable, String]],
+  organization: Option[Validated[Throwable, String]],
+  domain: Option[Validated[Throwable, String]],
+  connectionType: Option[Validated[Throwable, String]]
 )
 ```
 

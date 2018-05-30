@@ -18,7 +18,8 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
-import scalaz._
+import cats.data.Validated
+import scala.util.Try
 
 import model._
 
@@ -51,6 +52,11 @@ object IpLookups {
       memCache,
       lruCache
     )
+
+  implicit class RichValidated[E, A](validated: Validated[E, A]) {
+    def flatMap[EE >: E, B](f: A => Validated[EE, B]): Validated[EE, B] =
+      validated.andThen(f)
+  }
 }
 
 /**
@@ -84,16 +90,13 @@ class IpLookups(
 
   // Initialise the cache
   private val lru =
-    if (lruCache > 0)
-      Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
+    if (lruCache > 0) Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
     else None // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val geoService = getService(geoFile)
-  private val ispService =
-    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
-  private val orgService =
-    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
+  private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
+  private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
   private val domainService =
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
   private val connectionTypeService =
@@ -138,12 +141,14 @@ class IpLookups(
 
     val ipAddress = getIpAddress(ip)
 
+    import IpLookups.RichValidated
+
     /**
-     * Creates a Validation boxing the result of using a lookup service on the ip
+     * Creates a Validated boxing the result of using a lookup service on the ip
      * @param service ISP, domain or connection type LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Option[Validation[Throwable, String]] =
+    def getLookup(service: Option[SpecializedReader]): Option[Validated[Throwable, String]] =
       service.map { s =>
         for {
           ipA <- ipAddress
@@ -151,11 +156,11 @@ class IpLookups(
         } yield v
       }
 
-    val ipLocation: Option[Validation[Throwable, IpLocation]] =
+    val ipLocation: Option[Validated[Throwable, IpLocation]] =
       geoService.map { gs =>
         for {
           ipA <- ipAddress
-          v   <- Validation.fromTryCatch(gs.city(ipA))
+          v   <- Validated.fromTry(Try(gs.city(ipA)))
         } yield IpLocation.apply(v)
       }
 
@@ -190,7 +195,7 @@ class IpLookups(
       result
   }
 
-  /** Transforms a String into an Validation[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): Validation[Throwable, InetAddress] =
-    Validation.fromTryCatch(InetAddress.getByName(ip))
+  /** Transforms a String into an Validated[Throwable, InetAddress] */
+  private def getIpAddress(ip: String): Validated[Throwable, InetAddress] =
+    Validated.fromTry(Try(InetAddress.getByName(ip)))
 }

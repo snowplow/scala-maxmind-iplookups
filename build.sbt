@@ -27,7 +27,7 @@ lazy val root = project.in(file("."))
     libraryDependencies ++= Seq(
       Dependencies.maxmind,
       Dependencies.collUtils,
-      Dependencies.scalaz,
+      Dependencies.cats,
       Dependencies.specs2
     )
   )

@@ -18,7 +18,8 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
-import scalaz._
+import cats.data.Validated
+import scala.util.Try
 
 import model._
 
@@ -26,23 +27,23 @@ import model._
 object IpLookups {
 
   /**
-   * Alternative constructor taking Strings rather than Files
-   *
-   * @param geoFile Geographic lookup database filepath
-   * @param ispFile ISP lookup database filepath
-   * @param domainFile Domain lookup database filepath
-   * @param connectionTypeFile Connection type lookup database filepath
-   * @param memCache Whether to use MaxMind's CHMCache
-   * @param lruCache Maximum size of SynchronizedLruMap cache
-   */
+    * Alternative constructor taking Strings rather than Files
+    *
+    * @param geoFile Geographic lookup database filepath
+    * @param ispFile ISP lookup database filepath
+    * @param domainFile Domain lookup database filepath
+    * @param connectionTypeFile Connection type lookup database filepath
+    * @param memCache Whether to use MaxMind's CHMCache
+    * @param lruCache Maximum size of SynchronizedLruMap cache
+    */
   def apply(
-    geoFile: Option[String] = None,
-    ispFile: Option[String] = None,
-    domainFile: Option[String] = None,
-    connectionTypeFile: Option[String] = None,
-    memCache: Boolean = true,
-    lruCache: Int = 10000
-  ): IpLookups =
+             geoFile: Option[String] = None,
+             ispFile: Option[String] = None,
+             domainFile: Option[String] = None,
+             connectionTypeFile: Option[String] = None,
+             memCache: Boolean = true,
+             lruCache: Int = 10000
+           ): IpLookups =
     new IpLookups(
       geoFile.map(new File(_)),
       ispFile.map(new File(_)),
@@ -52,35 +53,36 @@ object IpLookups {
       lruCache
     )
 }
-
 /**
- * IpLookups is a Scala wrapper around MaxMind's own DatabaseReader Java class.
- *
- * Two main differences:
- *
- * 1. getLocation(ipS: String) now returns an IpLocation
- *    case class, not a raw MaxMind Location
- * 2. IpLookups introduces an LRU cache to improve
- *    lookup performance
- *
- * Inspired by:
- * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
- *
- * @param geoFile Geographic lookup database file
- * @param ispFile ISP lookup database file
- * @param domainFile Domain lookup database file
- * @param connectionTypeFile Connection type lookup database file
- * @param memCache Whether to use MaxMind's CHMCache
- * @param lruCache Maximum size of SynchronizedLruMap cache
- */
+  * IpLookups is a Scala wrapper around MaxMind's own DatabaseReader Java class.
+  *
+  * Two main differences:
+  *
+  * 1. getLocation(ipS: String) now returns an IpLocation
+  *    case class, not a raw MaxMind Location
+  * 2. IpLookups introduces an LRU cache to improve
+  *    lookup performance
+  *
+  * Inspired by:
+  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
+  *
+  * @param geoFile Geographic lookup database file
+  * @param ispFile ISP lookup database file
+  * @param domainFile Domain lookup database file
+  * @param connectionTypeFile Connection type lookup database file
+  * @param memCache Whether to use MaxMind's CHMCache
+  * @param lruCache Maximum size of SynchronizedLruMap cache
+  */
+
+
 class IpLookups(
-  geoFile: Option[File] = None,
-  ispFile: Option[File] = None,
-  domainFile: Option[File] = None,
-  connectionTypeFile: Option[File] = None,
-  memCache: Boolean = true,
-  lruCache: Int = 10000
-) {
+                 geoFile: Option[File] = None,
+                 ispFile: Option[File] = None,
+                 domainFile: Option[File] = None,
+                 connectionTypeFile: Option[File] = None,
+                 memCache: Boolean = true,
+                 lruCache: Int = 10000
+               ) {
 
   // Initialise the cache
   private val lru =
@@ -97,49 +99,54 @@ class IpLookups(
     getService(connectionTypeFile).map(SpecializedReader(_, ReaderFunctions.connectionType))
 
   /**
-   * Get a LookupService from a database file
-   *
-   * @param serviceFile The database file
-   * @return LookupService
-   */
+    * Get a LookupService from a database file
+    *
+    * @param serviceFile The database file
+    * @return LookupService
+    */
   private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
     serviceFile.map { f =>
       val builder = new DatabaseReader.Builder(f)
       (
         if (memCache) builder.withCache(new CHMCache())
         else builder
-      ).build()
+        ).build()
     }
 
   /**
-   * Returns the MaxMind location for this IP address
-   * as an IpLocation, or None if MaxMind cannot find
-   * the location.
-   */
+    * Returns the MaxMind location for this IP address
+    * as an IpLocation, or None if MaxMind cannot find
+    * the location.
+    */
   val performLookups: String => IpLookupResult = (s: String) =>
     lru.map(performLookupsWithLruCache(_, s))
       .getOrElse(performLookupsWithoutLruCache(s))
 
   /**
-   * This version does not use the LRU cache.
-   * Concurrently looks up information
-   * based on an IP address from one or
-   * more MaxMind LookupServices
-   *
-   * @param ip IP address
-   * @return Tuple containing the results of the
-   *         LookupServices
-   */
+    * This version does not use the LRU cache.
+    * Concurrently looks up information
+    * based on an IP address from one or
+    * more MaxMind LookupServices
+    *
+    * @param ip IP address
+    * @return Tuple containing the results of the
+    *         LookupServices
+    */
   private def performLookupsWithoutLruCache(ip: String): IpLookupResult = {
 
     val ipAddress = getIpAddress(ip)
 
+    implicit class RichValidated[E, A](validated: Validated[E, A]) {
+      def flatMap[EE >: E, B](f: A => Validated[EE, B]): Validated[EE, B] =
+        validated.andThen(f)
+    }
+
     /**
-     * Creates a Validation boxing the result of using a lookup service on the ip
-     * @param service ISP, domain or connection type LookupService
-     * @return the result of the lookup
-     */
-    def getLookup(service: Option[SpecializedReader]): Option[Validation[Throwable, String]] =
+      * Creates a Validation boxing the result of using a lookup service on the ip
+      * @param service ISP, domain or connection type LookupService
+      * @return the result of the lookup
+      */
+    def getLookup(service: Option[SpecializedReader]): Option[Validated[Throwable, String]] =
       service.map { s =>
         for {
           ipA <- ipAddress
@@ -147,11 +154,11 @@ class IpLookups(
         } yield v
       }
 
-    val ipLocation: Option[Validation[Throwable, IpLocation]] =
+    val ipLocation: Option[Validated[Throwable, IpLocation]] =
       geoService.map { gs =>
         for {
           ipA <- ipAddress
-          v <- Validation.fromTryCatch(gs.city(ipA))
+          v <- Validated.fromTry(Try(gs.city(ipA)))
         } yield IpLocation.apply(v)
       }
 
@@ -165,20 +172,20 @@ class IpLookups(
   }
 
   /**
-   * Returns the MaxMind location for this IP address
-   * as an IpLocation, or None if MaxMind cannot find
-   * the location.
-   *
-   * This version uses and maintains the LRU cache.
-   *
-   * Don't confuse the LRU returning None (meaning that no
-   * cache entry could be found), versus an extant cache entry
-   * containing None (meaning that the IP address is unknown).
-   */
+    * Returns the MaxMind location for this IP address
+    * as an IpLocation, or None if MaxMind cannot find
+    * the location.
+    *
+    * This version uses and maintains the LRU cache.
+    *
+    * Don't confuse the LRU returning None (meaning that no
+    * cache entry could be found), versus an extant cache entry
+    * containing None (meaning that the IP address is unknown).
+    */
   private def performLookupsWithLruCache(
-    lru: SynchronizedLruMap[String, IpLookupResult],
-    ip: String
-  ): IpLookupResult = lru.get(ip) match {
+                                          lru: SynchronizedLruMap[String, IpLookupResult],
+                                          ip: String
+                                        ): IpLookupResult = lru.get(ip) match {
     case Some(result) => result // In the LRU cache
     case None => // Not in the LRU cache
       val result = performLookupsWithoutLruCache(ip)
@@ -187,6 +194,6 @@ class IpLookups(
   }
 
   /** Transforms a String into an Validation[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): Validation[Throwable, InetAddress] =
-    Validation.fromTryCatch(InetAddress.getByName(ip))
+  private def getIpAddress(ip: String): Validated[Throwable, InetAddress] =
+    Validated.fromTry(Try(InetAddress.getByName(ip)))
 }

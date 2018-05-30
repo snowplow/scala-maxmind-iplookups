@@ -16,8 +16,9 @@ import java.net.UnknownHostException
 
 import com.maxmind.geoip2.exception.AddressNotFoundException
 import org.specs2.mutable.Specification
-import scalaz._
-import Scalaz._
+import cats.data.Validated
+import cats.data.Validated.{Invalid, Valid}
+import cats.implicits._
 
 import model._
 
@@ -36,7 +37,7 @@ object IpLookupsTest {
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
-      IpLocation(
+      Valid(IpLocation(
         countryCode = "CN",
         countryName = "China",
         region = Some("22"),
@@ -46,16 +47,15 @@ object IpLookupsTest {
         timezone = Some("Asia/Harbin"),
         postalCode = None,
         metroCode = None,
-        regionName = Some("Jilin Sheng")
-      ).success.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
-      "Dialup".success.some
+        regionName = Some("Jilin Sheng"))).some,
+      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
+      Valid("Dialup").some
     ),
 
     "216.160.83.56" -> IpLookupResult(
-      IpLocation(
+      Valid(IpLocation(
         countryCode = "US",
         countryName = "United States",
         region = Some("WA"),
@@ -66,15 +66,15 @@ object IpLookupsTest {
         postalCode = Some("98354"),
         metroCode = Some(819),
         regionName = Some("Washington")
-      ).success.some,
-      "Century Link".success.some,
-      "Lariat Software".success.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").failure.some
+      )).some,
+      Valid("Century Link").some,
+      Valid("Lariat Software").some,
+      Invalid(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some
     ),
 
     "67.43.156.0" -> IpLookupResult(
-      IpLocation(
+      Valid(IpLocation(
         countryCode = "BT",
         countryName = "Bhutan",
         region = None,
@@ -85,21 +85,21 @@ object IpLookupsTest {
         postalCode = None,
         metroCode = None,
         regionName = None
-      ).success.some,
-      "Loud Packet".success.some,
-      "zudoarichikito_".success.some,
-      "shoesfin.NET".success.some,
-      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").failure.some
+      )).some,
+      Valid("Loud Packet").some,
+      Valid("zudoarichikito_").some,
+      Valid("shoesfin.NET").some,
+      Invalid(new AddressNotFoundException("The address 67.43.156.0 is not in the database.")).some
     ),
 
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some
+      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
+      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some
     )
   )
 }
@@ -130,11 +130,11 @@ class IpLookupsTest extends Specification {
     "providing an invalid ip should fail" in {
       val ipLookups = ipLookupsFromFiles(true, 0)
       val expected = IpLookupResult(
-        new UnknownHostException("not: Name or service not known").failure.some,
-        new UnknownHostException("not: Name or service not known").failure.some,
-        new UnknownHostException("not: Name or service not known").failure.some,
-        new UnknownHostException("not: Name or service not known").failure.some,
-        new UnknownHostException("not: Name or service not known").failure.some
+        Invalid(new UnknownHostException("not: Name or service not known")).some,
+        Invalid(new UnknownHostException("not: Name or service not known")).some,
+        Invalid(new UnknownHostException("not: Name or service not known")).some,
+        Invalid(new UnknownHostException("not: Name or service not known")).some,
+        Invalid(new UnknownHostException("not: Name or service not known")).some
       )
       val actual = ipLookups.performLookups("not")
       matchIpLookupResult(actual, expected)
@@ -164,17 +164,17 @@ class IpLookupsTest extends Specification {
 
   // needed because == doesn't work on exceptions
   private def matchThrowables[A](
-    actual: Option[Validation[Throwable, A]],
-    expected: Option[Validation[Throwable, A]]
-  ): Boolean = actual match {
+                                  actual: Option[Validated[Throwable, A]],
+                                  expected: Option[Validated[Throwable, A]]
+                                ): Boolean = actual match {
     case None => actual must_== expected
     case Some(r) => r match {
-      case Success(_) => actual must_== expected
-      case Failure(_) => getErrorMessage(actual) must_== getErrorMessage(expected)
+      case Valid(_) => actual must_== expected
+      case Invalid(_) => getErrorMessage(actual) must_== getErrorMessage(expected)
     }
   }
 
   private def getErrorMessage[A](
-      e: Option[Validation[Throwable, A]]): Option[Validation[String, A]] =
+                                  e: Option[Validated[Throwable, A]]): Option[Validated[String, A]] =
     e.map(_.leftMap(_.getMessage))
 }

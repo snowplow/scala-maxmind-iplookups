@@ -13,31 +13,31 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import com.maxmind.geoip2.model.CityResponse
-import scalaz._
+import cats.data.Validated
 
 object model {
 
   /** A case class wrapper around the MaxMind CityResponse class. */
   final case class IpLocation(
-    countryCode: String,
-    countryName: String,
-    region: Option[String],
-    city: Option[String],
-    latitude: Float,
-    longitude: Float,
-    timezone: Option[String],
-    postalCode: Option[String],
-    metroCode: Option[Int],
-    regionName: Option[String]
-  )
+                               countryCode: String,
+                               countryName: String,
+                               region: Option[String],
+                               city: Option[String],
+                               latitude: Float,
+                               longitude: Float,
+                               timezone: Option[String],
+                               postalCode: Option[String],
+                               metroCode: Option[Int],
+                               regionName: Option[String]
+                             )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
   object IpLocation {
     /**
-    * Constructs an IpLocation instance from a MaxMind CityResponse instance.
-    * @param cityResponse MaxMind CityResponse object
-    * @return IpLocation
-    */
+      * Constructs an IpLocation instance from a MaxMind CityResponse instance.
+      * @param cityResponse MaxMind CityResponse object
+      * @return IpLocation
+      */
     def apply(cityResponse: CityResponse): IpLocation =
       IpLocation(
         countryCode = cityResponse.getCountry.getIsoCode,
@@ -55,10 +55,9 @@ object model {
 
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
-    ipLocation: Option[Validation[Throwable, IpLocation]],
-    isp: Option[Validation[Throwable, String]],
-    organization: Option[Validation[Throwable, String]],
-    domain: Option[Validation[Throwable, String]],
-    connectionType: Option[Validation[Throwable, String]]
-  )
+                                   ipLocation: Option[Validated[Throwable, IpLocation]],
+                                   isp: Option[Validated[Throwable, String]],
+                                   organization: Option[Validated[Throwable, String]],
+                                   domain: Option[Validated[Throwable, String]],
+                                   connectionType: Option[Validated[Throwable, String]])
 }

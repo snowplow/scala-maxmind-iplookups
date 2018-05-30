@@ -52,6 +52,11 @@ object IpLookups {
       memCache,
       lruCache
     )
+
+  implicit class RichValidated[E, A](validated: Validated[E, A]) {
+    def flatMap[EE >: E, B](f: A => Validated[EE, B]): Validated[EE, B] =
+      validated.andThen(f)
+  }
 }
 /**
   * IpLookups is a Scala wrapper around MaxMind's own DatabaseReader Java class.
@@ -136,10 +141,7 @@ class IpLookups(
 
     val ipAddress = getIpAddress(ip)
 
-    implicit class RichValidated[E, A](validated: Validated[E, A]) {
-      def flatMap[EE >: E, B](f: A => Validated[EE, B]): Validated[EE, B] =
-        validated.andThen(f)
-    }
+    import IpLookups.RichValidated
 
     /**
       * Creates a Validation boxing the result of using a lookup service on the ip

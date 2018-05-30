@@ -11,26 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-import com.typesafe.sbt.SbtGit.GitKeys._
-
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
-    organization       :=  "com.snowplowanalytics",
-    name               :=  "scala-maxmind-iplookups",
-    version            :=  "0.4.0",
-    description        :=  "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion       :=  "2.11.12",
-    crossScalaVersions :=  Seq("2.11.12", "2.12.5"),
-    scalacOptions      :=  BuildSettings.compilerOptions,
-    javacOptions       :=  BuildSettings.javaCompilerOptions,
-    scalafmtOnCompile  := true
-
-    siteSubdirName in ScalaUnidoc := "latest/api",
-    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-    gitRemoteRepo := "git@github.com:snowplow/scala-maxmind-iplookups.git"
+    organization := "com.snowplowanalytics",
+    name := "scala-maxmind-iplookups",
+    version := "0.4.0",
+    description := "Scala wrapper for MaxMind GeoIP2 library",
+    scalaVersion := "2.11.12",
+    crossScalaVersions := Seq("2.11.12", "2.12.5"),
+    scalacOptions := BuildSettings.compilerOptions,
+    javacOptions := BuildSettings.javaCompilerOptions,
+    scalafmtOnCompile := true
   )
   .settings(BuildSettings.publishSettings)
+  .settings(BuildSettings.docSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,

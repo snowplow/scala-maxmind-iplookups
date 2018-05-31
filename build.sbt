@@ -33,6 +33,8 @@ lazy val root = project
       Dependencies.maxmind,
       Dependencies.collUtils,
       Dependencies.cats,
-      Dependencies.specs2
+      Dependencies.scalaz,
+      Dependencies.specs2,
+      Dependencies.catsEffect
     )
   )

@@ -29,13 +29,15 @@ object IpLookupsTest {
     val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
     val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
-    IpLookups(
-      Some(geoFile),
-      Some(ispFile),
-      Some(domainFile),
-      Some(connectionTypeFile),
-      memCache,
-      lruCache)
+    IpLookups
+      .createFromFilenames(
+        Some(geoFile),
+        Some(ispFile),
+        Some(domainFile),
+        Some(connectionTypeFile),
+        memCache,
+        lruCache)
+      .unsafeRunSync
   }
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
@@ -132,7 +134,7 @@ class IpLookupsTest extends Specification {
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
-            val actual = ipLookups.performLookups(ip)
+            val actual = ipLookups.performLookups(ip).unsafeRunSync()
             matchIpLookupResult(actual, expected)
           }
       }
@@ -147,14 +149,16 @@ class IpLookupsTest extends Specification {
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some
       )
-      val actual = ipLookups.performLookups("not")
+      val actual = ipLookups.performLookups("not").unsafeRunSync
       matchIpLookupResult(actual, expected)
     }
 
     "providing no files should return Nones" in {
-      val ipLookups = IpLookups(None, None, None, None, true, 0)
-      val expected  = IpLookupResult(None, None, None, None, None)
-      val actual    = ipLookups.performLookups("67.43.156.0")
+      val actual = (for {
+        ipLookups <- IpLookups.createFromFiles(None, None, None, None, true, 0)
+        res       <- ipLookups.performLookups("67.43.156.0")
+      } yield res).unsafeRunSync
+      val expected = IpLookupResult(None, None, None, None, None)
       matchIpLookupResult(actual, expected)
     }
   }

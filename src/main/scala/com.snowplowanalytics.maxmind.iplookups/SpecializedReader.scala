@@ -18,10 +18,12 @@ import com.maxmind.geoip2.DatabaseReader
 import cats.syntax.either._
 
 import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
+import cats.effect.IO
+import scalaz._
 
 final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue(ip: InetAddress): Either[Throwable, String] =
-    Either.catchNonFatal(f(db, ip))
+  def getValue(ip: InetAddress): IO[Validation[Throwable, String]] =
+    IO { Validation.fromTryCatch(f(db, ip)) }
 }
 
 object ReaderFunctions {

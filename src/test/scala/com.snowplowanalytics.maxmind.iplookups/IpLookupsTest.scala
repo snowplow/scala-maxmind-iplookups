@@ -24,13 +24,18 @@ import model._
 object IpLookupsTest {
 
   def ipLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups = {
-    val geoFile    = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
-    val ispFile    = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
+    val geoFile = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
+    val ispFile = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
     val domainFile = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
-    val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
+    val connectionTypeFile =
+      getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
-    IpLookups(Some(geoFile), Some(ispFile), Some(domainFile), Some(connectionTypeFile),
-      memCache, lruCache)
+    IpLookups(Some(geoFile),
+              Some(ispFile),
+              Some(domainFile),
+              Some(connectionTypeFile),
+              memCache,
+              lruCache)
   }
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
@@ -48,12 +53,14 @@ object IpLookupsTest {
         metroCode = None,
         regionName = Some("Jilin Sheng")
       ).success.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 175.16.199.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 175.16.199.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 175.16.199.0 is not in the database.").failure.some,
       "Dialup".success.some
     ),
-
     "216.160.83.56" -> IpLookupResult(
       IpLocation(
         countryCode = "US",
@@ -69,10 +76,11 @@ object IpLookupsTest {
       ).success.some,
       "Century Link".success.some,
       "Lariat Software".success.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").failure.some
+      new AddressNotFoundException(
+        "The address 216.160.83.56 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 216.160.83.56 is not in the database.").failure.some
     ),
-
     "67.43.156.0" -> IpLookupResult(
       IpLocation(
         countryCode = "BT",
@@ -89,17 +97,22 @@ object IpLookupsTest {
       "Loud Packet".success.some,
       "zudoarichikito_".success.some,
       "shoesfin.NET".success.some,
-      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").failure.some
+      new AddressNotFoundException(
+        "The address 67.43.156.0 is not in the database.").failure.some
     ),
-
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").failure.some
+      new AddressNotFoundException(
+        "The address 192.0.2.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 192.0.2.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 192.0.2.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 192.0.2.0 is not in the database.").failure.some,
+      new AddressNotFoundException(
+        "The address 192.0.2.0 is not in the database.").failure.some
     )
   )
 }
@@ -109,9 +122,14 @@ class IpLookupsTest extends Specification {
   "Looking up some IP address locations should match their expected locations" should {
 
     val mcf: Boolean => String = mc => if (mc) "using" else "without using"
-    val lcf: Int => String = lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
+    val lcf: Int => String =
+      lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
     val formatter: (String, Boolean, Int) => String =
-      (ip, mcache, lcache) => "The IP address %s looked up (%s memory cache and with %s)".format(ip, mcf(mcache), lcf(lcache))
+      (ip, mcache, lcache) =>
+        "The IP address %s looked up (%s memory cache and with %s)".format(
+          ip,
+          mcf(mcache),
+          lcf(lcache))
 
     import IpLookupsTest._
     for (memCache <- Seq(true, false);
@@ -119,11 +137,12 @@ class IpLookupsTest extends Specification {
 
       val ipLookups = ipLookupsFromFiles(memCache, lruCache)
 
-      testData foreach { case (ip, expected) =>
-        formatter(ip, memCache, lruCache) should {
-          val actual = ipLookups.performLookups(ip)
-          matchIpLookupResult(actual, expected)
-        }
+      testData foreach {
+        case (ip, expected) =>
+          formatter(ip, memCache, lruCache) should {
+            val actual = ipLookups.performLookups(ip)
+            matchIpLookupResult(actual, expected)
+          }
       }
     }
 
@@ -148,7 +167,8 @@ class IpLookupsTest extends Specification {
     }
   }
 
-  private def matchIpLookupResult(actual: IpLookupResult, expected: IpLookupResult) = {
+  private def matchIpLookupResult(actual: IpLookupResult,
+                                  expected: IpLookupResult) = {
     s"have iplocation = ${actual.ipLocation}" in {
       matchThrowables(actual.ipLocation, expected.ipLocation)
     }
@@ -156,7 +176,9 @@ class IpLookupsTest extends Specification {
     s"have org = ${actual.organization}" in {
       matchThrowables(actual.organization, expected.organization)
     }
-    s"have domain = ${actual.domain}" in { matchThrowables(actual.domain, expected.domain) }
+    s"have domain = ${actual.domain}" in {
+      matchThrowables(actual.domain, expected.domain)
+    }
     s"have net speed = ${actual.connectionType}" in {
       matchThrowables(actual.connectionType, expected.connectionType)
     }
@@ -164,14 +186,16 @@ class IpLookupsTest extends Specification {
 
   // needed because == doesn't work on exceptions
   private def matchThrowables[A](
-    actual: Option[Validation[Throwable, A]],
-    expected: Option[Validation[Throwable, A]]
+      actual: Option[Validation[Throwable, A]],
+      expected: Option[Validation[Throwable, A]]
   ): Boolean = actual match {
     case None => actual must_== expected
-    case Some(r) => r match {
-      case Success(_) => actual must_== expected
-      case Failure(_) => getErrorMessage(actual) must_== getErrorMessage(expected)
-    }
+    case Some(r) =>
+      r match {
+        case Success(_) => actual must_== expected
+        case Failure(_) =>
+          getErrorMessage(actual) must_== getErrorMessage(expected)
+      }
   }
 
   private def getErrorMessage[A](

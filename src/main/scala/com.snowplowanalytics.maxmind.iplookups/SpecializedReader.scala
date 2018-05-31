@@ -26,8 +26,8 @@ final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
 object ReaderFunctions {
   type ReaderFunction = (DatabaseReader, InetAddress) => String
 
-  val isp = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getIsp
-  val org = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getOrganization
+  val isp    = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getIsp
+  val org    = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getOrganization
   val domain = (db: DatabaseReader, ip: InetAddress) => db.domain(ip).getDomain
   val connectionType = (db: DatabaseReader, ip: InetAddress) =>
     db.connectionType(ip).getConnectionType.toString

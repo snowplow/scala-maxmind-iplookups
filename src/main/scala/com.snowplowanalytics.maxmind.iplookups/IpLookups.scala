@@ -84,13 +84,16 @@ class IpLookups(
 
   // Initialise the cache
   private val lru =
-    if (lruCache > 0) Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
+    if (lruCache > 0)
+      Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
     else None // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val geoService = getService(geoFile)
-  private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
-  private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
+  private val ispService =
+    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
+  private val orgService =
+    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
   private val domainService =
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
   private val connectionTypeService =
@@ -117,7 +120,8 @@ class IpLookups(
    * the location.
    */
   val performLookups: String => IpLookupResult = (s: String) =>
-    lru.map(performLookupsWithLruCache(_, s))
+    lru
+      .map(performLookupsWithLruCache(_, s))
       .getOrElse(performLookupsWithoutLruCache(s))
 
   /**
@@ -143,7 +147,7 @@ class IpLookups(
       service.map { s =>
         for {
           ipA <- ipAddress
-          v <- s.getValue(ipA)
+          v   <- s.getValue(ipA)
         } yield v
       }
 
@@ -151,7 +155,7 @@ class IpLookups(
       geoService.map { gs =>
         for {
           ipA <- ipAddress
-          v <- Validation.fromTryCatch(gs.city(ipA))
+          v   <- Validation.fromTryCatch(gs.city(ipA))
         } yield IpLocation.apply(v)
       }
 

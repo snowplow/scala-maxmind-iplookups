@@ -33,19 +33,24 @@ object model {
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
   object IpLocation {
+
     /**
-    * Constructs an IpLocation instance from a MaxMind CityResponse instance.
-    * @param cityResponse MaxMind CityResponse object
-    * @return IpLocation
-    */
+     * Constructs an IpLocation instance from a MaxMind CityResponse instance.
+     * @param cityResponse MaxMind CityResponse object
+     * @return IpLocation
+     */
     def apply(cityResponse: CityResponse): IpLocation =
       IpLocation(
         countryCode = cityResponse.getCountry.getIsoCode,
         countryName = cityResponse.getCountry.getName,
         region = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
         city = Option(cityResponse.getCity.getName),
-        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
-        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
+        latitude = Option(cityResponse.getLocation.getLatitude)
+          .map(_.toFloat)
+          .getOrElse(0F),
+        longitude = Option(cityResponse.getLocation.getLongitude)
+          .map(_.toFloat)
+          .getOrElse(0F),
         timezone = Option(cityResponse.getLocation.getTimeZone),
         postalCode = Option(cityResponse.getPostal.getCode),
         metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),

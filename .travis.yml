@@ -13,6 +13,8 @@ deploy:
   on:
     condition: '"${TRAVIS_SCALA_VERSION}" == "2.12.5"'
     tags: true
+after_success:
+- bash <(curl -s https://codecov.io/bash)
 env:
   global:
   - secure: S3rLmHxmFxGS5G7XgaGck8Wi6QnIlFPaJMO5t6BDg8ggrsTseEB0CJPxBRHy+Xrg6J7N3AjmhOyz+ed3Z4rPHTxdF+20c6sGGvgTZCs6ngM7m+cqcJ7CczrEs0ZBJ9q5nUhBwb4nCYSqZ1UcE2JxZeKkfjhwYEFkRgZ0BL6f6Gw=

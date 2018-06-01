@@ -76,6 +76,6 @@ object BuildSettings {
   )
 
   lazy val coverageSettings = Seq(
-    coverageMinimum := 100
+    coverageMinimum := 90
   )
 }

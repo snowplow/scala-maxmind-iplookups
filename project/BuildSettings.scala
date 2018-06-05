@@ -17,6 +17,11 @@ import Keys._
 import bintray.BintrayPlugin._
 import bintray.BintrayKeys._
 
+// Scaladocs
+import sbtunidoc.ScalaUnidocPlugin.autoImport._
+import com.typesafe.sbt.site.SitePlugin.autoImport._
+import com.typesafe.sbt.SbtGit.GitKeys._
+
 object BuildSettings {
 
   lazy val compilerOptions = Seq(
@@ -59,5 +64,11 @@ object BuildSettings {
           <organizationUrl>http://snowplowanalytics.com</organizationUrl>
         </developer>
       </developers>)
+  )
+
+  lazy val docSettings = Seq(
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
+    gitRemoteRepo := "https://github.com/snowplow/scala-maxmind-iplookups.git",
+    siteSubdirName := ""
   )
 }

@@ -14,12 +14,12 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
-
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
+import cats.syntax.either._
+
 import model._
-import cats.implicits._
 
 /** Companion object to hold alternative constructors. */
 object IpLookups {

@@ -13,10 +13,10 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
-
 import com.maxmind.geoip2.DatabaseReader
+import cats.syntax.either._
+
 import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
-import cats.implicits._
 
 final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
   def getValue(ip: InetAddress): Either[Throwable, String] =

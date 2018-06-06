@@ -15,7 +15,8 @@ package com.snowplowanalytics.maxmind.iplookups
 import com.maxmind.geoip2.exception.AddressNotFoundException
 import java.net.UnknownHostException
 import org.specs2.mutable.Specification
-import cats.implicits._
+import cats.syntax.either._
+import cats.syntax.option._
 
 import model._
 
@@ -39,70 +40,67 @@ object IpLookupsTest {
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
-      Right(
-        IpLocation(
-          countryCode = "CN",
-          countryName = "China",
-          region = Some("22"),
-          city = Some("Changchun"),
-          latitude = 43.88F,
-          longitude = 125.3228F,
-          timezone = Some("Asia/Harbin"),
-          postalCode = None,
-          metroCode = None,
-          regionName = Some("Jilin Sheng")
-        )).some,
-      Left(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Right("Dialup").some
+      IpLocation(
+        countryCode = "CN",
+        countryName = "China",
+        region = Some("22"),
+        city = Some("Changchun"),
+        latitude = 43.88F,
+        longitude = 125.3228F,
+        timezone = Some("Asia/Harbin"),
+        postalCode = None,
+        metroCode = None,
+        regionName = Some("Jilin Sheng")
+      ).asRight.some,
+      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      "Dialup".asRight.some
     ),
     "216.160.83.56" -> IpLookupResult(
-      Right(
-        IpLocation(
-          countryCode = "US",
-          countryName = "United States",
-          region = Some("WA"),
-          city = Some("Milton"),
-          latitude = 47.2513F,
-          longitude = -122.3149F,
-          timezone = Some("America/Los_Angeles"),
-          postalCode = Some("98354"),
-          metroCode = Some(819),
-          regionName = Some("Washington")
-        )).some,
-      Right("Century Link").some,
-      Right("Lariat Software").some,
-      Left(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some
+      IpLocation(
+        countryCode = "US",
+        countryName = "United States",
+        region = Some("WA"),
+        city = Some("Milton"),
+        latitude = 47.2513F,
+        longitude = -122.3149F,
+        timezone = Some("America/Los_Angeles"),
+        postalCode = Some("98354"),
+        metroCode = Some(819),
+        regionName = Some("Washington")
+      ).asRight.some,
+      "Century Link".asRight.some,
+      "Lariat Software".asRight.some,
+      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some
     ),
     "67.43.156.0" -> IpLookupResult(
-      Right(
-        IpLocation(
-          countryCode = "BT",
-          countryName = "Bhutan",
-          region = None,
-          city = None,
-          latitude = 27.5F,
-          longitude = 90.5F,
-          timezone = Some("Asia/Thimphu"),
-          postalCode = None,
-          metroCode = None,
-          regionName = None
-        )).some,
-      Right("Loud Packet").some,
-      Right("zudoarichikito_").some,
-      Right("shoesfin.NET").some,
-      Left(new AddressNotFoundException("The address 67.43.156.0 is not in the database.")).some
+      IpLocation(
+        countryCode = "BT",
+        countryName = "Bhutan",
+        region = None,
+        city = None,
+        latitude = 27.5F,
+        longitude = 90.5F,
+        timezone = Some("Asia/Thimphu"),
+        postalCode = None,
+        metroCode = None,
+        regionName = None
+      ).asRight.some,
+      "Loud Packet".asRight.some,
+      "zudoarichikito_".asRight.some,
+      "shoesfin.NET".asRight.some,
+      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some
     ),
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      Left(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Left(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )
 }
@@ -142,11 +140,11 @@ class IpLookupsTest extends Specification {
     "providing an invalid ip should fail" in {
       val ipLookups = ipLookupsFromFiles(true, 0)
       val expected = IpLookupResult(
-        Left(new UnknownHostException("not: Name or service not known")).some,
-        Left(new UnknownHostException("not: Name or service not known")).some,
-        Left(new UnknownHostException("not: Name or service not known")).some,
-        Left(new UnknownHostException("not: Name or service not known")).some,
-        Left(new UnknownHostException("not: Name or service not known")).some
+        new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: Name or service not known").asLeft.some
       )
       val actual = ipLookups.performLookups("not")
       matchIpLookupResult(actual, expected)

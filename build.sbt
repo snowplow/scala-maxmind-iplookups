@@ -13,6 +13,7 @@
 
 lazy val root = project
   .in(file("."))
+  .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
     organization := "com.snowplowanalytics",
     name := "scala-maxmind-iplookups",
@@ -25,6 +26,8 @@ lazy val root = project
     scalafmtOnCompile := true
   )
   .settings(BuildSettings.publishSettings)
+  .settings(BuildSettings.docSettings)
+  .settings(BuildSettings.coverageSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,

@@ -13,7 +13,6 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import com.maxmind.geoip2.model.CityResponse
-import com.snowplowanalytics.maxmind.iplookups.Errors.IpLookupError
 
 object model {
 
@@ -56,10 +55,10 @@ object model {
 
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
-    ipLocation: Option[Either[IpLookupError, IpLocation]],
-    isp: Option[Either[IpLookupError, String]],
-    organization: Option[Either[IpLookupError, String]],
-    domain: Option[Either[IpLookupError, String]],
-    connectionType: Option[Either[IpLookupError, String]]
+    ipLocation: Option[Either[Throwable, IpLocation]],
+    isp: Option[Either[Throwable, String]],
+    organization: Option[Either[Throwable, String]],
+    domain: Option[Either[Throwable, String]],
+    connectionType: Option[Either[Throwable, String]]
   )
 }

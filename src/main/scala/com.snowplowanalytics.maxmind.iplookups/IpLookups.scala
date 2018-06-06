@@ -18,9 +18,8 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
-import com.snowplowanalytics.maxmind.iplookups.Errors._
-import com.maxmind.geoip2.exception.{AddressNotFoundException => GeoIp2AddressNotFoundException}
 import model._
+import cats.implicits._
 
 /** Companion object to hold alternative constructors. */
 object IpLookups {
@@ -136,11 +135,11 @@ class IpLookups(
     val ipAddress = getIpAddress(ip)
 
     /**
-     * Creates a Validated boxing the result of using a lookup service on the ip
+     * Creates a Either boxing the result of using a lookup service on the ip
      * @param service ISP, domain or connection type LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Option[Either[IpLookupError, String]] =
+    def getLookup(service: Option[SpecializedReader]): Option[Either[Throwable, String]] =
       service.map { s =>
         for {
           ipA <- ipAddress.right
@@ -148,19 +147,11 @@ class IpLookups(
         } yield v
       }
 
-    val ipLocation: Option[Either[IpLookupError, IpLocation]] =
+    val ipLocation: Option[Either[Throwable, IpLocation]] =
       geoService.map { gs =>
         for {
-          ipA <- ipAddress.right
-
-          v <- (try {
-            Right(gs.city(ipA))
-          } catch {
-            case ex: IOException                    => Left(ex)
-            case ex: GeoIp2AddressNotFoundException => Left(AddressNotFoundException(ex))
-            case ex: GeoIp2Exception                => Left(ex)
-          }).right
-
+          ipA <- ipAddress
+          v   <- Either.catchNonFatal(gs.city(ipA))
         } yield IpLocation.apply(v)
       }
 
@@ -195,11 +186,7 @@ class IpLookups(
       result
   }
 
-  /** Transforms a String into an Either[IpLookupError, InetAddress] */
-  private def getIpAddress(ip: String): Either[IpLookupError, InetAddress] =
-    try {
-      Right(InetAddress.getByName(ip))
-    } catch {
-      case ex: java.net.UnknownHostException => Left(UnknownHostException(ex.getMessage))
-    }
+  /** Transforms a String into an Either[Throwable, InetAddress] */
+  private def getIpAddress(ip: String): Either[Throwable, InetAddress] =
+    Either.catchNonFatal(InetAddress.getByName(ip))
 }

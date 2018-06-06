@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/snowplow/scala-maxmind-iplookups.png)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
 [![Maven Central](https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-maxmind-iplookups_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.12)
+[![codecov](https://codecov.io/gh/snowplow/scala-maxmind-iplookups/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-maxmind-iplookups)
 [![Join the chat at https://gitter.im/snowplow/scala-maxmind-iplookups](https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg)](https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Introduction

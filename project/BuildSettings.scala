@@ -22,6 +22,9 @@ import sbtunidoc.ScalaUnidocPlugin.autoImport._
 import com.typesafe.sbt.site.SitePlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys._
 
+// Scoverage
+import scoverage.ScoverageKeys._
+
 object BuildSettings {
 
   lazy val compilerOptions = Seq(
@@ -70,5 +73,9 @@ object BuildSettings {
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     gitRemoteRepo := "https://github.com/snowplow/scala-maxmind-iplookups.git",
     siteSubdirName := ""
+  )
+
+  lazy val coverageSettings = Seq(
+    coverageMinimum := 90
   )
 }

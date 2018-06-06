@@ -27,6 +27,7 @@ lazy val root = project
   )
   .settings(BuildSettings.publishSettings)
   .settings(BuildSettings.docSettings)
+  .settings(BuildSettings.coverageSettings)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,

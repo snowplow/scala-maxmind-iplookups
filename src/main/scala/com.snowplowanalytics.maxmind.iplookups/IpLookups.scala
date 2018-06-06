@@ -18,9 +18,8 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
-import cats.data.Validated
-import scala.util.Try
-
+import com.snowplowanalytics.maxmind.iplookups.Errors._
+import com.maxmind.geoip2.exception.{AddressNotFoundException => GeoIp2AddressNotFoundException}
 import model._
 
 /** Companion object to hold alternative constructors. */
@@ -52,11 +51,6 @@ object IpLookups {
       memCache,
       lruCache
     )
-
-  implicit class RichValidated[E, A](validated: Validated[E, A]) {
-    def flatMap[EE >: E, B](f: A => Validated[EE, B]): Validated[EE, B] =
-      validated.andThen(f)
-  }
 }
 
 /**
@@ -141,26 +135,32 @@ class IpLookups(
 
     val ipAddress = getIpAddress(ip)
 
-    import IpLookups.RichValidated
-
     /**
      * Creates a Validated boxing the result of using a lookup service on the ip
      * @param service ISP, domain or connection type LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Option[Validated[Throwable, String]] =
+    def getLookup(service: Option[SpecializedReader]): Option[Either[IpLookupError, String]] =
       service.map { s =>
         for {
-          ipA <- ipAddress
-          v   <- s.getValue(ipA)
+          ipA <- ipAddress.right
+          v   <- s.getValue(ipA).right
         } yield v
       }
 
-    val ipLocation: Option[Validated[Throwable, IpLocation]] =
+    val ipLocation: Option[Either[IpLookupError, IpLocation]] =
       geoService.map { gs =>
         for {
-          ipA <- ipAddress
-          v   <- Validated.fromTry(Try(gs.city(ipA)))
+          ipA <- ipAddress.right
+
+          v <- (try {
+            Right(gs.city(ipA))
+          } catch {
+            case ex: IOException                    => Left(ex)
+            case ex: GeoIp2AddressNotFoundException => Left(AddressNotFoundException(ex))
+            case ex: GeoIp2Exception                => Left(ex)
+          }).right
+
         } yield IpLocation.apply(v)
       }
 
@@ -195,7 +195,11 @@ class IpLookups(
       result
   }
 
-  /** Transforms a String into an Validated[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): Validated[Throwable, InetAddress] =
-    Validated.fromTry(Try(InetAddress.getByName(ip)))
+  /** Transforms a String into an Either[IpLookupError, InetAddress] */
+  private def getIpAddress(ip: String): Either[IpLookupError, InetAddress] =
+    try {
+      Right(InetAddress.getByName(ip))
+    } catch {
+      case ex: java.net.UnknownHostException => Left(UnknownHostException(ex.getMessage))
+    }
 }

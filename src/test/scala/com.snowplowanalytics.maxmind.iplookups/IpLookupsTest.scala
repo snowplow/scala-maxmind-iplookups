@@ -12,12 +12,12 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import java.net.UnknownHostException
+import com.maxmind.geoip2.exception.{AddressNotFoundException => GeoIp2AddressNotFoundException}
+import com.snowplowanalytics.maxmind.iplookups.Errors.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.Errors.UnknownHostException
+import com.snowplowanalytics.maxmind.iplookups.Errors.IpLookupError
 
-import com.maxmind.geoip2.exception.AddressNotFoundException
 import org.specs2.mutable.Specification
-import cats.data.Validated
-import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
 
 import model._
@@ -42,7 +42,7 @@ object IpLookupsTest {
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
-      Valid(
+      Right(
         IpLocation(
           countryCode = "CN",
           countryName = "China",
@@ -55,13 +55,19 @@ object IpLookupsTest {
           metroCode = None,
           regionName = Some("Jilin Sheng")
         )).some,
-      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 175.16.199.0 is not in the database.")).some,
-      Valid("Dialup").some
+      Left(
+        AddressNotFoundException(new GeoIp2AddressNotFoundException(
+          "The address 175.16.199.0 is not in the database."))).some,
+      Left(
+        AddressNotFoundException(new GeoIp2AddressNotFoundException(
+          "The address 175.16.199.0 is not in the database."))).some,
+      Left(
+        AddressNotFoundException(new GeoIp2AddressNotFoundException(
+          "The address 175.16.199.0 is not in the database."))).some,
+      Right("Dialup").some
     ),
     "216.160.83.56" -> IpLookupResult(
-      Valid(
+      Right(
         IpLocation(
           countryCode = "US",
           countryName = "United States",
@@ -74,13 +80,17 @@ object IpLookupsTest {
           metroCode = Some(819),
           regionName = Some("Washington")
         )).some,
-      Valid("Century Link").some,
-      Valid("Lariat Software").some,
-      Invalid(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 216.160.83.56 is not in the database.")).some
+      Right("Century Link").some,
+      Right("Lariat Software").some,
+      Left(
+        AddressNotFoundException(new GeoIp2AddressNotFoundException(
+          "The address 216.160.83.56 is not in the database."))).some,
+      Left(
+        AddressNotFoundException(new GeoIp2AddressNotFoundException(
+          "The address 216.160.83.56 is not in the database."))).some
     ),
     "67.43.156.0" -> IpLookupResult(
-      Valid(
+      Right(
         IpLocation(
           countryCode = "BT",
           countryName = "Bhutan",
@@ -93,19 +103,26 @@ object IpLookupsTest {
           metroCode = None,
           regionName = None
         )).some,
-      Valid("Loud Packet").some,
-      Valid("zudoarichikito_").some,
-      Valid("shoesfin.NET").some,
-      Invalid(new AddressNotFoundException("The address 67.43.156.0 is not in the database.")).some
+      Right("Loud Packet").some,
+      Right("zudoarichikito_").some,
+      Right("shoesfin.NET").some,
+      Left(AddressNotFoundException(
+        new GeoIp2AddressNotFoundException("The address 67.43.156.0 is not in the database."))).some
     ),
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some,
-      Invalid(new AddressNotFoundException("The address 192.0.2.0 is not in the database.")).some
+      Left(AddressNotFoundException(
+        new GeoIp2AddressNotFoundException("The address 192.0.2.0 is not in the database."))).some,
+      Left(AddressNotFoundException(
+        new GeoIp2AddressNotFoundException("The address 192.0.2.0 is not in the database."))).some,
+      Left(AddressNotFoundException(
+        new GeoIp2AddressNotFoundException("The address 192.0.2.0 is not in the database."))).some,
+      Left(AddressNotFoundException(
+        new GeoIp2AddressNotFoundException("The address 192.0.2.0 is not in the database."))).some,
+      Left(
+        AddressNotFoundException(
+          new GeoIp2AddressNotFoundException("The address 192.0.2.0 is not in the database."))).some
     )
   )
 }
@@ -145,11 +162,11 @@ class IpLookupsTest extends Specification {
     "providing an invalid ip should fail" in {
       val ipLookups = ipLookupsFromFiles(true, 0)
       val expected = IpLookupResult(
-        Invalid(new UnknownHostException("not: Name or service not known")).some,
-        Invalid(new UnknownHostException("not: Name or service not known")).some,
-        Invalid(new UnknownHostException("not: Name or service not known")).some,
-        Invalid(new UnknownHostException("not: Name or service not known")).some,
-        Invalid(new UnknownHostException("not: Name or service not known")).some
+        Left(UnknownHostException("not: Name or service not known")).some,
+        Left(UnknownHostException("not: Name or service not known")).some,
+        Left(UnknownHostException("not: Name or service not known")).some,
+        Left(UnknownHostException("not: Name or service not known")).some,
+        Left(UnknownHostException("not: Name or service not known")).some
       )
       val actual = ipLookups.performLookups("not")
       matchIpLookupResult(actual, expected)
@@ -179,17 +196,17 @@ class IpLookupsTest extends Specification {
 
   // needed because == doesn't work on exceptions
   private def matchThrowables[A](
-    actual: Option[Validated[Throwable, A]],
-    expected: Option[Validated[Throwable, A]]
+    actual: Option[Either[IpLookupError, A]],
+    expected: Option[Either[IpLookupError, A]]
   ): Boolean = actual match {
     case None => actual must_== expected
     case Some(r) =>
       r match {
-        case Valid(_)   => actual must_== expected
-        case Invalid(_) => getErrorMessage(actual) must_== getErrorMessage(expected)
+        case Right(_) => actual must_== expected
+        case Left(_)  => getErrorMessage(actual) must_== getErrorMessage(expected)
       }
   }
 
-  private def getErrorMessage[A](e: Option[Validated[Throwable, A]]): Option[Validated[String, A]] =
-    e.map(_.leftMap(_.getMessage))
+  private def getErrorMessage[A](e: Option[Either[IpLookupError, A]]): Option[Either[String, A]] =
+    e.map(_.left.map(_.message))
 }

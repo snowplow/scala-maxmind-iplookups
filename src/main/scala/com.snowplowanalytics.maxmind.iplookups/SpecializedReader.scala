@@ -13,6 +13,7 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
+
 import com.maxmind.geoip2.DatabaseReader
 import cats.syntax.either._
 

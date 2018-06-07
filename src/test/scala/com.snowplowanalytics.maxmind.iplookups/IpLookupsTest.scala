@@ -12,8 +12,9 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import com.maxmind.geoip2.exception.AddressNotFoundException
 import java.net.UnknownHostException
+
+import com.maxmind.geoip2.exception.AddressNotFoundException
 import org.specs2.mutable.Specification
 import cats.syntax.either._
 import cats.syntax.option._

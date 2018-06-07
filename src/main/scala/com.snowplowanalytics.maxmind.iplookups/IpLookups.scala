@@ -14,6 +14,7 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
+
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
@@ -142,8 +143,8 @@ class IpLookups(
     def getLookup(service: Option[SpecializedReader]): Option[Either[Throwable, String]] =
       service.map { s =>
         for {
-          ipA <- ipAddress.right
-          v   <- s.getValue(ipA).right
+          ipA <- ipAddress
+          v   <- s.getValue(ipA)
         } yield v
       }
 

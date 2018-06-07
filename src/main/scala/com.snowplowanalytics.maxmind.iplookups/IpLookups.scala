@@ -18,7 +18,7 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.DatabaseReader
 import com.twitter.util.SynchronizedLruMap
-import scalaz._
+import cats.syntax.either._
 
 import model._
 
@@ -84,16 +84,13 @@ class IpLookups(
 
   // Initialise the cache
   private val lru =
-    if (lruCache > 0)
-      Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
+    if (lruCache > 0) Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
     else None // Of type mutable.Map[String, LookupData]
 
   // Configure the lookup services
   private val geoService = getService(geoFile)
-  private val ispService =
-    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
-  private val orgService =
-    getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
+  private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
+  private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
   private val domainService =
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
   private val connectionTypeService =
@@ -139,11 +136,11 @@ class IpLookups(
     val ipAddress = getIpAddress(ip)
 
     /**
-     * Creates a Validation boxing the result of using a lookup service on the ip
+     * Creates a Either boxing the result of using a lookup service on the ip
      * @param service ISP, domain or connection type LookupService
      * @return the result of the lookup
      */
-    def getLookup(service: Option[SpecializedReader]): Option[Validation[Throwable, String]] =
+    def getLookup(service: Option[SpecializedReader]): Option[Either[Throwable, String]] =
       service.map { s =>
         for {
           ipA <- ipAddress
@@ -151,11 +148,11 @@ class IpLookups(
         } yield v
       }
 
-    val ipLocation: Option[Validation[Throwable, IpLocation]] =
+    val ipLocation: Option[Either[Throwable, IpLocation]] =
       geoService.map { gs =>
         for {
           ipA <- ipAddress
-          v   <- Validation.fromTryCatch(gs.city(ipA))
+          v   <- Either.catchNonFatal(gs.city(ipA))
         } yield IpLocation.apply(v)
       }
 
@@ -190,7 +187,7 @@ class IpLookups(
       result
   }
 
-  /** Transforms a String into an Validation[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): Validation[Throwable, InetAddress] =
-    Validation.fromTryCatch(InetAddress.getByName(ip))
+  /** Transforms a String into an Either[Throwable, InetAddress] */
+  private def getIpAddress(ip: String): Either[Throwable, InetAddress] =
+    Either.catchNonFatal(InetAddress.getByName(ip))
 }

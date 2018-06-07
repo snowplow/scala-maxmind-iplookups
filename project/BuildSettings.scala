@@ -39,7 +39,8 @@ object BuildSettings {
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Xfuture",
-    "-Xlint"
+    "-Xlint",
+    "-Ypartial-unification"
   )
 
   lazy val javaCompilerOptions = Seq(

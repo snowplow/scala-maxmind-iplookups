@@ -47,10 +47,10 @@ val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"), isp
                   domainFile = None, connectionTypeFile = None, memCache = false, lruCache = 20000)
 
 ipLookups.performLookups("213.52.50.8").ipLocation match {
-  case Success(loc) =>
+  case Right(loc) =>
     println(loc.countryCode)   // => "NO"
     println(loc.countryName)   // => "Norway"
-  case Failure(f) =>
+  case Left(f) =>
     println(f)
 }
 ```
@@ -111,11 +111,11 @@ The `performLookups(ip)` method returns a:
 
 ```scala
 case class IpLookupResult(
-  ipLocation: Option[Validation[Throwable, IpLocation]],
-  isp: Option[Validation[Throwable, String]],
-  organization: Option[Validation[Throwable, String]],
-  domain: Option[Validation[Throwable, String]],
-  connectionType: Option[Validation[Throwable, String]]
+  ipLocation: Option[Either[Throwable, IpLocation]],
+  isp: Option[Either[Throwable, String]],
+  organization: Option[Either[Throwable, String]],
+  domain: Option[Either[Throwable, String]],
+  connectionType: Option[Either[Throwable, String]]
 )
 ```
 
@@ -165,20 +165,20 @@ val ipLookups = IpLookups(
 val lookupResult = ipLookups.performLookups("70.46.123.145")
 
 // Geographic lookup
-println(lookupResult.ipLocation).map(_.countryName) // => Some(Success("United States"))
-println(lookupResult.ipLocation).map(_.regionName)  // => Some(Success("Florida"))
+println(lookupResult.ipLocation).map(_.countryName) // => Some(Right("United States"))
+println(lookupResult.ipLocation).map(_.regionName)  // => Some(Right("Florida"))
 
 // ISP lookup
-println(lookupResult.isp) // => Some(Success("FDN Communications"))
+println(lookupResult.isp) // => Some(Right("FDN Communications"))
 
 // Organization lookup
-println(lookupResult.organization) // => Some(Success("DSLAM WAN Allocation"))
+println(lookupResult.organization) // => Some(Right("DSLAM WAN Allocation"))
 
 // Domain lookup
-println(lookupResult.domain) // => Some(Success("nuvox.net"))
+println(lookupResult.domain) // => Some(Right("nuvox.net"))
 
 // Connection type lookup
-println(lookupResult.connectionType) // => Some(Success("Dialup"))
+println(lookupResult.connectionType) // => Some(Right("Dialup"))
 ```
 
 ### LRU cache

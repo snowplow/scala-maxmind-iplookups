@@ -14,14 +14,15 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
+import java.util.{Collections, Map}
 
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.model.CityResponse
 import com.maxmind.geoip2.DatabaseReader
-import com.twitter.util.SynchronizedLruMap
+import cats.effect.Sync
 import cats.syntax.either._
-import cats.effect.IO
-import scalaz._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 
 import model._
 
@@ -36,25 +37,31 @@ object IpLookups {
    * @param domainFile Domain lookup database file
    * @param connectionTypeFile Connection type lookup database file
    * @param memCache Whether to use MaxMind's CHMCache
-   * @param lruCache Maximum size of SynchronizedLruMap cache
+   * @param lruCacheSize Maximum size of LruMap cache
    */
-  def createFromFiles(
+  def createFromFiles[F[_]: Sync](
     geoFile: Option[File] = None,
     ispFile: Option[File] = None,
     domainFile: Option[File] = None,
     connectionTypeFile: Option[File] = None,
     memCache: Boolean = true,
-    lruCache: Int = 10000
-  ): IO[IpLookups] = IO {
-    new IpLookups(
-      geoFile,
-      ispFile,
-      domainFile,
-      connectionTypeFile,
-      memCache,
-      lruCache
-    )
-  }
+    lruCacheSize: Int = 10000
+  ): F[IpLookups] =
+    (
+      if (lruCacheSize >= 0)
+        Sync[F].map(LruMap.create[F, String, IpLookupResult](lruCacheSize))(Some(_))
+      else Sync[F].pure(None)
+    ).flatMap((lruCache) =>
+      Sync[F].delay {
+        new IpLookups(
+          geoFile,
+          ispFile,
+          domainFile,
+          connectionTypeFile,
+          memCache,
+          lruCache
+        )
+    })
 
   /**
    * Alternative constructor taking Strings rather than Files
@@ -64,23 +71,23 @@ object IpLookups {
    * @param domainFile Domain lookup database filepath
    * @param connectionTypeFile Connection type lookup database filepath
    * @param memCache Whether to use MaxMind's CHMCache
-   * @param lruCache Maximum size of SynchronizedLruMap cache
+   * @param lruCacheSize Maximum size of LruMap cache
    */
-  def createFromFilenames(
+  def createFromFilenames[F[_]: Sync](
     geoFile: Option[String] = None,
     ispFile: Option[String] = None,
     domainFile: Option[String] = None,
     connectionTypeFile: Option[String] = None,
     memCache: Boolean = true,
-    lruCache: Int = 10000
-  ): IO[IpLookups] =
+    lruCacheSize: Int = 10000
+  ): F[IpLookups] =
     IpLookups.createFromFiles(
       geoFile.map(new File(_)),
       ispFile.map(new File(_)),
       domainFile.map(new File(_)),
       connectionTypeFile.map(new File(_)),
       memCache,
-      lruCache
+      lruCacheSize
     )
 }
 
@@ -98,18 +105,16 @@ object IpLookups {
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
 class IpLookups private (
-  geoFile: Option[File] = None,
-  ispFile: Option[File] = None,
-  domainFile: Option[File] = None,
-  connectionTypeFile: Option[File] = None,
-  memCache: Boolean = true,
-  lruCache: Int = 10000
+  geoFile: Option[File],
+  ispFile: Option[File],
+  domainFile: Option[File],
+  connectionTypeFile: Option[File],
+  memCache: Boolean,
+  lruCache: Option[LruMap[String, IpLookupResult]]
 ) {
 
   // Initialise the cache
-  private val lru =
-    if (lruCache > 0) Some(new SynchronizedLruMap[String, IpLookupResult](lruCache))
-    else None // Of type mutable.Map[String, LookupData]
+  private val lru = lruCache
 
   // Configure the lookup services
   private val geoService = getService(geoFile)
@@ -140,17 +145,17 @@ class IpLookups private (
    * @param service ISP, domain or connection type LookupService
    * @return the result of the lookup
    */
-  private def getLookup(
-    ipAddress: Validation[Throwable, InetAddress],
+  private def getLookup[F[_]: Sync](
+    ipAddress: Either[Throwable, InetAddress],
     service: Option[SpecializedReader]
-  ): IO[Option[Validation[Throwable, String]]] =
+  ): F[Option[Either[Throwable, String]]] =
     (ipAddress, service) match {
-      case (Success(ipA), Some(svc)) =>
-        svc.getValue(ipA).map(Some(_))
-      case (Failure(f), _) =>
-        IO.pure(Some(Failure(f)))
+      case (Right(ipA), Some(svc)) =>
+        Sync[F].map(svc.getValue(ipA))(Some(_))
+      case (Left(f), _) =>
+        Sync[F].pure(Some(Left(f)))
       case _ =>
-        IO.pure(None)
+        Sync[F].pure(None)
     }
 
   /**
@@ -158,20 +163,20 @@ class IpLookups private (
    * as an IpLocation, or None if MaxMind cannot find
    * the location.
    */
-  val performLookups: String => IO[IpLookupResult] = (s: String) =>
+  def performLookups[F[_]: Sync](s: String): F[IpLookupResult] =
     lru
       .map(performLookupsWithLruCache(_, s))
       .getOrElse(performLookupsWithoutLruCache(s))
 
-  private def getLocationLookup(
-    ipAddress: Validation[Throwable, InetAddress]
-  ): IO[Option[Validation[Throwable, IpLocation]]] = (ipAddress, geoService) match {
-    case (Success(ipA), Some(gs)) =>
-      (getCityResponse(gs, ipA)).map(
+  private def getLocationLookup[F[_]: Sync](
+    ipAddress: Either[Throwable, InetAddress]
+  ): F[Option[Either[Throwable, IpLocation]]] = (ipAddress, geoService) match {
+    case (Right(ipA), Some(gs)) =>
+      Sync[F].map(getCityResponse(gs, ipA))(
         (loc) => Some(loc.map(IpLocation(_)))
       )
-    case (Failure(f), _) => IO.pure(Some(Failure(f)))
-    case _               => IO.pure(None)
+    case (Left(f), _) => Sync[F].pure(Some(Left(f)))
+    case _            => Sync[F].pure(None)
   }
 
   /**
@@ -184,7 +189,7 @@ class IpLookups private (
    * @return Tuple containing the results of the
    *         LookupServices
    */
-  private def performLookupsWithoutLruCache(ip: String): IO[IpLookupResult] = {
+  private def performLookupsWithoutLruCache[F[_]: Sync](ip: String): F[IpLookupResult] =
     for {
       ipAddress <- getIpAddress(ip)
 
@@ -194,7 +199,6 @@ class IpLookups private (
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
     } yield IpLookupResult(ipLocation, isp, org, domain, connectionType)
-  }
 
   /**
    * Returns the MaxMind location for this IP address
@@ -207,33 +211,28 @@ class IpLookups private (
    * cache entry could be found), versus an extant cache entry
    * containing None (meaning that the IP address is unknown).
    */
-  private def performLookupsWithLruCache(
-    lru: SynchronizedLruMap[String, IpLookupResult],
+  private def performLookupsWithLruCache[F[_]: Sync](
+    lru: LruMap[String, IpLookupResult],
     ip: String
-  ): IO[IpLookupResult] = {
-    val lookupAndCache = for {
-      result <- performLookupsWithoutLruCache(ip)
-      _      <- putFromMap(lru, ip, result)
-    } yield result
+  ): F[IpLookupResult] = {
+    val lookupAndCache =
+      performLookupsWithoutLruCache(ip).flatMap(result => {
+        LruMap.put(lru, ip, result).map(_ => result)
+      })
 
-    getFromMap(lru, ip)
-      .map(_.map(IO.pure(_)))
+    LruMap
+      .get(lru, ip)
+      .map(_.map(Sync[F].pure(_)))
       .flatMap(_.getOrElse(lookupAndCache))
   }
 
-  /** Transforms a String into an Validation[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): IO[Validation[Throwable, InetAddress]] =
-    IO { Validation.fromTryCatch(InetAddress.getByName(ip)) }
+  /** Transforms a String into an Either[Throwable, InetAddress] */
+  private def getIpAddress[F[_]: Sync](ip: String): F[Either[Throwable, InetAddress]] =
+    Sync[F].delay { Either.catchNonFatal(InetAddress.getByName(ip)) }
 
-  private def getCityResponse(
+  private def getCityResponse[F[_]: Sync](
     gs: DatabaseReader,
     ipAddress: InetAddress
-  ): IO[Validation[Throwable, CityResponse]] =
-    IO { Validation.fromTryCatch(gs.city(ipAddress)) }
-
-  private def getFromMap[K, V](map: SynchronizedLruMap[K, V], k: K): IO[Option[V]] =
-    IO { map.get(k) }
-
-  private def putFromMap[K, V](map: SynchronizedLruMap[K, V], k: K, v: V): IO[Unit] =
-    IO { map.put(k, v) }
+  ): F[Either[Throwable, CityResponse]] =
+    Sync[F].delay { Either.catchNonFatal(gs.city(ipAddress)) }
 }

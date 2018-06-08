@@ -13,10 +13,8 @@
 import sbt._
 
 object Dependencies {
-  val maxmind    = "com.maxmind.geoip2" %  "geoip2"          % "2.11.0"
-  val collUtils  = "com.twitter"        %% "util-collection" % "18.2.0"
-  val scalaz     = "org.scalaz"         %% "scalaz-core"     % "7.0.9"
-  val catsEffect = "org.typelevel"      %% "cats-effect"     % "0.10.1"
-  val cats       = "org.typelevel"      %% "cats-core"       % "1.1.0"
-  val specs2     = "org.specs2"         %% "specs2-core"     % "4.0.3"  % "test"
+  val maxmind       = "com.maxmind.geoip2" %  "geoip2"               % "2.11.0"
+  val catsEffect    = "org.typelevel"      %% "cats-effect"          % "0.10.1"
+  val cats          = "org.typelevel"      %% "cats-core"            % "1.1.0"
+  val specs2        = "org.specs2"         %% "specs2-core"          % "4.0.3"  % "test"
 }

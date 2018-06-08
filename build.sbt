@@ -31,7 +31,7 @@ lazy val root = project
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,
-      Dependencies.collUtils,
+      Dependencies.catsEffect,
       Dependencies.cats,
       Dependencies.scalaz,
       Dependencies.specs2,

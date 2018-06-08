@@ -41,17 +41,28 @@ Here is a simple usage example, performing just a geographic lookup and not the 
 connection type lookups:
 
 ```scala
+import cats.effect.IO
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
-val ipLookups = IpLookups(geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"), ispFile = None,
-                  domainFile = None, connectionTypeFile = None, memCache = false, lruCache = 20000)
+val result = (for {
+  ipLookups <- IpLookups.createFromFilenames[IO](
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    ispFile = None,
+    domainFile = None,
+    connectionTypeFile = None,
+    memCache = false,
+    lruCacheSize = 20000
+  )
 
-ipLookups.performLookups("213.52.50.8").ipLocation match {
-  case Right(loc) =>
-    println(loc.countryCode)   // => "NO"
-    println(loc.countryName)   // => "Norway"
-  case Left(f) =>
-    println(f)
+  lookup <- ipLookups.performLookups[IO]("175.16.199.0")
+} yield lookup).unsafeRunSync()
+
+result.ipLocation match {
+  case Some(Right(loc)) =>
+    println(loc.countryCode)   // => "CN"
+    println(loc.countryName)   // => "China"
+  case _ =>
+    println("Lookup failed")
 }
 ```
 

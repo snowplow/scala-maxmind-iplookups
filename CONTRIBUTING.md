@@ -11,7 +11,8 @@ First and foremost, please do not log an issue if you are asking a general quest
 go through our Discourse forum: https://discourse.snowplowanalytics.com/.
 
 Posting your problem there ensures more people will see it and you should get support faster than creating a new issue on
-GitHub. Please do create a new issue on GitHub if you think you've found a bug though!
+GitHub. Please do create a new issue on GitHub if you think you've found a bug or if you would like to submit a feature
+request though!
 
 ### Gitter
 

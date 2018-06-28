@@ -24,6 +24,7 @@ import cats.syntax.either._
 final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
   def getValue[F[_]: Sync](ip: InetAddress): F[Either[Throwable, String]] =
     Sync[F].delay { Either.catchNonFatal(f(db, ip)) }
+}
 
 object ReaderFunctions {
   type ReaderFunction = (DatabaseReader, InetAddress) => String

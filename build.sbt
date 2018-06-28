@@ -33,8 +33,8 @@ lazy val root = project
       Dependencies.maxmind,
       Dependencies.catsEffect,
       Dependencies.cats,
-      Dependencies.scalaz,
-      Dependencies.specs2,
-      Dependencies.catsEffect
+      Dependencies.lruMap,
+      Dependencies.scalaCheck,
+      Dependencies.specs2
     )
   )

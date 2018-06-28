@@ -16,6 +16,7 @@ import java.net.UnknownHostException
 
 import com.maxmind.geoip2.exception.AddressNotFoundException
 import org.specs2.mutable.Specification
+import org.specs2.specification.Tables
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.effect.IO
@@ -24,7 +25,7 @@ import model._
 
 object IpLookupsTest {
 
-  def ipLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups = {
+  def ipLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] = {
     val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
     val ispFile            = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
     val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
@@ -109,7 +110,7 @@ object IpLookupsTest {
   )
 }
 
-class IpLookupsTest extends Specification {
+class IpLookupsTest extends Specification with Tables {
 
   "Looking up some IP address locations should match their expected locations" should {
 
@@ -135,7 +136,7 @@ class IpLookupsTest extends Specification {
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
-            val actual = ipLookups.performLookups[IO](ip).unsafeRunSync()
+            val actual = ipLookups.performLookups(ip).unsafeRunSync
             matchIpLookupResult(actual, expected)
           }
       }
@@ -150,14 +151,14 @@ class IpLookupsTest extends Specification {
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some
       )
-      val actual = ipLookups.performLookups[IO]("not").unsafeRunSync
+      val actual = ipLookups.performLookups("not").unsafeRunSync
       matchIpLookupResult(actual, expected)
     }
 
     "providing no files should return Nones" in {
       val actual = (for {
         ipLookups <- IpLookups.createFromFiles[IO](None, None, None, None, true, 0)
-        res       <- ipLookups.performLookups[IO]("67.43.156.0")
+        res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync
       val expected = IpLookupResult(None, None, None, None, None)
       matchIpLookupResult(actual, expected)
@@ -165,16 +166,13 @@ class IpLookupsTest extends Specification {
   }
 
   private def matchIpLookupResult(actual: IpLookupResult, expected: IpLookupResult) = {
-    s"have iplocation = ${actual.ipLocation}" in {
-      matchThrowables(actual.ipLocation, expected.ipLocation)
-    }
-    s"have isp = ${actual.isp}" in { matchThrowables(actual.isp, expected.isp) }
-    s"have org = ${actual.organization}" in {
-      matchThrowables(actual.organization, expected.organization)
-    }
-    s"have domain = ${actual.domain}" in { matchThrowables(actual.domain, expected.domain) }
-    s"have net speed = ${actual.connectionType}" in {
-      matchThrowables(actual.connectionType, expected.connectionType)
+    "field" | "expected" | "actual" |>
+      "iplocation" ! expected.ipLocation ! actual.ipLocation |
+      "isp" ! expected.isp ! actual.isp |
+      "organization" ! expected.organization ! actual.organization |
+      "domain" ! expected.domain ! actual.domain |
+      "connection type" ! expected.connectionType ! actual.connectionType | { (_, e, a) =>
+      matchThrowables(e, a)
     }
   }
 

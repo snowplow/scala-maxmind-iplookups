@@ -1,3 +1,21 @@
+Version 0.5.0 (2018-06-29)
+--------------------------
+Add Gitter badge (#57)
+Fix typo in .travis.yml (#59)
+Remove vagrant setup (#60)
+Integrate scalafmt (#66)
+Publish scaladoc to gh-pages (#40)
+Integrate code coverage reports (#65)
+Remove cruft from .gitignore (#75)
+Switch from scalaz to cats (#61)
+Add issue template (#64)
+Add pull request template (#80)
+Add CONTRIBUTING.md (#76)
+Fix travis badge url (#83)
+Encapsulate side-effects into cats-effect IO (#63)
+Refactor test suite (#17)
+Move away from Twitter's util-collection (#42)
+
 Version 0.4.0 (2018-04-04)
 --------------------------
 Upgrade to Maxmind's GeoIP2 databases (#35)

@@ -27,7 +27,8 @@ object model {
     timezone: Option[String],
     postalCode: Option[String],
     metroCode: Option[Int],
-    regionName: Option[String]
+    regionName: Option[String],
+    isInEuropeanUnion: Boolean
   )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
@@ -49,7 +50,8 @@ object model {
         timezone = Option(cityResponse.getLocation.getTimeZone),
         postalCode = Option(cityResponse.getPostal.getCode),
         metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),
-        regionName = Option(cityResponse.getMostSpecificSubdivision.getName)
+        regionName = Option(cityResponse.getMostSpecificSubdivision.getName),
+        isInEuropeanUnion = cityResponse.getCountry.isInEuropeanUnion
       )
   }
 

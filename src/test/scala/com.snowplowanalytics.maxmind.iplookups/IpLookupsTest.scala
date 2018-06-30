@@ -55,7 +55,8 @@ object IpLookupsTest {
         timezone = Some("Asia/Harbin"),
         postalCode = None,
         metroCode = None,
-        regionName = Some("Jilin Sheng")
+        regionName = Some("Jilin Sheng"),
+        isInEuropeanUnion = false
       ).asRight.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
@@ -73,7 +74,8 @@ object IpLookupsTest {
         timezone = Some("America/Los_Angeles"),
         postalCode = Some("98354"),
         metroCode = Some(819),
-        regionName = Some("Washington")
+        regionName = Some("Washington"),
+        isInEuropeanUnion = false
       ).asRight.some,
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
@@ -91,7 +93,8 @@ object IpLookupsTest {
         timezone = Some("Asia/Thimphu"),
         postalCode = None,
         metroCode = None,
-        regionName = None
+        regionName = None,
+        isInEuropeanUnion = false
       ).asRight.some,
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,

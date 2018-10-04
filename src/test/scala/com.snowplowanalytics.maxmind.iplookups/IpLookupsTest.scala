@@ -148,11 +148,11 @@ class IpLookupsTest extends Specification with Tables {
     "providing an invalid ip should fail" in {
       val ipLookups = ipLookupsFromFiles(true, 0)
       val expected = IpLookupResult(
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some
+        new UnknownHostException().asLeft.some,
+        new UnknownHostException().asLeft.some,
+        new UnknownHostException().asLeft.some,
+        new UnknownHostException().asLeft.some,
+        new UnknownHostException().asLeft.some
       )
       val actual = ipLookups.performLookups("not").unsafeRunSync
       matchIpLookupResult(actual, expected)
@@ -188,10 +188,11 @@ class IpLookupsTest extends Specification with Tables {
     case Some(r) =>
       r match {
         case Right(_) => actual must_== expected
-        case Left(_)  => getErrorMessage(actual) must_== getErrorMessage(expected)
+        case Left(_)  => getErrorClass(actual) must_== getErrorClass(expected)
       }
   }
 
-  private def getErrorMessage[A](e: Option[Either[Throwable, A]]): Option[Either[String, A]] =
-    e.map(_.leftMap(_.getMessage))
+  private def getErrorClass[A](
+    e: Option[Either[Throwable, A]]): Option[Either[Class[_ <: Throwable], A]] =
+    e.map(_.leftMap(_.getClass))
 }

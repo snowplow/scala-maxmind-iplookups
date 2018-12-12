@@ -197,10 +197,6 @@ println(lookupResult.connectionType) // => Some(Right("Dialup"))
 
 We recommend trying different LRU cache sizes to see what works best for you.
 
-Please note that the LRU cache is **not** thread-safe ([see this note][twitter-lru-cache]). Switch
-it off if you are thinking about performing ip lookups with the same `IpLookups` instance across
-threads.
-
 ## Building etc
 
 Assuming you already have SBT installed:

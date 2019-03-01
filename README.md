@@ -153,7 +153,9 @@ case class IpLocation(
   postalCode: Option[String],
   metroCode: Option[Int],
   regionName: Option[String],
-  isInEuropeanUnion: Boolean
+  isInEuropeanUnion: Boolean,
+  continent: String,
+  accuracyRadius: Int
 )
 ```
 

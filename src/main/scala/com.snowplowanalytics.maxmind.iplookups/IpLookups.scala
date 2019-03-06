@@ -14,7 +14,6 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
-import java.util.{Collections, Map}
 
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.model.CityResponse

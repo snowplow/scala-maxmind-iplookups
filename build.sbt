@@ -19,8 +19,8 @@ lazy val root = project
     name := "scala-maxmind-iplookups",
     version := "0.5.0",
     description := "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion := "2.12.6",
-    crossScalaVersions := Seq("2.11.12", "2.12.6"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )

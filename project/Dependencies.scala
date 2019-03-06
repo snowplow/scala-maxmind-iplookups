@@ -18,5 +18,5 @@ object Dependencies {
   val cats          = "org.typelevel"         %% "cats-core"            % "1.6.0"
   val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.3.0-M2"
   val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.0" % Test
-  val specs2        = "org.specs2"            %% "specs2-core"          % "4.0.3"  % Test
+  val specs2        = "org.specs2"            %% "specs2-core"          % "4.4.1"  % Test
 }

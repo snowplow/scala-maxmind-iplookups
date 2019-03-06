@@ -15,15 +15,14 @@ package com.snowplowanalytics.maxmind.iplookups
 import java.io.File
 import java.net.InetAddress
 
-import com.maxmind.db.CHMCache
-import com.maxmind.geoip2.model.CityResponse
-import com.maxmind.geoip2.DatabaseReader
-import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
+import cats.{Eval, Monad}
 import cats.effect.Sync
-import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
+import com.maxmind.db.CHMCache
+import com.maxmind.geoip2.DatabaseReader
+import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
 import model._
 
@@ -32,7 +31,6 @@ object IpLookups {
 
   /**
    * Create an IpLookups from Files
-   *
    * @param geoFile Geographic lookup database file
    * @param ispFile ISP lookup database file
    * @param domainFile Domain lookup database file
@@ -49,10 +47,12 @@ object IpLookups {
     lruCacheSize: Int = 10000
   )(implicit CLM: CreateLruMap[F, String, IpLookupResult]): F[IpLookups[F]] =
     (
-      if (lruCacheSize > 0)
+      if (lruCacheSize > 0) {
         CLM.create(lruCacheSize).map(_.some)
-      else Sync[F].pure(None)
-    ).flatMap((lruCache) =>
+      } else {
+        Sync[F].pure(None)
+      }
+    ).flatMap { lruCache =>
       Sync[F].delay {
         new IpLookups(
           geoFile,
@@ -62,11 +62,47 @@ object IpLookups {
           memCache,
           lruCache
         )
-    })
+      }
+    }
 
   /**
-   * Alternative constructor taking Strings rather than Files
-   *
+   * Create an unsafe IpLookups from Files
+   * @param geoFile Geographic lookup database file
+   * @param ispFile ISP lookup database file
+   * @param domainFile Domain lookup database file
+   * @param connectionTypeFile Connection type lookup database file
+   * @param memCache Whether to use MaxMind's CHMCache
+   * @param lruCacheSize Maximum size of LruMap cache
+   */
+  def unsafeCreateFromFiles(
+    geoFile: Option[File] = None,
+    ispFile: Option[File] = None,
+    domainFile: Option[File] = None,
+    connectionTypeFile: Option[File] = None,
+    memCache: Boolean = true,
+    lruCacheSize: Int = 10000
+  )(implicit CLM: CreateLruMap[Eval, String, IpLookupResult]): Eval[IpLookups[Eval]] =
+    (
+      if (lruCacheSize > 0) {
+        CLM.create(lruCacheSize).map(_.some)
+      } else {
+        Eval.now(None)
+      }
+    ).flatMap { lruCache =>
+      Eval.later {
+        new IpLookups(
+          geoFile,
+          ispFile,
+          domainFile,
+          connectionTypeFile,
+          memCache,
+          lruCache
+        )
+      }
+    }
+
+  /**
+   * Alternative constructor taking filenames rather than Files
    * @param geoFile Geographic lookup database filepath
    * @param ispFile ISP lookup database filepath
    * @param domainFile Domain lookup database filepath
@@ -90,37 +126,62 @@ object IpLookups {
       memCache,
       lruCacheSize
     )
+
+  /**
+   * Alternative unsafe constructor taking filenames rather than Files
+   * @param geoFile Geographic lookup database filepath
+   * @param ispFile ISP lookup database filepath
+   * @param domainFile Domain lookup database filepath
+   * @param connectionTypeFile Connection type lookup database filepath
+   * @param memCache Whether to use MaxMind's CHMCache
+   * @param lruCacheSize Maximum size of LruMap cache
+   */
+  def unsafeCreateFromFilenames(
+    geoFile: Option[String] = None,
+    ispFile: Option[String] = None,
+    domainFile: Option[String] = None,
+    connectionTypeFile: Option[String] = None,
+    memCache: Boolean = true,
+    lruCacheSize: Int = 10000
+  ): Eval[IpLookups[Eval]] =
+    IpLookups.unsafeCreateFromFiles(
+      geoFile.map(new File(_)),
+      ispFile.map(new File(_)),
+      domainFile.map(new File(_)),
+      connectionTypeFile.map(new File(_)),
+      memCache,
+      lruCacheSize
+    )
 }
 
 /**
  * IpLookups is a Scala wrapper around MaxMind's own DatabaseReader Java class.
- *
  * Two main differences:
- *
  * 1. getLocation(ipS: String) now returns an IpLocation
  *    case class, not a raw MaxMind Location
  * 2. IpLookups introduces an LRU cache to improve
  *    lookup performance
- *
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
-class IpLookups[F[_]: Sync] private (
+class IpLookups[F[_]: Monad] private (
   geoFile: Option[File],
   ispFile: Option[File],
   domainFile: Option[File],
   connectionTypeFile: Option[File],
   memCache: Boolean,
   lru: Option[LruMap[F, String, IpLookupResult]]
-) {
+)(
+  implicit
+  SR: SpecializedReader[F],
+  IAR: IpAddressResolver[F]) {
   // Configure the lookup services
-  private val geoService = getService(geoFile)
-  private val ispService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.isp))
-  private val orgService = getService(ispFile).map(SpecializedReader(_, ReaderFunctions.org))
-  private val domainService =
-    getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
+  private val geoService    = getService(geoFile)
+  private val ispService    = getService(ispFile).map((_, ReaderFunctions.isp))
+  private val orgService    = getService(ispFile).map((_, ReaderFunctions.org))
+  private val domainService = getService(domainFile).map((_, ReaderFunctions.domain))
   private val connectionTypeService =
-    getService(connectionTypeFile).map(SpecializedReader(_, ReaderFunctions.connectionType))
+    getService(connectionTypeFile).map((_, ReaderFunctions.connectionType))
 
   /**
    * Get a LookupService from a database file
@@ -144,15 +205,15 @@ class IpLookups[F[_]: Sync] private (
    */
   private def getLookup(
     ipAddress: Either[Throwable, InetAddress],
-    service: Option[SpecializedReader]
+    service: Option[(DatabaseReader, ReaderFunction)]
   ): F[Option[Either[Throwable, String]]] =
     (ipAddress, service) match {
-      case (Right(ipA), Some(svc)) =>
-        Sync[F].map(svc.getValue(ipA))(Some(_))
+      case (Right(ipA), Some((db, f))) =>
+        SR.getValue(f, db, ipA).map(_.some)
       case (Left(f), _) =>
-        Sync[F].pure(Some(Left(f)))
+        Monad[F].pure(Some(Left(f)))
       case _ =>
-        Sync[F].pure(None)
+        Monad[F].pure(None)
     }
 
   /**
@@ -169,11 +230,10 @@ class IpLookups[F[_]: Sync] private (
     ipAddress: Either[Throwable, InetAddress]
   ): F[Option[Either[Throwable, IpLocation]]] = (ipAddress, geoService) match {
     case (Right(ipA), Some(gs)) =>
-      Sync[F].map(getCityResponse(gs, ipA))(
-        (loc) => Some(loc.map(IpLocation(_)))
-      )
-    case (Left(f), _) => Sync[F].pure(Some(Left(f)))
-    case _            => Sync[F].pure(None)
+      SR.getCityValue(gs, ipA)
+        .map(loc => loc.map(IpLocation(_)).some)
+    case (Left(f), _) => Monad[F].pure(Some(Left(f)))
+    case _            => Monad[F].pure(None)
   }
 
   /**
@@ -188,7 +248,7 @@ class IpLookups[F[_]: Sync] private (
    */
   private def performLookupsWithoutLruCache(ip: String): F[IpLookupResult] =
     for {
-      ipAddress <- getIpAddress(ip)
+      ipAddress <- IAR.resolve(ip)
 
       ipLocation     <- getLocationLookup(ipAddress)
       isp            <- getLookup(ipAddress, ispService)
@@ -219,17 +279,7 @@ class IpLookups[F[_]: Sync] private (
 
     lru
       .get(ip)
-      .map(_.map(Sync[F].pure(_)))
+      .map(_.map(Monad[F].pure(_)))
       .flatMap(_.getOrElse(lookupAndCache))
   }
-
-  /** Transforms a String into an Either[Throwable, InetAddress] */
-  private def getIpAddress(ip: String): F[Either[Throwable, InetAddress]] =
-    Sync[F].delay { Either.catchNonFatal(InetAddress.getByName(ip)) }
-
-  private def getCityResponse(
-    gs: DatabaseReader,
-    ipAddress: InetAddress
-  ): F[Either[Throwable, CityResponse]] =
-    Sync[F].delay { Either.catchNonFatal(gs.city(ipAddress)) }
 }

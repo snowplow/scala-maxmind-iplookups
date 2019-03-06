@@ -14,21 +14,61 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
 
-import com.maxmind.geoip2.DatabaseReader
-import cats.syntax.either._
-
-import com.snowplowanalytics.maxmind.iplookups.ReaderFunctions.ReaderFunction
+import cats.Eval
 import cats.effect.Sync
 import cats.syntax.either._
+import com.maxmind.geoip2.DatabaseReader
+import com.maxmind.geoip2.model.CityResponse
 
-final case class SpecializedReader(db: DatabaseReader, f: ReaderFunction) {
-  def getValue[F[_]: Sync](ip: InetAddress): F[Either[Throwable, String]] =
-    Sync[F].delay { Either.catchNonFatal(f(db, ip)) }
+import model._
+
+/** Data type letting you read data in maxmind's DatabaseReader. */
+sealed trait SpecializedReader[F[_]] {
+  def getValue(
+    f: ReaderFunction,
+    db: DatabaseReader,
+    ip: InetAddress
+  ): F[Either[Throwable, String]]
+
+  def getCityValue(
+    db: DatabaseReader,
+    ip: InetAddress
+  ): F[Either[Throwable, CityResponse]]
+}
+
+object SpecializedReader {
+  implicit def specializedReader[F[_]: Sync]: SpecializedReader[F] = new SpecializedReader[F] {
+    def getValue(
+      f: ReaderFunction,
+      db: DatabaseReader,
+      ip: InetAddress
+    ): F[Either[Throwable, String]] =
+      Sync[F].delay { Either.catchNonFatal(f(db, ip)) }
+
+    def getCityValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): F[Either[Throwable, CityResponse]] =
+      Sync[F].delay { Either.catchNonFatal(db.city(ip)) }
+  }
+
+  implicit def evalSpecializedReader: SpecializedReader[Eval] = new SpecializedReader[Eval] {
+    def getValue(
+      f: ReaderFunction,
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Eval[Either[Throwable, String]] =
+      Eval.later { Either.catchNonFatal(f(db, ip)) }
+
+    def getCityValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Eval[Either[Throwable, CityResponse]] =
+      Eval.later { Either.catchNonFatal(db.city(ip)) }
+  }
 }
 
 object ReaderFunctions {
-  type ReaderFunction = (DatabaseReader, InetAddress) => String
-
   val isp    = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getIsp
   val org    = (db: DatabaseReader, ip: InetAddress) => db.isp(ip).getOrganization
   val domain = (db: DatabaseReader, ip: InetAddress) => db.domain(ip).getDomain

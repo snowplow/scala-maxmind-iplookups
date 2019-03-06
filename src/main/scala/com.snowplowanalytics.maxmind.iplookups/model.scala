@@ -12,9 +12,13 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
+import java.net.InetAddress
+
+import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.CityResponse
 
 object model {
+  type ReaderFunction = (DatabaseReader, InetAddress) => String
 
   /** A case class wrapper around the MaxMind CityResponse class. */
   final case class IpLocation(

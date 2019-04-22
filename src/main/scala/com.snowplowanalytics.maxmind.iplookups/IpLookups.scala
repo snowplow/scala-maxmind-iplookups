@@ -26,8 +26,7 @@ import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
 import model._
 
-/** Companion object to hold alternative constructors. */
-object IpLookups {
+trait CreateIpLookups[F[_]] {
 
   /**
    * Create an IpLookups from Files
@@ -38,71 +37,17 @@ object IpLookups {
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
-  def createFromFiles[F[_]: Sync](
+  def createFromFiles(
     geoFile: Option[File] = None,
     ispFile: Option[File] = None,
     domainFile: Option[File] = None,
     connectionTypeFile: Option[File] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
-  )(implicit CLM: CreateLruMap[F, String, IpLookupResult]): F[IpLookups[F]] =
-    (
-      if (lruCacheSize > 0) {
-        CLM.create(lruCacheSize).map(_.some)
-      } else {
-        Sync[F].pure(None)
-      }
-    ).flatMap { lruCache =>
-      Sync[F].delay {
-        new IpLookups(
-          geoFile,
-          ispFile,
-          domainFile,
-          connectionTypeFile,
-          memCache,
-          lruCache
-        )
-      }
-    }
+  ): F[IpLookups[F]]
 
   /**
-   * Create an unsafe IpLookups from Files
-   * @param geoFile Geographic lookup database file
-   * @param ispFile ISP lookup database file
-   * @param domainFile Domain lookup database file
-   * @param connectionTypeFile Connection type lookup database file
-   * @param memCache Whether to use MaxMind's CHMCache
-   * @param lruCacheSize Maximum size of LruMap cache
-   */
-  def unsafeCreateFromFiles(
-    geoFile: Option[File] = None,
-    ispFile: Option[File] = None,
-    domainFile: Option[File] = None,
-    connectionTypeFile: Option[File] = None,
-    memCache: Boolean = true,
-    lruCacheSize: Int = 10000
-  )(implicit CLM: CreateLruMap[Eval, String, IpLookupResult]): Eval[IpLookups[Eval]] =
-    (
-      if (lruCacheSize > 0) {
-        CLM.create(lruCacheSize).map(_.some)
-      } else {
-        Eval.now(None)
-      }
-    ).flatMap { lruCache =>
-      Eval.later {
-        new IpLookups(
-          geoFile,
-          ispFile,
-          domainFile,
-          connectionTypeFile,
-          memCache,
-          lruCache
-        )
-      }
-    }
-
-  /**
-   * Alternative constructor taking filenames rather than Files
+   * Alternative constructor taking filenames rather than files
    * @param geoFile Geographic lookup database filepath
    * @param ispFile ISP lookup database filepath
    * @param domainFile Domain lookup database filepath
@@ -110,48 +55,87 @@ object IpLookups {
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
-  def createFromFilenames[F[_]: Sync](
+  def createFromFilenames(
     geoFile: Option[String] = None,
     ispFile: Option[String] = None,
     domainFile: Option[String] = None,
     connectionTypeFile: Option[String] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
-  ): F[IpLookups[F]] =
-    IpLookups.createFromFiles(
-      geoFile.map(new File(_)),
-      ispFile.map(new File(_)),
-      domainFile.map(new File(_)),
-      connectionTypeFile.map(new File(_)),
-      memCache,
-      lruCacheSize
-    )
+  ): F[IpLookups[F]] = createFromFiles(
+    geoFile.map(new File(_)),
+    ispFile.map(new File(_)),
+    domainFile.map(new File(_)),
+    connectionTypeFile.map(new File(_)),
+    memCache,
+    lruCacheSize
+  )
+}
 
-  /**
-   * Alternative unsafe constructor taking filenames rather than Files
-   * @param geoFile Geographic lookup database filepath
-   * @param ispFile ISP lookup database filepath
-   * @param domainFile Domain lookup database filepath
-   * @param connectionTypeFile Connection type lookup database filepath
-   * @param memCache Whether to use MaxMind's CHMCache
-   * @param lruCacheSize Maximum size of LruMap cache
-   */
-  def unsafeCreateFromFilenames(
-    geoFile: Option[String] = None,
-    ispFile: Option[String] = None,
-    domainFile: Option[String] = None,
-    connectionTypeFile: Option[String] = None,
-    memCache: Boolean = true,
-    lruCacheSize: Int = 10000
-  ): Eval[IpLookups[Eval]] =
-    IpLookups.unsafeCreateFromFiles(
-      geoFile.map(new File(_)),
-      ispFile.map(new File(_)),
-      domainFile.map(new File(_)),
-      connectionTypeFile.map(new File(_)),
-      memCache,
-      lruCacheSize
-    )
+object CreateIpLookups {
+  def apply[F[_]](implicit ev: CreateIpLookups[F]): CreateIpLookups[F] = ev
+
+  implicit def syncCreateIpLookups[F[_]: Sync](
+    implicit CLM: CreateLruMap[F, String, IpLookupResult]
+  ): CreateIpLookups[F] = new CreateIpLookups[F] {
+    override def createFromFiles(
+      geoFile: Option[File] = None,
+      ispFile: Option[File] = None,
+      domainFile: Option[File] = None,
+      connectionTypeFile: Option[File] = None,
+      memCache: Boolean = true,
+      lruCacheSize: Int = 10000
+    ): F[IpLookups[F]] =
+      (
+        if (lruCacheSize > 0) {
+          CLM.create(lruCacheSize).map(_.some)
+        } else {
+          Sync[F].pure(None)
+        }
+      ).flatMap { lruCache =>
+        Sync[F].delay {
+          new IpLookups(
+            geoFile,
+            ispFile,
+            domainFile,
+            connectionTypeFile,
+            memCache,
+            lruCache
+          )
+        }
+      }
+  }
+
+  implicit def evalCreateIpLookups(
+    implicit CLM: CreateLruMap[Eval, String, IpLookupResult]
+  ): CreateIpLookups[Eval] = new CreateIpLookups[Eval] {
+    override def createFromFiles(
+      geoFile: Option[File] = None,
+      ispFile: Option[File] = None,
+      domainFile: Option[File] = None,
+      connectionTypeFile: Option[File] = None,
+      memCache: Boolean = true,
+      lruCacheSize: Int = 10000
+    ): Eval[IpLookups[Eval]] =
+      (
+        if (lruCacheSize > 0) {
+          CLM.create(lruCacheSize).map(_.some)
+        } else {
+          Eval.now(None)
+        }
+      ).flatMap { lruCache =>
+        Eval.later {
+          new IpLookups(
+            geoFile,
+            ispFile,
+            domainFile,
+            connectionTypeFile,
+            memCache,
+            lruCache
+          )
+        }
+      }
+  }
 }
 
 /**
@@ -164,7 +148,7 @@ object IpLookups {
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpLookups.java
  */
-class IpLookups[F[_]: Monad] private (
+class IpLookups[F[_]: Monad] private[iplookups] (
   geoFile: Option[File],
   ispFile: Option[File],
   domainFile: Option[File],

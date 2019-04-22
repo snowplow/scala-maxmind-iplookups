@@ -31,8 +31,8 @@ object IpLookupsTest {
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
   def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
-    IpLookups
-      .createFromFilenames[IO](
+    CreateIpLookups[IO]
+      .createFromFilenames(
         Some(geoFile),
         Some(ispFile),
         Some(domainFile),
@@ -43,8 +43,8 @@ object IpLookupsTest {
       .unsafeRunSync
 
   def evalIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Eval] =
-    IpLookups
-      .unsafeCreateFromFilenames(
+    CreateIpLookups[Eval]
+      .createFromFilenames(
         Some(geoFile),
         Some(ispFile),
         Some(domainFile),
@@ -191,11 +191,11 @@ class IpLookupsTest extends Specification with Tables {
 
     "providing no files should return Nones" in {
       val ioActual = (for {
-        ipLookups <- IpLookups.createFromFiles[IO](None, None, None, None, true, 0)
+        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync
       val evalActual = (for {
-        ipLookups <- IpLookups.unsafeCreateFromFiles(None, None, None, None, true, 0)
+        ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).value
       val expected = IpLookupResult(None, None, None, None, None)

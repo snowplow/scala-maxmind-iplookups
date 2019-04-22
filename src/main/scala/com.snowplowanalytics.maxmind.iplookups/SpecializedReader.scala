@@ -14,7 +14,7 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 import cats.syntax.either._
 import com.maxmind.geoip2.DatabaseReader
@@ -37,7 +37,7 @@ sealed trait SpecializedReader[F[_]] {
 }
 
 object SpecializedReader {
-  implicit def specializedReader[F[_]: Sync]: SpecializedReader[F] = new SpecializedReader[F] {
+  implicit def synSpecializedReader[F[_]: Sync]: SpecializedReader[F] = new SpecializedReader[F] {
     def getValue(
       f: ReaderFunction,
       db: DatabaseReader,
@@ -65,6 +65,21 @@ object SpecializedReader {
       ip: InetAddress
     ): Eval[Either[Throwable, CityResponse]] =
       Eval.later { Either.catchNonFatal(db.city(ip)) }
+  }
+
+  implicit def idSpecializedReader: SpecializedReader[Id] = new SpecializedReader[Id] {
+    def getValue(
+      f: ReaderFunction,
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Id[Either[Throwable, String]] =
+      Either.catchNonFatal(f(db, ip))
+
+    def getCityValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Id[Either[Throwable, CityResponse]] =
+      Either.catchNonFatal(db.city(ip))
   }
 }
 

@@ -14,7 +14,7 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.Sync
 import cats.syntax.either._
 
@@ -27,7 +27,7 @@ sealed trait IpAddressResolver[F[_]] {
 }
 
 object IpAddressResolver {
-  implicit def ipAddressResolver[F[_]: Sync]: IpAddressResolver[F] = new IpAddressResolver[F] {
+  implicit def syncIpAddressResolver[F[_]: Sync]: IpAddressResolver[F] = new IpAddressResolver[F] {
     def resolve(ip: String): F[Either[Throwable, InetAddress]] =
       Sync[F].delay { getIpAddress(ip) }
   }
@@ -35,5 +35,10 @@ object IpAddressResolver {
   implicit def evalIpAddressResolver: IpAddressResolver[Eval] = new IpAddressResolver[Eval] {
     def resolve(ip: String): Eval[Either[Throwable, InetAddress]] =
       Eval.later { getIpAddress(ip) }
+  }
+
+  implicit def idIpAddressResolver: IpAddressResolver[Id] = new IpAddressResolver[Id] {
+    def resolve(ip: String): Id[Either[Throwable, InetAddress]] =
+      getIpAddress(ip)
   }
 }

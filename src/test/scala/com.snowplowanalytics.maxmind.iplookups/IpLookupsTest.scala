@@ -14,7 +14,7 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
 
-import cats.Eval
+import cats.{Eval, Id}
 import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
@@ -53,6 +53,17 @@ object IpLookupsTest {
         lruCache
       )
       .value
+
+  def idIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Id] =
+    CreateIpLookups[Id]
+      .createFromFilenames(
+        Some(geoFile),
+        Some(ispFile),
+        Some(domainFile),
+        Some(connectionTypeFile),
+        memCache,
+        lruCache
+      )
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
@@ -154,14 +165,17 @@ class IpLookupsTest extends Specification with Tables {
 
       val ioIpLookups   = ioIpLookupsFromFiles(memCache, lruCache)
       val evalIpLookups = evalIpLookupsFromFiles(memCache, lruCache)
+      val idIpLookups   = idIpLookupsFromFiles(memCache, lruCache)
 
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
             val ioActual   = ioIpLookups.performLookups(ip).unsafeRunSync
             val evalActual = evalIpLookups.performLookups(ip).value
+            val idActual   = idIpLookups.performLookups(ip)
             matchIpLookupResult(ioActual, expected)
             matchIpLookupResult(evalActual, expected)
+            matchIpLookupResult(idActual, expected)
           }
       }
     }
@@ -169,6 +183,7 @@ class IpLookupsTest extends Specification with Tables {
     "providing an invalid ip should fail" in {
       val ioIpLookups   = ioIpLookupsFromFiles(true, 0)
       val evalIpLookups = evalIpLookupsFromFiles(true, 0)
+      val idIpLookups   = idIpLookupsFromFiles(true, 0)
       val ioExpected = IpLookupResult(
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
@@ -183,10 +198,19 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some
       )
+      val idExpected = IpLookupResult(
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some
+      )
       val ioActual   = ioIpLookups.performLookups("not").unsafeRunSync
       val evalActual = evalIpLookups.performLookups("not").value
+      val idActual   = idIpLookups.performLookups("not")
       matchIpLookupResult(ioActual, ioExpected)
       matchIpLookupResult(evalActual, evalExpected)
+      matchIpLookupResult(idActual, idExpected)
     }
 
     "providing no files should return Nones" in {
@@ -198,9 +222,13 @@ class IpLookupsTest extends Specification with Tables {
         ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).value
+      val idActual = CreateIpLookups[Id]
+        .createFromFiles(None, None, None, None, true, 0)
+        .performLookups("67.43.156.0")
       val expected = IpLookupResult(None, None, None, None, None)
       matchIpLookupResult(ioActual, expected)
       matchIpLookupResult(evalActual, expected)
+      matchIpLookupResult(idActual, expected)
     }
   }
 

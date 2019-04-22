@@ -45,7 +45,7 @@ import cats.effect.IO
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
 val result = (for {
-  ipLookups <- IpLookups.createFromFilenames[IO](
+  ipLookups <- CreateIpLookups[IO].createFromFilenames(
     geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
     ispFile = None,
     domainFile = None,
@@ -53,8 +53,7 @@ val result = (for {
     memCache = false,
     lruCacheSize = 20000
   )
-
-  lookup <- ipLookups.performLookups[IO]("175.16.199.0")
+  lookup <- ipLookups.performLookups("175.16.199.0")
 } yield lookup).unsafeRunSync()
 
 result.ipLocation match {
@@ -66,7 +65,37 @@ result.ipLocation match {
 }
 ```
 
-Note that `GeoLite2-City.mmdb` is updated by MaxMind each month..
+`cats.Eval` and `cats.Id` are also supported:
+
+```scala
+import cats.{Eval, Id}
+
+val evalResult: Eval[IpLookupResult] = for {
+  ipLookups <- CreateIpLookups[Eval].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    ispFile = None,
+    domainFile = None,
+    connectionTypeFile = None,
+    memCache = false,
+    lruCacheSize = 20000
+  )
+  lookup <- ipLookups.performLookups("175.16.199.0")
+} yield lookup
+
+val idResult: IpLookupResult = {
+  val ipLookups = CreateIpLookups[Id].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    ispFile = None,
+    domainFile = None,
+    connectionTypeFile = None,
+    memCache = false,
+    lruCacheSize = 20000
+  )
+  ipLookups.performLookups("175.16.199.0")
+}
+```
+
+Note that `GeoLite2-City.mmdb` is updated by MaxMind each month.
 
 For further usage examples for Scala MaxMind IP Lookups, please see the tests in
 [`IpLookupsTest.scala`][iplookupstest-scala]. The test suite uses test databases provided by
@@ -79,7 +108,7 @@ MaxMind.
 The signature is as follows:
 
 ```scala
-case class IpLookups(
+final case class IpLookups(
   geoFile: Option[File],
   ispFile: Option[File],
   domainFile: Option[File],
@@ -89,11 +118,11 @@ case class IpLookups(
 )
 ```
 
-In the `IpLookups` companion object there is an alternative constructor which takes `Option[String]`
+`CreateIpLookups` proposes an alternative constructor which takes `Option[String]`
 as file paths to the databases instead:
 
 ```scala
-def apply(
+def createFromFilenames(
   geoFile: Option[String],
   ispFile: Option[String],
   domainFile: Option[String],
@@ -121,7 +150,7 @@ cache, set its size to zero, i.e. `lruCache = 0`.
 The `performLookups(ip)` method returns a:
 
 ```scala
-case class IpLookupResult(
+final case class IpLookupResult(
   ipLocation: Option[Either[Throwable, IpLocation]],
   isp: Option[Either[Throwable, String]],
   organization: Option[Either[Throwable, String]],
@@ -143,7 +172,7 @@ Note that enabling providing an ISP database will return an `organization` in ad
 The geographic lookup returns an `IpLocation` case class instance with the following structure:
 
 ```scala
-case class IpLocation(
+final case class IpLocation(
   countryCode: String,
   countryName: String,
   region: Option[String],
@@ -167,16 +196,17 @@ This example shows how to do a lookup using all four databases.
 ```scala
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
-val ipLookups = IpLookups(
-  geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
-  ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
-  domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
-  connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
-  memCache = false,
-  lruCache = 10000
-)
-
-val lookupResult = ipLookups.performLookups("70.46.123.145")
+val lookupResult = (for {
+  ipLookups <- CreateIpLookups[IO].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
+    ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
+    domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
+    connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
+    memCache = false,
+    lruCache = 10000
+  )
+  lookupResult <- ipLookups.performLookups("70.46.123.145")
+} yield lookupResult).unsafeRunSync()
 
 // Geographic lookup
 println(lookupResult.ipLocation).map(_.countryName) // => Some(Right("United States"))
@@ -238,8 +268,6 @@ limitations under the License.
 [java-lib]: https://github.com/maxmind/GeoIP2-java
 
 [iplookupstest-scala]: https://github.com/snowplow/scala-maxmind-iplookups/blob/master/src/test/scala/com.snowplowanalytics.maxmind.iplookups/IpLookupsTest.scala
-
-[twitter-lru-cache]: https://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
 [maxmind-downloads]: https://dev.maxmind.com/geoip/geoip2/downloadable/#MaxMind_APIs
 [maxmind-isp]: https://www.maxmind.com/en/geoip2-isp-database

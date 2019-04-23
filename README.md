@@ -19,8 +19,7 @@ can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.6.0** and is compatible with Scala 2.11 and
-2.12.
+The latest version of scala-maxmind-iplookups is **0.6.0** and is compatible with Scala 2.12.
 
 Add this to your SBT config:
 

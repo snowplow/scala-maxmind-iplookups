@@ -20,7 +20,6 @@ lazy val root = project
     version := "0.6.0-M2",
     description := "Scala wrapper for MaxMind GeoIP2 library",
     scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )

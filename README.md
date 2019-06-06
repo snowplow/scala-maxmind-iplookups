@@ -46,7 +46,7 @@ import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
 val result = (for {
   ipLookups <- IpLookups.createFromFilenames[IO](
-    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
     ispFile = None,
     domainFile = None,
     connectionTypeFile = None,
@@ -54,7 +54,7 @@ val result = (for {
     lruCacheSize = 20000
   )
 
-  lookup <- ipLookups.performLookups[IO]("175.16.199.0")
+  lookup <- ipLookups.performLookups("175.16.199.0")
 } yield lookup).unsafeRunSync()
 
 result.ipLocation match {

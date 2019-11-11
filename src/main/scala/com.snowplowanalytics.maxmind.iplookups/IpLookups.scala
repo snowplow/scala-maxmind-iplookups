@@ -15,7 +15,7 @@ package com.snowplowanalytics.maxmind.iplookups
 import java.io.File
 import java.net.InetAddress
 
-import cats.{Eval, Monad}
+import cats.{Eval, Id, Monad}
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -26,7 +26,7 @@ import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
 import model._
 
-trait CreateIpLookups[F[_]] {
+sealed trait CreateIpLookups[F[_]] {
 
   /**
    * Create an IpLookups from Files
@@ -135,6 +135,34 @@ object CreateIpLookups {
           )
         }
       }
+  }
+
+  implicit def idCreateIpLookups(
+    implicit CLM: CreateLruMap[Id, String, IpLookupResult]
+  ): CreateIpLookups[Id] = new CreateIpLookups[Id] {
+    override def createFromFiles(
+      geoFile: Option[File] = None,
+      ispFile: Option[File] = None,
+      domainFile: Option[File] = None,
+      connectionTypeFile: Option[File] = None,
+      memCache: Boolean = true,
+      lruCacheSize: Int = 10000
+    ): Id[IpLookups[Id]] = {
+      val lruCache: Option[LruMap[Id, String, IpLookupResult]] =
+        if (lruCacheSize > 0) {
+          CLM.create(lruCacheSize).map(_.some)
+        } else {
+          None
+        }
+      new IpLookups(
+        geoFile,
+        ispFile,
+        domainFile,
+        connectionTypeFile,
+        memCache,
+        lruCache
+      )
+    }
   }
 }
 

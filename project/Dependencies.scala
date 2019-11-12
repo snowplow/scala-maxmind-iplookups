@@ -17,6 +17,6 @@ object Dependencies {
   val catsEffect    = "org.typelevel"         %% "cats-effect"          % "1.2.0"
   val cats          = "org.typelevel"         %% "cats-core"            % "1.6.0"
   val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.3.0"
-  val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.0" % "test"
-  val specs2        = "org.specs2"            %% "specs2-core"          % "4.0.3"  % "test"
+  val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.0" % Test
+  val specs2        = "org.specs2"            %% "specs2-core"          % "4.0.3"  % Test
 }

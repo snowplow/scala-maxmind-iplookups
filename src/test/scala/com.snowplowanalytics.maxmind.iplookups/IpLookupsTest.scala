@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -14,33 +14,56 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
 
+import cats.{Eval, Id}
+import cats.effect.IO
+import cats.syntax.either._
+import cats.syntax.option._
 import com.maxmind.geoip2.exception.AddressNotFoundException
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
-import cats.syntax.either._
-import cats.syntax.option._
-import cats.effect.IO
 
 import model._
 
 object IpLookupsTest {
+  val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
+  val ispFile            = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
+  val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
+  val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
 
-  def ipLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] = {
-    val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
-    val ispFile            = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
-    val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
-    val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
-
-    IpLookups
-      .createFromFilenames[IO](
+  def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
+    CreateIpLookups[IO]
+      .createFromFilenames(
         Some(geoFile),
         Some(ispFile),
         Some(domainFile),
         Some(connectionTypeFile),
         memCache,
-        lruCache)
+        lruCache
+      )
       .unsafeRunSync
-  }
+
+  def evalIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Eval] =
+    CreateIpLookups[Eval]
+      .createFromFilenames(
+        Some(geoFile),
+        Some(ispFile),
+        Some(domainFile),
+        Some(connectionTypeFile),
+        memCache,
+        lruCache
+      )
+      .value
+
+  def idIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Id] =
+    CreateIpLookups[Id]
+      .createFromFilenames(
+        Some(geoFile),
+        Some(ispFile),
+        Some(domainFile),
+        Some(connectionTypeFile),
+        memCache,
+        lruCache
+      )
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
@@ -140,37 +163,72 @@ class IpLookupsTest extends Specification with Tables {
       lruCache <- Seq(0, 1000, 10000)
     } {
 
-      val ipLookups = ipLookupsFromFiles(memCache, lruCache)
+      val ioIpLookups   = ioIpLookupsFromFiles(memCache, lruCache)
+      val evalIpLookups = evalIpLookupsFromFiles(memCache, lruCache)
+      val idIpLookups   = idIpLookupsFromFiles(memCache, lruCache)
 
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
-            val actual = ipLookups.performLookups(ip).unsafeRunSync
-            matchIpLookupResult(actual, expected)
+            val ioActual   = ioIpLookups.performLookups(ip).unsafeRunSync
+            val evalActual = evalIpLookups.performLookups(ip).value
+            val idActual   = idIpLookups.performLookups(ip)
+            matchIpLookupResult(ioActual, expected)
+            matchIpLookupResult(evalActual, expected)
+            matchIpLookupResult(idActual, expected)
           }
       }
     }
 
     "providing an invalid ip should fail" in {
-      val ipLookups = ipLookupsFromFiles(true, 0)
-      val expected = IpLookupResult(
+      val ioIpLookups   = ioIpLookupsFromFiles(true, 0)
+      val evalIpLookups = evalIpLookupsFromFiles(true, 0)
+      val idIpLookups   = idIpLookupsFromFiles(true, 0)
+      val ioExpected = IpLookupResult(
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some
       )
-      val actual = ipLookups.performLookups("not").unsafeRunSync
-      matchIpLookupResult(actual, expected)
+      val evalExpected = IpLookupResult(
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some
+      )
+      val idExpected = IpLookupResult(
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some
+      )
+      val ioActual   = ioIpLookups.performLookups("not").unsafeRunSync
+      val evalActual = evalIpLookups.performLookups("not").value
+      val idActual   = idIpLookups.performLookups("not")
+      matchIpLookupResult(ioActual, ioExpected)
+      matchIpLookupResult(evalActual, evalExpected)
+      matchIpLookupResult(idActual, idExpected)
     }
 
     "providing no files should return Nones" in {
-      val actual = (for {
-        ipLookups <- IpLookups.createFromFiles[IO](None, None, None, None, true, 0)
+      val ioActual = (for {
+        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync
+      val evalActual = (for {
+        ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, true, 0)
+        res       <- ipLookups.performLookups("67.43.156.0")
+      } yield res).value
+      val idActual = CreateIpLookups[Id]
+        .createFromFiles(None, None, None, None, true, 0)
+        .performLookups("67.43.156.0")
       val expected = IpLookupResult(None, None, None, None, None)
-      matchIpLookupResult(actual, expected)
+      matchIpLookupResult(ioActual, expected)
+      matchIpLookupResult(evalActual, expected)
+      matchIpLookupResult(idActual, expected)
     }
   }
 

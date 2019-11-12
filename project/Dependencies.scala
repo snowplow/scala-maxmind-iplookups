@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -14,9 +14,9 @@ import sbt._
 
 object Dependencies {
   val maxmind       = "com.maxmind.geoip2"    %  "geoip2"               % "2.12.0"
-  val catsEffect    = "org.typelevel"         %% "cats-effect"          % "1.0.0"
-  val cats          = "org.typelevel"         %% "cats-core"            % "1.4.0"
-  val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.2.0"
-  val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.0" % "test"
-  val specs2        = "org.specs2"            %% "specs2-core"          % "4.0.3"  % "test"
+  val catsEffect    = "org.typelevel"         %% "cats-effect"          % "1.2.0"
+  val cats          = "org.typelevel"         %% "cats-core"            % "1.6.0"
+  val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.3.0"
+  val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.0" % Test
+  val specs2        = "org.specs2"            %% "specs2-core"          % "4.4.1"  % Test
 }

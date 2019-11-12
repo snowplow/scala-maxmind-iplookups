@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,11 +17,9 @@ lazy val root = project
   .settings(
     organization := "com.snowplowanalytics",
     name := "scala-maxmind-iplookups",
-    version := "0.5.0",
+    version := "0.6.0-M1",
     description := "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion := "2.12.6",
-    crossScalaVersions := Seq("2.11.12", "2.12.6"),
-    scalacOptions := BuildSettings.compilerOptions,
+    scalaVersion := "2.12.8",
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )

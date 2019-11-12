@@ -1,3 +1,23 @@
+Version 0.6.0 (2019-xx-xx)
+--------------------------
+Introduce tagless final encoding (#108)
+Add support for isInEuropeanUnion flag (#87)
+Add support for isInEU, continent and accuracyRadius to the model (#101)
+Bump geoip2 to 2.12.0 (#93)
+Bump cats-effect to 1.0.0 (#90)
+Bump cats-effect to 1.2.0 (#104)
+Bump cats-core to 1.4.0 (#91)
+Bump cats-core to 1.6.0 (#106)
+Bump scala-lru-map to 0.3.0 (#105)
+Bump scala-lru-map to 0.2.0 (#92)
+Bump specs2-core to 4.4.1 (#110)
+Bump Scala to 2.12.8 (#103)
+Change default Scala version to 2.12.6 (#89)
+Bump SBT to 1.2.8 (#109)
+Use sbt-tpolecat (#102)
+Remove thread safety warning regarding LRU cache from readme file (#99)
+Extend copyright to 2019 (#111)
+
 Version 0.5.0 (2018-06-29)
 --------------------------
 Add Gitter badge (#57)

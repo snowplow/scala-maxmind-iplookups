@@ -18,11 +18,12 @@ import java.net.InetAddress
 import com.maxmind.db.CHMCache
 import com.maxmind.geoip2.model.CityResponse
 import com.maxmind.geoip2.DatabaseReader
-import com.snowplowanalytics.lrumap.LruMap
+import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.option._
 
 import model._
 
@@ -46,10 +47,10 @@ object IpLookups {
     connectionTypeFile: Option[File] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
-  ): F[IpLookups[F]] =
+  )(implicit CLM: CreateLruMap[F, String, IpLookupResult]): F[IpLookups[F]] =
     (
       if (lruCacheSize > 0)
-        Sync[F].map(LruMap.create[F, String, IpLookupResult](lruCacheSize))(Some(_))
+        CLM.create(lruCacheSize).map(_.some)
       else Sync[F].pure(None)
     ).flatMap((lruCache) =>
       Sync[F].delay {

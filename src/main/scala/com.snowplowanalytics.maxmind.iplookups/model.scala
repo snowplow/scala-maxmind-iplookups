@@ -14,11 +14,20 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.InetAddress
 
+import cats.data.ValidatedNel
+import cats.syntax.traverse._
+import cats.syntax.either._
+import cats.syntax.apply._
+import cats.instances.option._
+import cats.instances.either._
+
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.CityResponse
 
 object model {
   type ReaderFunction = (DatabaseReader, InetAddress) => String
+
+  type Error[A] = Either[Throwable, A]
 
   /** A case class wrapper around the MaxMind CityResponse class. */
   final case class IpLocation(
@@ -70,5 +79,18 @@ object model {
     organization: Option[Either[Throwable, String]],
     domain: Option[Either[Throwable, String]],
     connectionType: Option[Either[Throwable, String]]
-  )
+  ) {
+    // Combine all errors if any
+    def results: ValidatedNel[
+      Throwable,
+      (Option[IpLocation], Option[String], Option[String], Option[String], Option[String])] = {
+      val location   = ipLocation.sequence[Error, IpLocation].toValidatedNel
+      val provider   = isp.sequence[Error, String].toValidatedNel
+      val org        = organization.sequence[Error, String].toValidatedNel
+      val dom        = domain.sequence[Error, String].toValidatedNel
+      val connection = connectionType.sequence[Error, String].toValidatedNel
+
+      (location, provider, org, dom, connection).tupled
+    }
+  }
 }

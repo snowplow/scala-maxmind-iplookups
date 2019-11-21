@@ -19,13 +19,12 @@ can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.5.0** and is compatible with Scala 2.11 and
-2.12.
+The latest version of scala-maxmind-iplookups is **0.6.0** and is compatible with Scala 2.12.
 
 Add this to your SBT config:
 
 ```scala
-val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.5.0"
+val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.6.0"
 ```
 
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
@@ -45,7 +44,7 @@ import cats.effect.IO
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
 val result = (for {
-  ipLookups <- IpLookups.createFromFilenames[IO](
+  ipLookups <- CreateIpLookups[IO].createFromFilenames(
     geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
     ispFile = None,
     domainFile = None,
@@ -53,8 +52,7 @@ val result = (for {
     memCache = false,
     lruCacheSize = 20000
   )
-
-  lookup <- ipLookups.performLookups[IO]("175.16.199.0")
+  lookup <- ipLookups.performLookups("175.16.199.0")
 } yield lookup).unsafeRunSync()
 
 result.ipLocation match {
@@ -66,7 +64,37 @@ result.ipLocation match {
 }
 ```
 
-Note that `GeoLite2-City.mmdb` is updated by MaxMind each month..
+`cats.Eval` and `cats.Id` are also supported:
+
+```scala
+import cats.{Eval, Id}
+
+val evalResult: Eval[IpLookupResult] = for {
+  ipLookups <- CreateIpLookups[Eval].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    ispFile = None,
+    domainFile = None,
+    connectionTypeFile = None,
+    memCache = false,
+    lruCacheSize = 20000
+  )
+  lookup <- ipLookups.performLookups("175.16.199.0")
+} yield lookup
+
+val idResult: IpLookupResult = {
+  val ipLookups = CreateIpLookups[Id].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    ispFile = None,
+    domainFile = None,
+    connectionTypeFile = None,
+    memCache = false,
+    lruCacheSize = 20000
+  )
+  ipLookups.performLookups("175.16.199.0")
+}
+```
+
+Note that `GeoLite2-City.mmdb` is updated by MaxMind each month.
 
 For further usage examples for Scala MaxMind IP Lookups, please see the tests in
 [`IpLookupsTest.scala`][iplookupstest-scala]. The test suite uses test databases provided by
@@ -79,7 +107,7 @@ MaxMind.
 The signature is as follows:
 
 ```scala
-case class IpLookups(
+final case class IpLookups(
   geoFile: Option[File],
   ispFile: Option[File],
   domainFile: Option[File],
@@ -89,11 +117,11 @@ case class IpLookups(
 )
 ```
 
-In the `IpLookups` companion object there is an alternative constructor which takes `Option[String]`
+`CreateIpLookups` proposes an alternative constructor which takes `Option[String]`
 as file paths to the databases instead:
 
 ```scala
-def apply(
+def createFromFilenames(
   geoFile: Option[String],
   ispFile: Option[String],
   domainFile: Option[String],
@@ -121,7 +149,7 @@ cache, set its size to zero, i.e. `lruCache = 0`.
 The `performLookups(ip)` method returns a:
 
 ```scala
-case class IpLookupResult(
+final case class IpLookupResult(
   ipLocation: Option[Either[Throwable, IpLocation]],
   isp: Option[Either[Throwable, String]],
   organization: Option[Either[Throwable, String]],
@@ -143,7 +171,7 @@ Note that enabling providing an ISP database will return an `organization` in ad
 The geographic lookup returns an `IpLocation` case class instance with the following structure:
 
 ```scala
-case class IpLocation(
+final case class IpLocation(
   countryCode: String,
   countryName: String,
   region: Option[String],
@@ -153,7 +181,10 @@ case class IpLocation(
   timezone: Option[String],
   postalCode: Option[String],
   metroCode: Option[Int],
-  regionName: Option[String]
+  regionName: Option[String],
+  isInEuropeanUnion: Boolean,
+  continent: String,
+  accuracyRadius: Int
 )
 ```
 
@@ -164,16 +195,17 @@ This example shows how to do a lookup using all four databases.
 ```scala
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
-val ipLookups = IpLookups(
-  geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
-  ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
-  domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
-  connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
-  memCache = false,
-  lruCache = 10000
-)
-
-val lookupResult = ipLookups.performLookups("70.46.123.145")
+val lookupResult = (for {
+  ipLookups <- CreateIpLookups[IO].createFromFilenames(
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
+    ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
+    domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
+    connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
+    memCache = false,
+    lruCache = 10000
+  )
+  lookupResult <- ipLookups.performLookups("70.46.123.145")
+} yield lookupResult).unsafeRunSync()
 
 // Geographic lookup
 println(lookupResult.ipLocation).map(_.countryName) // => Some(Right("United States"))
@@ -195,10 +227,6 @@ println(lookupResult.connectionType) // => Some(Right("Dialup"))
 ### LRU cache
 
 We recommend trying different LRU cache sizes to see what works best for you.
-
-Please note that the LRU cache is **not** thread-safe ([see this note][twitter-lru-cache]). Switch
-it off if you are thinking about performing ip lookups with the same `IpLookups` instance across
-threads.
 
 ## Building etc
 
@@ -225,7 +253,7 @@ As such we recommend upgrading to version 0.4.0 as soon as possible
 
 ## Copyright and license
 
-Copyright 2012-2018 Snowplow Analytics Ltd.
+Copyright 2012-2019 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -239,8 +267,6 @@ limitations under the License.
 [java-lib]: https://github.com/maxmind/GeoIP2-java
 
 [iplookupstest-scala]: https://github.com/snowplow/scala-maxmind-iplookups/blob/master/src/test/scala/com.snowplowanalytics.maxmind.iplookups/IpLookupsTest.scala
-
-[twitter-lru-cache]: https://twitter.github.com/commons/apidocs/com/twitter/common/util/caching/LRUCache.html
 
 [maxmind-downloads]: https://dev.maxmind.com/geoip/geoip2/downloadable/#MaxMind_APIs
 [maxmind-isp]: https://www.maxmind.com/en/geoip2-isp-database

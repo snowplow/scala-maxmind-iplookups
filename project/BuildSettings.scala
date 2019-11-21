@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -26,22 +26,6 @@ import com.typesafe.sbt.SbtGit.GitKeys._
 import scoverage.ScoverageKeys._
 
 object BuildSettings {
-
-  lazy val compilerOptions = Seq(
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions",
-    "-unchecked",
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Xfuture",
-    "-Xlint",
-    "-Ypartial-unification"
-  )
 
   lazy val javaCompilerOptions = Seq(
     "-source", "1.8",

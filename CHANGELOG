@@ -1,3 +1,7 @@
+Version 0.6.1 (2019-11-25)
+--------------------------
+Default isInEuropeanUnion to false in case of NoSuchMethodError (#123)
+
 Version 0.6.0 (2019-11-21)
 --------------------------
 Add support for isInEuropeanUnion flag (#87)

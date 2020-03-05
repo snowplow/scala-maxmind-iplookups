@@ -11,6 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
+credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials")
+
 lazy val root = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
@@ -24,7 +26,10 @@ lazy val root = project
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )
-  .settings(BuildSettings.publishSettings)
+  .settings(Seq(
+    publishTo := Some(
+      "Supersonic Artifactory" at "http://artifactory.rtb.ec2ssa.info:8081/artifactory/ext-release-local;build.timestamp=" + new java.util.Date().getTime)
+  ))
   .settings(BuildSettings.docSettings)
   .settings(BuildSettings.coverageSettings)
   .settings(

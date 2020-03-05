@@ -13,15 +13,13 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
-
-import com.maxmind.geoip2.exception.AddressNotFoundException
-import org.specs2.mutable.Specification
-import org.specs2.specification.Tables
+import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
-import cats.effect.IO
-
-import model._
+import com.maxmind.geoip2.exception.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.model._
+import org.specs2.mutable.Specification
+import org.specs2.specification.Tables
 
 object IpLookupsTest {
 
@@ -143,13 +141,13 @@ class IpLookupsTest extends Specification with Tables {
     }
 
     "providing an invalid ip should fail" in {
-      val ipLookups = ipLookupsFromFiles(true, 0)
+      val ipLookups = ipLookupsFromFiles(memCache = true, 0)
       val expected = IpLookupResult(
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some
       )
       val actual = ipLookups.performLookups("not").unsafeRunSync
       matchIpLookupResult(actual, expected)
@@ -157,7 +155,7 @@ class IpLookupsTest extends Specification with Tables {
 
     "providing no files should return Nones" in {
       val actual = (for {
-        ipLookups <- IpLookups.createFromFiles[IO](None, None, None, None, true, 0)
+        ipLookups <- IpLookups.createFromFiles[IO](None, None, None, None, memCache = true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync
       val expected = IpLookupResult(None, None, None, None, None)

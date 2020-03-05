@@ -13,16 +13,14 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
-
-import cats.{Eval, Id}
 import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
+import cats.{Eval, Id}
 import com.maxmind.geoip2.exception.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
-
-import model._
 
 object IpLookupsTest {
   val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
@@ -226,15 +224,15 @@ class IpLookupsTest extends Specification with Tables {
 
     // If this test fails, see https://github.com/snowplow/scala-maxmind-iplookups/issues/96
     "providing an invalid ip should fail" in {
-      val ioIpLookups   = ioIpLookupsFromFiles(true, 0)
+      val ioIpLookups   = ioIpLookupsFromFiles(memCache = true, 0)
       val evalIpLookups = evalIpLookupsFromFiles(true, 0)
       val idIpLookups   = idIpLookupsFromFiles(true, 0)
       val ioExpected = IpLookupResult(
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
+        new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some
       )
       val evalExpected = IpLookupResult(
@@ -263,8 +261,15 @@ class IpLookupsTest extends Specification with Tables {
 
     "providing no files should return Nones" in {
       val ioActual = (for {
-        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, None, true, 0)
-        res       <- ipLookups.performLookups("67.43.156.0")
+        ipLookups <- CreateIpLookups[IO].createFromFiles(
+          None,
+          None,
+          None,
+          None,
+          None,
+          memCache = true,
+          0)
+        res <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync()
       val evalActual = (for {
         ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, None, true, 0)

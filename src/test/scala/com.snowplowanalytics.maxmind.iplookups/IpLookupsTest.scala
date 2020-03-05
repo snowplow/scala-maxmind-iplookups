@@ -75,6 +75,7 @@ object IpLookupsTest {
         countryName = "China",
         region = Some("22"),
         city = Some("Changchun"),
+        cityGeoNameId = Some(2038180),
         latitude = 43.88F,
         longitude = 125.3228F,
         timezone = Some("Asia/Harbin"),
@@ -104,6 +105,7 @@ object IpLookupsTest {
         countryName = "United States",
         region = Some("WA"),
         city = Some("Milton"),
+        cityGeoNameId = Some(5803556),
         latitude = 47.2513F,
         longitude = -122.3149F,
         timezone = Some("America/Los_Angeles"),
@@ -131,6 +133,7 @@ object IpLookupsTest {
       IpLocation(
         countryCode = "BT",
         countryName = "Bhutan",
+        cityGeoNameId = None,
         region = None,
         city = None,
         latitude = 27.5F,
@@ -174,11 +177,11 @@ object IpLookupsTest {
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      ipLocation = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      isp = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      organization = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      domain = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      connectionType = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )

@@ -40,70 +40,79 @@ object IpLookupsTest {
       .unsafeRunSync
   }
 
+  val chinaChangchun = IpLocation(
+    countryCode = "CN",
+    countryName = "China",
+    region = Some("22"),
+    cityName = Some("Changchun"),
+    cityGeoNameId = Some(2038180),
+    latitude = 43.88F,
+    longitude = 125.3228F,
+    timezone = Some("Asia/Harbin"),
+    postalCode = None,
+    metroCode = None,
+    regionName = Some("Jilin Sheng")
+  )
+
+  val usMilton = IpLocation(
+    countryCode = "US",
+    countryName = "United States",
+    region = Some("WA"),
+    cityName = Some("Milton"),
+    cityGeoNameId = Some(5803556),
+    latitude = 47.2513F,
+    longitude = -122.3149F,
+    timezone = Some("America/Los_Angeles"),
+    postalCode = Some("98354"),
+    metroCode = Some(819),
+    regionName = Some("Washington")
+  )
+
+  val bhutan = IpLocation(
+    countryCode = "BT",
+    countryName = "Bhutan",
+    region = None,
+    cityName = None,
+    cityGeoNameId = None,
+    latitude = 27.5F,
+    longitude = 90.5F,
+    timezone = Some("Asia/Thimphu"),
+    postalCode = None,
+    metroCode = None,
+    regionName = None
+  )
+
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
-      IpLocation(
-        countryCode = "CN",
-        countryName = "China",
-        region = Some("22"),
-        city = Some("Changchun"),
-        latitude = 43.88F,
-        longitude = 125.3228F,
-        timezone = Some("Asia/Harbin"),
-        postalCode = None,
-        metroCode = None,
-        regionName = Some("Jilin Sheng")
-      ).asRight.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
-      "Dialup".asRight.some
+      ipLocation = chinaChangchun.asRight.some,
+      isp = new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      organization = new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      domain = new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
+      connectionType = "Dialup".asRight.some
     ),
     "216.160.83.56" -> IpLookupResult(
-      IpLocation(
-        countryCode = "US",
-        countryName = "United States",
-        region = Some("WA"),
-        city = Some("Milton"),
-        latitude = 47.2513F,
-        longitude = -122.3149F,
-        timezone = Some("America/Los_Angeles"),
-        postalCode = Some("98354"),
-        metroCode = Some(819),
-        regionName = Some("Washington")
-      ).asRight.some,
-      "Century Link".asRight.some,
-      "Lariat Software".asRight.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some
+      ipLocation = usMilton.asRight.some,
+      isp = "Century Link".asRight.some,
+      organization = "Lariat Software".asRight.some,
+      domain = new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
+      connectionType = new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some
     ),
     "67.43.156.0" -> IpLookupResult(
-      IpLocation(
-        countryCode = "BT",
-        countryName = "Bhutan",
-        region = None,
-        city = None,
-        latitude = 27.5F,
-        longitude = 90.5F,
-        timezone = Some("Asia/Thimphu"),
-        postalCode = None,
-        metroCode = None,
-        regionName = None
-      ).asRight.some,
-      "Loud Packet".asRight.some,
-      "zudoarichikito_".asRight.some,
-      "shoesfin.NET".asRight.some,
-      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some
+      ipLocation = bhutan.asRight.some,
+      isp = "Loud Packet".asRight.some,
+      organization = "zudoarichikito_".asRight.some,
+      domain = "shoesfin.NET".asRight.some,
+      connectionType = new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some
     ),
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
+      ipLocation = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      isp = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      organization = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      domain = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      connectionType = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )
 }

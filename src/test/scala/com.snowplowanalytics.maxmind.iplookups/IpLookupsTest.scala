@@ -13,16 +13,14 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
-
-import cats.{Eval, Id}
 import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
+import cats.{Eval, Id}
 import com.maxmind.geoip2.exception.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
-
-import model._
 
 object IpLookupsTest {
   val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
@@ -73,6 +71,7 @@ object IpLookupsTest {
         countryName = "China",
         region = Some("22"),
         city = Some("Changchun"),
+        cityGeoNameId = Some(2038180),
         latitude = 43.88F,
         longitude = 125.3228F,
         timezone = Some("Asia/Harbin"),
@@ -94,6 +93,7 @@ object IpLookupsTest {
         countryName = "United States",
         region = Some("WA"),
         city = Some("Milton"),
+        cityGeoNameId = Some(5803556),
         latitude = 47.2513F,
         longitude = -122.3149F,
         timezone = Some("America/Los_Angeles"),
@@ -115,6 +115,7 @@ object IpLookupsTest {
         countryName = "Bhutan",
         region = None,
         city = None,
+        cityGeoNameId = Some(0),
         latitude = 27.5F,
         longitude = 90.5F,
         timezone = Some("Asia/Thimphu"),

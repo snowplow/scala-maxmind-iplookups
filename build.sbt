@@ -19,7 +19,7 @@ lazy val root = project
   .settings(
     organization := "com.snowplowanalytics",
     name := "scala-maxmind-iplookups",
-    version := "0.5.1",
+    version := "0.5.3",
     description := "Scala wrapper for MaxMind GeoIP2 library - Sonic release",
     scalaVersion := "2.11.12",
     crossScalaVersions := Seq("2.11.12", "2.12.5"),

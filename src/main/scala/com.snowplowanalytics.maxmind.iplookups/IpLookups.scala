@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -34,6 +34,7 @@ sealed trait CreateIpLookups[F[_]] {
    * @param ispFile ISP lookup database file
    * @param domainFile Domain lookup database file
    * @param connectionTypeFile Connection type lookup database file
+   * @param anonymousFile Anonymous lookup database file
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
@@ -42,6 +43,7 @@ sealed trait CreateIpLookups[F[_]] {
     ispFile: Option[File] = None,
     domainFile: Option[File] = None,
     connectionTypeFile: Option[File] = None,
+    anonymousFile: Option[File] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]]
@@ -52,6 +54,7 @@ sealed trait CreateIpLookups[F[_]] {
    * @param ispFile ISP lookup database filepath
    * @param domainFile Domain lookup database filepath
    * @param connectionTypeFile Connection type lookup database filepath
+   * @param anonymousFile Anonymous lookup database filepath
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
@@ -60,6 +63,7 @@ sealed trait CreateIpLookups[F[_]] {
     ispFile: Option[String] = None,
     domainFile: Option[String] = None,
     connectionTypeFile: Option[String] = None,
+    anonymousFile: Option[String] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]] = createFromFiles(
@@ -67,6 +71,7 @@ sealed trait CreateIpLookups[F[_]] {
     ispFile.map(new File(_)),
     domainFile.map(new File(_)),
     connectionTypeFile.map(new File(_)),
+    anonymousFile.map(new File(_)),
     memCache,
     lruCacheSize
   )
@@ -83,6 +88,7 @@ object CreateIpLookups {
       ispFile: Option[File] = None,
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
+      anonymousFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): F[IpLookups[F]] =
@@ -99,6 +105,7 @@ object CreateIpLookups {
             ispFile,
             domainFile,
             connectionTypeFile,
+            anonymousFile,
             memCache,
             lruCache
           )
@@ -114,6 +121,7 @@ object CreateIpLookups {
       ispFile: Option[File] = None,
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
+      anonymousFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): Eval[IpLookups[Eval]] =
@@ -130,6 +138,7 @@ object CreateIpLookups {
             ispFile,
             domainFile,
             connectionTypeFile,
+            anonymousFile,
             memCache,
             lruCache
           )
@@ -145,6 +154,7 @@ object CreateIpLookups {
       ispFile: Option[File] = None,
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
+      anonymousFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): Id[IpLookups[Id]] = {
@@ -159,6 +169,7 @@ object CreateIpLookups {
         ispFile,
         domainFile,
         connectionTypeFile,
+        anonymousFile,
         memCache,
         lruCache
       )
@@ -181,6 +192,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   ispFile: Option[File],
   domainFile: Option[File],
   connectionTypeFile: Option[File],
+  anonymousFile: Option[File],
   memCache: Boolean,
   lru: Option[LruMap[F, String, IpLookupResult]]
 )(
@@ -194,6 +206,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   private val domainService = getService(domainFile).map((_, ReaderFunctions.domain))
   private val connectionTypeService =
     getService(connectionTypeFile).map((_, ReaderFunctions.connectionType))
+  private val anonymousService = getService(anonymousFile)
 
   /**
    * Get a LookupService from a database file
@@ -212,7 +225,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
 
   /**
    * Creates an Either from an IPLookup
-   * @param service ISP, domain or connection type LookupService
+   * @param service ISP, domain, connection or anonymous type LookupService
    * @return the result of the lookup
    */
   private def getLookup(
@@ -248,6 +261,16 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     case _            => Monad[F].pure(None)
   }
 
+  private def getAnonymousIpLookup(
+    ipAddress: Either[Throwable, InetAddress]
+  ): F[Option[Either[Throwable, AnonymousIp]]] = (ipAddress, anonymousService) match {
+    case (Right(ipA), Some(gs)) =>
+      SR.getAnonymousValue(gs, ipA)
+        .map(loc => loc.map(AnonymousIp(_)).some)
+    case (Left(f), _) => Monad[F].pure(Some(Left(f)))
+    case _            => Monad[F].pure(None)
+  }
+
   /**
    * This version does not use the LRU cache.
    * Concurrently looks up information
@@ -267,7 +290,8 @@ class IpLookups[F[_]: Monad] private[iplookups] (
       org            <- getLookup(ipAddress, orgService)
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
-    } yield IpLookupResult(ipLocation, isp, org, domain, connectionType)
+      anonymous      <- getAnonymousIpLookup(ipAddress)
+    } yield IpLookupResult(ipLocation, isp, org, domain, connectionType, anonymous)
 
   /**
    * Returns the MaxMind location for this IP address

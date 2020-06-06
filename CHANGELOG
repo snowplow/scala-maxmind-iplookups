@@ -1,3 +1,7 @@
+Version 0.6.2 (2020-06-06)
+--------------------------
+Add support for anonymous IP database (#132)
+
 Version 0.6.1 (2019-11-25)
 --------------------------
 Default isInEuropeanUnion to false in case of NoSuchMethodError (#123)

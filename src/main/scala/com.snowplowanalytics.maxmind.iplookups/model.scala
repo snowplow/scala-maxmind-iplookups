@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -23,6 +23,7 @@ import cats.instances.either._
 
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.CityResponse
+import com.maxmind.geoip2.model.AnonymousIpResponse
 
 object model {
   type ReaderFunction = (DatabaseReader, InetAddress) => String
@@ -44,6 +45,16 @@ object model {
     isInEuropeanUnion: Boolean,
     continent: String,
     accuracyRadius: Int
+  )
+
+  /** A case class wrapper around the MaxMind AnonymousIp class. */
+  final case class AnonymousIp(
+    ipAddress: String,
+    isAnonymous: Boolean,
+    isAnonymousVpn: Boolean,
+    isHostingProvider: Boolean,
+    isPublicProxy: Boolean,
+    isTorExitNode: Boolean
   )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
@@ -80,25 +91,55 @@ object model {
     }
   }
 
+  /** Companion class contains a constructor which takes a MaxMind AnonymousIp. */
+  object AnonymousIp {
+
+    /**
+     * Constructs an AnonymousIp instance from a MaxMind AnonymousIp instance.
+     * @param anonymousIP MaxMind AnonymousIp object
+     * @return AnonymousIp
+     */
+    def apply(anonymousIpResponse: AnonymousIpResponse): AnonymousIp = {
+
+      AnonymousIp(
+        ipAddress = anonymousIpResponse.getIpAddress,
+        isAnonymous = anonymousIpResponse.isAnonymous,
+        isAnonymousVpn = anonymousIpResponse.isAnonymousVpn,
+        isHostingProvider = anonymousIpResponse.isHostingProvider,
+        isPublicProxy = anonymousIpResponse.isPublicProxy,
+        isTorExitNode = anonymousIpResponse.isTorExitNode
+      )
+    }
+
+  }
+
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
     ipLocation: Option[Either[Throwable, IpLocation]],
     isp: Option[Either[Throwable, String]],
     organization: Option[Either[Throwable, String]],
     domain: Option[Either[Throwable, String]],
-    connectionType: Option[Either[Throwable, String]]
+    connectionType: Option[Either[Throwable, String]],
+    anonymousIp: Option[Either[Throwable, AnonymousIp]]
   ) {
     // Combine all errors if any
     def results: ValidatedNel[
       Throwable,
-      (Option[IpLocation], Option[String], Option[String], Option[String], Option[String])] = {
+      (
+        Option[IpLocation],
+        Option[String],
+        Option[String],
+        Option[String],
+        Option[String],
+        Option[AnonymousIp])] = {
       val location   = ipLocation.sequence[Error, IpLocation].toValidatedNel
       val provider   = isp.sequence[Error, String].toValidatedNel
       val org        = organization.sequence[Error, String].toValidatedNel
       val dom        = domain.sequence[Error, String].toValidatedNel
       val connection = connectionType.sequence[Error, String].toValidatedNel
+      val anonymous  = anonymousIp.sequence[Error, AnonymousIp].toValidatedNel
 
-      (location, provider, org, dom, connection).tupled
+      (location, provider, org, dom, connection, anonymous).tupled
     }
   }
 }

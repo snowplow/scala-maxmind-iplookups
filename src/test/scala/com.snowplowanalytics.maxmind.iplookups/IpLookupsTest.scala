@@ -29,6 +29,7 @@ object IpLookupsTest {
   val ispFile            = getClass.getResource("GeoIP2-ISP-Test.mmdb").getFile
   val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
+  val anonymousFile      = getClass.getResource("GeoIP2-Anonymous-IP-Test.mmdb").getFile
 
   def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
     CreateIpLookups[IO]
@@ -37,6 +38,7 @@ object IpLookupsTest {
         Some(ispFile),
         Some(domainFile),
         Some(connectionTypeFile),
+        Some(anonymousFile),
         memCache,
         lruCache
       )
@@ -49,6 +51,7 @@ object IpLookupsTest {
         Some(ispFile),
         Some(domainFile),
         Some(connectionTypeFile),
+        Some(anonymousFile),
         memCache,
         lruCache
       )
@@ -61,6 +64,7 @@ object IpLookupsTest {
         Some(ispFile),
         Some(domainFile),
         Some(connectionTypeFile),
+        Some(anonymousFile),
         memCache,
         lruCache
       )
@@ -86,7 +90,15 @@ object IpLookupsTest {
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
-      "Dialup".asRight.some
+      "Dialup".asRight.some,
+      AnonymousIp(
+        ipAddress = "175.16.199.0",
+        isAnonymous = false,
+        isAnonymousVpn = false,
+        isHostingProvider = false,
+        isPublicProxy = false,
+        isTorExitNode = false
+      ).asRight.some
     ),
     "216.160.83.56" -> IpLookupResult(
       IpLocation(
@@ -107,7 +119,15 @@ object IpLookupsTest {
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
       new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
-      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some
+      new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
+      AnonymousIp(
+        ipAddress = "216.160.83.56",
+        isAnonymous = false,
+        isAnonymousVpn = false,
+        isHostingProvider = false,
+        isPublicProxy = false,
+        isTorExitNode = false
+      ).asRight.some
     ),
     "67.43.156.0" -> IpLookupResult(
       IpLocation(
@@ -128,11 +148,35 @@ object IpLookupsTest {
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,
       "shoesfin.NET".asRight.some,
-      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some
+      new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some,
+      AnonymousIp(
+        ipAddress = "67.43.156.0",
+        isAnonymous = false,
+        isAnonymousVpn = false,
+        isHostingProvider = false,
+        isPublicProxy = false,
+        isTorExitNode = false
+      ).asRight.some
+    ),
+    "81.2.69.11" -> IpLookupResult(
+      new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
+      "in-addr.arpa".asRight.some,
+      new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
+      AnonymousIp(
+        ipAddress = "81.2.69.11",
+        isAnonymous = true,
+        isAnonymousVpn = true,
+        isHostingProvider = true,
+        isPublicProxy = true,
+        isTorExitNode = true
+      ).asRight.some
     ),
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
@@ -189,6 +233,7 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some,
+        new UnknownHostException("not: Name or service not known").asLeft.some,
         new UnknownHostException("not: Name or service not known").asLeft.some
       )
       val evalExpected = IpLookupResult(
@@ -196,9 +241,11 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some,
+        new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some
       )
       val idExpected = IpLookupResult(
+        new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some,
@@ -215,17 +262,17 @@ class IpLookupsTest extends Specification with Tables {
 
     "providing no files should return Nones" in {
       val ioActual = (for {
-        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, true, 0)
+        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync
       val evalActual = (for {
-        ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, true, 0)
+        ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
       } yield res).value
       val idActual = CreateIpLookups[Id]
-        .createFromFiles(None, None, None, None, true, 0)
+        .createFromFiles(None, None, None, None, None, true, 0)
         .performLookups("67.43.156.0")
-      val expected = IpLookupResult(None, None, None, None, None)
+      val expected = IpLookupResult(None, None, None, None, None, None)
       matchIpLookupResult(ioActual, expected)
       matchIpLookupResult(evalActual, expected)
       matchIpLookupResult(idActual, expected)
@@ -238,7 +285,8 @@ class IpLookupsTest extends Specification with Tables {
       "isp" ! expected.isp ! actual.isp |
       "organization" ! expected.organization ! actual.organization |
       "domain" ! expected.domain ! actual.domain |
-      "connection type" ! expected.connectionType ! actual.connectionType | { (_, e, a) =>
+      "connection type" ! expected.connectionType ! actual.connectionType |
+      "anonymous" ! expected.anonymousIp ! actual.anonymousIp | { (_, e, a) =>
       matchThrowables(e, a)
     }
   }

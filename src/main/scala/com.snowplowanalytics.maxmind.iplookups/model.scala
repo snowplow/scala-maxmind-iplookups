@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import com.maxmind.geoip2.model.CityResponse
+import com.maxmind.geoip2.model.{AnonymousIpResponse, CityResponse}
 
 object model {
 
@@ -35,7 +35,7 @@ object model {
   object IpLocation {
 
     /**
-     * Constructs an IpLocation instance from a MaxMind CityResponse instance.
+     * Constructs an [[IpLocation]] instance from a MaxMind CityResponse instance.
      * @param cityResponse MaxMind CityResponse object
      * @return IpLocation
      */
@@ -55,12 +55,42 @@ object model {
       )
   }
 
+  /** A case class wrapper around the MaxMind AnonymousIpResponse class. */
+  final case class AnonymousIp(
+    isAnonymous: Boolean,
+    isAnonymousVpn: Boolean,
+    isHostingProvider: Boolean,
+    isPublicProxy: Boolean,
+    isTorExitNode: Boolean,
+    ipAddress: String
+  )
+
+  /** Companion class contains a constructor which takes a MaxMind AnonymousIpResponse. */
+  object AnonymousIp {
+
+    /**
+     * Constructs an [[AnonymousIp]] instance from a MaxMind AnonymousIpResponse instance.
+     * @param anonymousIpResponse MaxMind AnonymousIpResponse object
+     * @return IpLocation
+     */
+    def apply(anonymousIpResponse: AnonymousIpResponse): AnonymousIp =
+      AnonymousIp(
+        isAnonymous = anonymousIpResponse.isAnonymous,
+        isAnonymousVpn = anonymousIpResponse.isAnonymousVpn,
+        isHostingProvider = anonymousIpResponse.isHostingProvider,
+        isPublicProxy = anonymousIpResponse.isPublicProxy,
+        isTorExitNode = anonymousIpResponse.isTorExitNode,
+        ipAddress = anonymousIpResponse.getIpAddress
+      )
+  }
+
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
     ipLocation: Option[Either[Throwable, IpLocation]],
     isp: Option[Either[Throwable, String]],
     organization: Option[Either[Throwable, String]],
     domain: Option[Either[Throwable, String]],
-    connectionType: Option[Either[Throwable, String]]
+    connectionType: Option[Either[Throwable, String]],
+    anonymousIp: Option[Either[Throwable, AnonymousIp]]
   )
 }

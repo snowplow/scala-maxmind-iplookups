@@ -14,18 +14,15 @@ package com.snowplowanalytics.maxmind.iplookups
 
 import java.io.File
 import java.net.InetAddress
-import java.util.{Collections, Map}
-
-import com.maxmind.db.CHMCache
-import com.maxmind.geoip2.model.CityResponse
-import com.maxmind.geoip2.DatabaseReader
-import com.snowplowanalytics.lrumap.LruMap
 import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-
-import model._
+import com.maxmind.db.CHMCache
+import com.maxmind.geoip2.DatabaseReader
+import com.maxmind.geoip2.model.{AnonymousIpResponse, CityResponse}
+import com.snowplowanalytics.lrumap.LruMap
+import com.snowplowanalytics.maxmind.iplookups.model._
 
 /** Companion object to hold alternative constructors. */
 object IpLookups {
@@ -45,6 +42,7 @@ object IpLookups {
     ispFile: Option[File] = None,
     domainFile: Option[File] = None,
     connectionTypeFile: Option[File] = None,
+    anonymousIpFile: Option[File] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]] =
@@ -59,6 +57,7 @@ object IpLookups {
           ispFile,
           domainFile,
           connectionTypeFile,
+          anonymousIpFile,
           memCache,
           lruCache
         )
@@ -79,6 +78,7 @@ object IpLookups {
     ispFile: Option[String] = None,
     domainFile: Option[String] = None,
     connectionTypeFile: Option[String] = None,
+    anonymousIpFile: Option[String] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]] =
@@ -87,6 +87,7 @@ object IpLookups {
       ispFile.map(new File(_)),
       domainFile.map(new File(_)),
       connectionTypeFile.map(new File(_)),
+      anonymousIpFile.map(new File(_)),
       memCache,
       lruCacheSize
     )
@@ -110,6 +111,7 @@ class IpLookups[F[_]: Sync] private (
   ispFile: Option[File],
   domainFile: Option[File],
   connectionTypeFile: Option[File],
+  anonymousIpFile: Option[File],
   memCache: Boolean,
   lru: Option[LruMap[F, String, IpLookupResult]]
 ) {
@@ -121,6 +123,7 @@ class IpLookups[F[_]: Sync] private (
     getService(domainFile).map(SpecializedReader(_, ReaderFunctions.domain))
   private val connectionTypeService =
     getService(connectionTypeFile).map(SpecializedReader(_, ReaderFunctions.connectionType))
+  private val anonymousIpService = getService(anonymousIpFile)
 
   /**
    * Get a LookupService from a database file
@@ -176,6 +179,17 @@ class IpLookups[F[_]: Sync] private (
     case _            => Sync[F].pure(None)
   }
 
+  private def getAnonymousIpResponse(
+    ipAddress: Either[Throwable, InetAddress]
+  ): F[Option[Either[Throwable, AnonymousIp]]] = (ipAddress, anonymousIpService) match {
+    case (Right(ipA), Some(gs)) =>
+      Sync[F].map(getAnonymousIpResponse(gs, ipA))(
+        (loc) => Some(loc.map(AnonymousIp(_)))
+      )
+    case (Left(f), _) => Sync[F].pure(Some(Left(f)))
+    case _            => Sync[F].pure(None)
+  }
+
   /**
    * This version does not use the LRU cache.
    * Concurrently looks up information
@@ -195,7 +209,8 @@ class IpLookups[F[_]: Sync] private (
       org            <- getLookup(ipAddress, orgService)
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
-    } yield IpLookupResult(ipLocation, isp, org, domain, connectionType)
+      anonymousIp    <- getAnonymousIpResponse(ipAddress)
+    } yield IpLookupResult(ipLocation, isp, org, domain, connectionType, anonymousIp)
 
   /**
    * Returns the MaxMind location for this IP address
@@ -212,10 +227,9 @@ class IpLookups[F[_]: Sync] private (
     lru: LruMap[F, String, IpLookupResult],
     ip: String
   ): F[IpLookupResult] = {
-    val lookupAndCache =
-      performLookupsWithoutLruCache(ip).flatMap(result => {
-        lru.put(ip, result).map(_ => result)
-      })
+    val lookupAndCache = performLookupsWithoutLruCache(ip).flatMap { result =>
+      lru.put(ip, result).map(_ => result)
+    }
 
     lru
       .get(ip)
@@ -232,4 +246,10 @@ class IpLookups[F[_]: Sync] private (
     ipAddress: InetAddress
   ): F[Either[Throwable, CityResponse]] =
     Sync[F].delay { Either.catchNonFatal(gs.city(ipAddress)) }
+
+  private def getAnonymousIpResponse(
+    gs: DatabaseReader,
+    ipAddress: InetAddress
+  ): F[Either[Throwable, AnonymousIpResponse]] =
+    Sync[F].delay { Either.catchNonFatal(gs.anonymousIp(ipAddress)) }
 }

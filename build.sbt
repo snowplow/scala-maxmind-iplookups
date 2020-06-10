@@ -27,10 +27,8 @@ lazy val root = project
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )
-  .settings(Seq(
-    publishTo := Some(
-      "Supersonic Artifactory" at "http://artifactory.rtb.ec2ssa.info:8081/artifactory/ext-release-local;build.timestamp=" + new java.util.Date().getTime)
-  ))
+  .settings(Seq(publishTo := Some(
+    "Supersonic Artifactory" at "http://artifactory.rtb.ec2ssa.info:8081/artifactory/ext-release-local;build.timestamp=" + new java.util.Date().getTime)))
   .settings(BuildSettings.docSettings)
   .settings(BuildSettings.coverageSettings)
   .settings(

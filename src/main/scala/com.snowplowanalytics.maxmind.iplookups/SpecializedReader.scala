@@ -19,6 +19,7 @@ import cats.effect.Sync
 import cats.syntax.either._
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.CityResponse
+import com.maxmind.geoip2.model.AnonymousIpResponse
 
 import model._
 
@@ -34,6 +35,12 @@ sealed trait SpecializedReader[F[_]] {
     db: DatabaseReader,
     ip: InetAddress
   ): F[Either[Throwable, CityResponse]]
+
+  def getAnonymousValue(
+    db: DatabaseReader,
+    ip: InetAddress
+  ): F[Either[Throwable, AnonymousIpResponse]]
+
 }
 
 object SpecializedReader {
@@ -50,6 +57,13 @@ object SpecializedReader {
       ip: InetAddress
     ): F[Either[Throwable, CityResponse]] =
       Sync[F].delay { Either.catchNonFatal(db.city(ip)) }
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress,
+    ): F[Either[Throwable, AnonymousIpResponse]] =
+      Sync[F].delay { Either.catchNonFatal(db.anonymousIp(ip)) }
+
   }
 
   implicit def evalSpecializedReader: SpecializedReader[Eval] = new SpecializedReader[Eval] {
@@ -65,6 +79,13 @@ object SpecializedReader {
       ip: InetAddress
     ): Eval[Either[Throwable, CityResponse]] =
       Eval.later { Either.catchNonFatal(db.city(ip)) }
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Eval[Either[Throwable, AnonymousIpResponse]] =
+      Eval.later { Either.catchNonFatal(db.anonymousIp(ip)) }
+
   }
 
   implicit def idSpecializedReader: SpecializedReader[Id] = new SpecializedReader[Id] {
@@ -80,6 +101,12 @@ object SpecializedReader {
       ip: InetAddress
     ): Id[Either[Throwable, CityResponse]] =
       Either.catchNonFatal(db.city(ip))
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Id[Either[Throwable, AnonymousIpResponse]] =
+      Either.catchNonFatal(db.anonymousIp(ip))
   }
 }
 

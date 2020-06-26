@@ -224,6 +224,7 @@ class IpLookupsTest extends Specification with Tables {
       }
     }
 
+    // If this test fails, see https://github.com/snowplow/scala-maxmind-iplookups/issues/96
     "providing an invalid ip should fail" in {
       val ioIpLookups   = ioIpLookupsFromFiles(true, 0)
       val evalIpLookups = evalIpLookupsFromFiles(true, 0)

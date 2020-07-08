@@ -1,3 +1,20 @@
+Version 0.7.1 (2020-07-07)
+--------------------------
+Bump geoip2 to 2.13.1 (#136)
+Bump cats-effect to 2.1.3 (#137)
+Bump cats-core to 2.1.1 (#138)
+Bump scala-lru-map to 0.4.0 (#139)
+Bump scalacheck to 1.14.3 (#140)
+Bump specs2-core 4.10.0 (#141)
+Bump sbt to 1.3.12 (#143)
+Bump sbt-bintray to 0.5.6 (#144)
+Bump sbt-unidoc to 0.4.3 (#145)
+Bump sbt-site to 1.3.3 (#146)
+Bump sbt-tpolecat to 0.1.13 (#147)
+Bump sbt-scoverage to 1.6.1 (#149)
+Bump Scala to 2.13.3 (#128)
+Integrate Snyk (#142)
+
 Version 0.7.0 (2020-06-06)
 --------------------------
 Add support for anonymous IP database (#132)

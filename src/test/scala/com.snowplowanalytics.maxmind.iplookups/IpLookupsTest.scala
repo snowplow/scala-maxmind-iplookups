@@ -42,7 +42,7 @@ object IpLookupsTest {
         memCache,
         lruCache
       )
-      .unsafeRunSync
+      .unsafeRunSync()
 
   def evalIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Eval] =
     CreateIpLookups[Eval]
@@ -214,7 +214,7 @@ class IpLookupsTest extends Specification with Tables {
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
-            val ioActual   = ioIpLookups.performLookups(ip).unsafeRunSync
+            val ioActual   = ioIpLookups.performLookups(ip).unsafeRunSync()
             val evalActual = evalIpLookups.performLookups(ip).value
             val idActual   = idIpLookups.performLookups(ip)
             matchIpLookupResult(ioActual, expected)
@@ -224,6 +224,7 @@ class IpLookupsTest extends Specification with Tables {
       }
     }
 
+    // If this test fails, see https://github.com/snowplow/scala-maxmind-iplookups/issues/96
     "providing an invalid ip should fail" in {
       val ioIpLookups   = ioIpLookupsFromFiles(true, 0)
       val evalIpLookups = evalIpLookupsFromFiles(true, 0)
@@ -252,7 +253,7 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some
       )
-      val ioActual   = ioIpLookups.performLookups("not").unsafeRunSync
+      val ioActual   = ioIpLookups.performLookups("not").unsafeRunSync()
       val evalActual = evalIpLookups.performLookups("not").value
       val idActual   = idIpLookups.performLookups("not")
       matchIpLookupResult(ioActual, ioExpected)
@@ -264,7 +265,7 @@ class IpLookupsTest extends Specification with Tables {
       val ioActual = (for {
         ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")
-      } yield res).unsafeRunSync
+      } yield res).unsafeRunSync()
       val evalActual = (for {
         ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, None, true, 0)
         res       <- ipLookups.performLookups("67.43.156.0")

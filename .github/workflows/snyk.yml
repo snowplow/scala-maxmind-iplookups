@@ -1,0 +1,20 @@
+name: Snyk
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/scala@master
+        with:
+          command: monitor
+          args: --project-name=scala-maxmind-iplookups
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

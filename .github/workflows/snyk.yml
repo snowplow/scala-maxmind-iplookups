@@ -8,13 +8,18 @@ jobs:
   security:
     runs-on: ubuntu-latest
 
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Snyk
+        run: sudo npm install -g snyk
+
+      - name: Add correct sbt-dependency-graph version
+        run: mkdir -p $HOME/.sbt/1.0/plugins && echo 'addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")' >> $HOME/.sbt/1.0/plugins/plugins.sbt
 
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/scala@master
-        with:
-          command: monitor
-          args: --project-name=scala-maxmind-iplookups
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk monitor --project-name=scala-maxmind-iplookups

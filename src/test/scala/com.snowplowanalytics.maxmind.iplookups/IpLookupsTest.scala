@@ -71,20 +71,23 @@ object IpLookupsTest {
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
       IpLocation(
+        continent = "Asia",
         countryCode = "CN",
         countryName = "China",
-        region = Some("22"),
         city = Some("Changchun"),
         cityGeoNameId = Some(2038180),
         latitude = 43.88F,
         longitude = 125.3228F,
         timezone = Some("Asia/Harbin"),
+        accuracyRadius = 100,
+        averageIncome = 0,
+        populationDensity = 0,
         postalCode = None,
         metroCode = None,
-        regionName = Some("Jilin Sheng"),
-        isInEuropeanUnion = false,
-        continent = "Asia",
-        accuracyRadius = 100
+        mostSpecificRegion = Some("22"),
+        mostSpecificRegionName = Some("Jilin Sheng"),
+        subdivisions = Vector(ParsedSubdivision("Jilin Sheng", "22", 2036500)),
+        isInEuropeanUnion = false
       ).asRight.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
@@ -101,20 +104,23 @@ object IpLookupsTest {
     ),
     "216.160.83.56" -> IpLookupResult(
       IpLocation(
+        continent = "North America",
         countryCode = "US",
         countryName = "United States",
-        region = Some("WA"),
         city = Some("Milton"),
         cityGeoNameId = Some(5803556),
         latitude = 47.2513F,
         longitude = -122.3149F,
         timezone = Some("America/Los_Angeles"),
+        accuracyRadius = 22,
+        averageIncome = 0,
+        populationDensity = 0,
         postalCode = Some("98354"),
         metroCode = Some(819),
-        regionName = Some("Washington"),
-        isInEuropeanUnion = false,
-        continent = "North America",
-        accuracyRadius = 22
+        mostSpecificRegion = Some("WA"),
+        mostSpecificRegionName = Some("Washington"),
+        subdivisions = Vector(ParsedSubdivision("Washington", "WA", 5815135)),
+        isInEuropeanUnion = false
       ).asRight.some,
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
@@ -131,20 +137,23 @@ object IpLookupsTest {
     ),
     "67.43.156.0" -> IpLookupResult(
       IpLocation(
+        continent = "Asia",
         countryCode = "BT",
         countryName = "Bhutan",
-        cityGeoNameId = None,
-        region = None,
         city = None,
+        cityGeoNameId = None,
         latitude = 27.5F,
         longitude = 90.5F,
         timezone = Some("Asia/Thimphu"),
+        accuracyRadius = 534,
+        averageIncome = 0,
+        populationDensity = 0,
         postalCode = None,
         metroCode = None,
-        regionName = None,
-        isInEuropeanUnion = false,
-        continent = "Asia",
-        accuracyRadius = 534
+        mostSpecificRegion = None,
+        mostSpecificRegionName = None,
+        subdivisions = Vector.empty,
+        isInEuropeanUnion = false
       ).asRight.some,
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,
@@ -177,11 +186,16 @@ object IpLookupsTest {
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      ipLocation = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      isp = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      organization = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      domain = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      connectionType = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      ipLocation =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      isp =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      organization =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      domain =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      connectionType =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )
@@ -236,7 +250,7 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some
+        new UnknownHostException("not: unknown error").asLeft.some
       )
       val evalExpected = IpLookupResult(
         new UnknownHostException("not").asLeft.some,

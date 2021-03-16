@@ -17,12 +17,12 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
   .settings(
-    organization := "com.snowplowanalytics",
+    organization := "com.supersonic",
     name := "scala-maxmind-iplookups",
     version := "0.7.3",
     description := "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion := "2.13.3",
-    crossScalaVersions := Seq("2.13.3", "2.12.10"),
+    scalaVersion := "2.12.11",
+    crossScalaVersions := Seq("2.13.3", "2.12.11"),
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )

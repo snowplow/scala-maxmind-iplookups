@@ -22,7 +22,7 @@ import cats.syntax.traverse._
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.{AnonymousIpResponse, CityResponse}
 import com.maxmind.geoip2.record._
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 object model {
   type ReaderFunction = (DatabaseReader, InetAddress) => String

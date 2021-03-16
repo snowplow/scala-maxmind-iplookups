@@ -177,11 +177,16 @@ object IpLookupsTest {
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      ipLocation = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      isp = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      organization = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      domain = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      connectionType = new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      ipLocation =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      isp =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      organization =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      domain =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      connectionType =
+        new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )
@@ -236,7 +241,7 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some
+        new UnknownHostException("not: unknown error").asLeft.some
       )
       val evalExpected = IpLookupResult(
         new UnknownHostException("not").asLeft.some,

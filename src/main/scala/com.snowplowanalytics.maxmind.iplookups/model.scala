@@ -48,7 +48,7 @@ object model {
     metroCode: Option[Int],
     mostSpecificRegion: Option[String],
     mostSpecificRegionName: Option[String],
-    subdivisions: Vector[ParsedSubdivision],
+    subdivisions: List[ParsedSubdivision],
     isInEuropeanUnion: Boolean
   )
 
@@ -77,9 +77,9 @@ object model {
       val city: City           = cityResponse.getCity
       val location: Location   = cityResponse.getLocation
       val postal: Postal       = cityResponse.getPostal
-      val subdivisions: Vector[ParsedSubdivision] = cityResponse.getSubdivisions.asScala.map { i =>
+      val subdivisions: List[ParsedSubdivision] = cityResponse.getSubdivisions.asScala.map { i =>
         ParsedSubdivision(i.getName, i.getIsoCode, i.getGeoNameId)
-      }.toVector
+      }.toList
 
       // Try to bypass bincompat problem with Spark Enrich,
       // Delete once Spark Enrich is deprecated

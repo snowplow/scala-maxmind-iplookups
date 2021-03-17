@@ -86,7 +86,7 @@ object IpLookupsTest {
         metroCode = None,
         mostSpecificRegion = Some("22"),
         mostSpecificRegionName = Some("Jilin Sheng"),
-        subdivisions = Vector(ParsedSubdivision("Jilin Sheng", "22", 2036500)),
+        subdivisions = List(ParsedSubdivision("Jilin Sheng", "22", 2036500)),
         isInEuropeanUnion = false
       ).asRight.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
@@ -119,7 +119,7 @@ object IpLookupsTest {
         metroCode = Some(819),
         mostSpecificRegion = Some("WA"),
         mostSpecificRegionName = Some("Washington"),
-        subdivisions = Vector(ParsedSubdivision("Washington", "WA", 5815135)),
+        subdivisions = List(ParsedSubdivision("Washington", "WA", 5815135)),
         isInEuropeanUnion = false
       ).asRight.some,
       "Century Link".asRight.some,
@@ -152,7 +152,7 @@ object IpLookupsTest {
         metroCode = None,
         mostSpecificRegion = None,
         mostSpecificRegionName = None,
-        subdivisions = Vector.empty,
+        subdivisions = List.empty,
         isInEuropeanUnion = false
       ).asRight.some,
       "Loud Packet".asRight.some,

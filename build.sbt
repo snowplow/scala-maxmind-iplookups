@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials")
+credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials_nexus")
 
 lazy val root = project
   .in(file("."))
@@ -26,10 +26,12 @@ lazy val root = project
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )
-  .settings(Seq(
-    publishTo := Some(
-      "Supersonic Artifactory" at "http://artifactory.rtb.ec2ssa.info:8081/artifactory/ext-release-local;build.timestamp=" + new java.util.Date().getTime)
-  ))
+  .settings(
+    Seq(
+      publishTo := Some(
+        "Supersonic Artifactory" at "https://nexus.general-prod.us-east-1.ironsrc.mobi/repository/ext-release-local"
+      )
+    ))
   .settings(BuildSettings.docSettings)
   .settings(BuildSettings.coverageSettings)
   .settings(

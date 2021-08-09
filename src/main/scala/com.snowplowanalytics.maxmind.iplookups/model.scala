@@ -68,18 +68,18 @@ object model {
     def apply(cityResponse: CityResponse): IpLocation = {
       // Try to bypass bincompat problem with Spark Enrich,
       // Delete once Spark Enrich is deprecated
-      val isInEuropeanUnion = try {
-        cityResponse.getCountry.isInEuropeanUnion
-      } catch {
-        case _: NoSuchMethodError => false
-      }
+      val isInEuropeanUnion =
+        try cityResponse.getCountry.isInEuropeanUnion
+        catch {
+          case _: NoSuchMethodError => false
+        }
       IpLocation(
         countryCode = cityResponse.getCountry.getIsoCode,
         countryName = cityResponse.getCountry.getName,
         region = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
         city = Option(cityResponse.getCity.getName),
-        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0F),
-        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0F),
+        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0f),
+        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0f),
         timezone = Option(cityResponse.getLocation.getTimeZone),
         postalCode = Option(cityResponse.getPostal.getCode),
         metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),
@@ -131,7 +131,9 @@ object model {
         Option[String],
         Option[String],
         Option[String],
-        Option[AnonymousIp])] = {
+        Option[AnonymousIp]
+      )
+    ] = {
       val location   = ipLocation.sequence[Error, IpLocation].toValidatedNel
       val provider   = isp.sequence[Error, String].toValidatedNel
       val org        = organization.sequence[Error, String].toValidatedNel

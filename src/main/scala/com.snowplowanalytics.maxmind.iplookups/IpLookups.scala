@@ -80,8 +80,8 @@ sealed trait CreateIpLookups[F[_]] {
 object CreateIpLookups {
   def apply[F[_]](implicit ev: CreateIpLookups[F]): CreateIpLookups[F] = ev
 
-  implicit def syncCreateIpLookups[F[_]: Sync](
-    implicit CLM: CreateLruMap[F, String, IpLookupResult]
+  implicit def syncCreateIpLookups[F[_]: Sync](implicit
+    CLM: CreateLruMap[F, String, IpLookupResult]
   ): CreateIpLookups[F] = new CreateIpLookups[F] {
     override def createFromFiles(
       geoFile: Option[File] = None,
@@ -113,8 +113,8 @@ object CreateIpLookups {
       }
   }
 
-  implicit def evalCreateIpLookups(
-    implicit CLM: CreateLruMap[Eval, String, IpLookupResult]
+  implicit def evalCreateIpLookups(implicit
+    CLM: CreateLruMap[Eval, String, IpLookupResult]
   ): CreateIpLookups[Eval] = new CreateIpLookups[Eval] {
     override def createFromFiles(
       geoFile: Option[File] = None,
@@ -146,8 +146,8 @@ object CreateIpLookups {
       }
   }
 
-  implicit def idCreateIpLookups(
-    implicit CLM: CreateLruMap[Id, String, IpLookupResult]
+  implicit def idCreateIpLookups(implicit
+    CLM: CreateLruMap[Id, String, IpLookupResult]
   ): CreateIpLookups[Id] = new CreateIpLookups[Id] {
     override def createFromFiles(
       geoFile: Option[File] = None,
@@ -195,10 +195,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   anonymousFile: Option[File],
   memCache: Boolean,
   lru: Option[LruMap[F, String, IpLookupResult]]
-)(
-  implicit
-  SR: SpecializedReader[F],
-  IAR: IpAddressResolver[F]) {
+)(implicit SR: SpecializedReader[F], IAR: IpAddressResolver[F]) {
   // Configure the lookup services
   private val geoService    = getService(geoFile)
   private val ispService    = getService(ispFile).map((_, ReaderFunctions.isp))
@@ -309,9 +306,9 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     ip: String
   ): F[IpLookupResult] = {
     val lookupAndCache =
-      performLookupsWithoutLruCache(ip).flatMap(result => {
+      performLookupsWithoutLruCache(ip).flatMap { result =>
         lru.put(ip, result).map(_ => result)
-      })
+      }
 
     lru
       .get(ip)

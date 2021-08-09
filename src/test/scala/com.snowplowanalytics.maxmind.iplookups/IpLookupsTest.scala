@@ -64,8 +64,8 @@ object IpLookupsTest {
         countryName = "China",
         region = Some("22"),
         city = Some("Changchun"),
-        latitude = 43.88F,
-        longitude = 125.3228F,
+        latitude = 43.88f,
+        longitude = 125.3228f,
         timezone = Some("Asia/Harbin"),
         postalCode = None,
         metroCode = None,
@@ -93,8 +93,8 @@ object IpLookupsTest {
         countryName = "United States",
         region = Some("WA"),
         city = Some("Milton"),
-        latitude = 47.2513F,
-        longitude = -122.3149F,
+        latitude = 47.2513f,
+        longitude = -122.3149f,
         timezone = Some("America/Los_Angeles"),
         postalCode = Some("98354"),
         metroCode = Some(819),
@@ -122,8 +122,8 @@ object IpLookupsTest {
         countryName = "Bhutan",
         region = None,
         city = None,
-        latitude = 27.5F,
-        longitude = 90.5F,
+        latitude = 27.5f,
+        longitude = 90.5f,
         timezone = Some("Asia/Thimphu"),
         postalCode = None,
         metroCode = None,
@@ -185,7 +185,8 @@ class IpLookupsTest extends Specification with Tables {
         "The IP address %s looked up (%s memory cache and with %s)".format(
           ip,
           mcf(mcache),
-          lcf(lcache))
+          lcf(lcache)
+        )
 
     import IpLookupsTest._
 
@@ -197,14 +198,13 @@ class IpLookupsTest extends Specification with Tables {
       val ioIpLookups = ioIpLookupsFromFiles(memCache, lruCache)
       val idIpLookups = idIpLookupsFromFiles(memCache, lruCache)
 
-      testData foreach {
-        case (ip, expected) =>
-          formatter(ip, memCache, lruCache) should {
-            val ioActual = ioIpLookups.performLookups(ip).unsafeRunSync()
-            val idActual = idIpLookups.performLookups(ip)
-            matchIpLookupResult(ioActual, expected)
-            matchIpLookupResult(idActual, expected)
-          }
+      testData foreach { case (ip, expected) =>
+        formatter(ip, memCache, lruCache) should {
+          val ioActual = ioIpLookups.performLookups(ip).unsafeRunSync()
+          val idActual = idIpLookups.performLookups(ip)
+          matchIpLookupResult(ioActual, expected)
+          matchIpLookupResult(idActual, expected)
+        }
       }
     }
 
@@ -255,8 +255,8 @@ class IpLookupsTest extends Specification with Tables {
       "domain" ! expected.domain ! actual.domain |
       "connection type" ! expected.connectionType ! actual.connectionType |
       "anonymous" ! expected.anonymousIp ! actual.anonymousIp | { (_, e, a) =>
-      matchThrowables(e, a)
-    }
+        matchThrowables(e, a)
+      }
   }
 
   // Match on Throwable's ClassName instead of error message, because messages are os-specific

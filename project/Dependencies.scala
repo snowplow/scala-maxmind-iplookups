@@ -16,7 +16,7 @@ object Dependencies {
   val maxmind       = "com.maxmind.geoip2"    %  "geoip2"               % "2.15.0"
   val catsEffect    = "org.typelevel"         %% "cats-effect"          % "2.5.3"
   val cats          = "org.typelevel"         %% "cats-core"            % "2.6.1"
-  val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.4.0"
+  val lruMap        = "com.snowplowanalytics" %% "scala-lru-map"        % "0.5.0"
   val scalaCheck    = "org.scalacheck"        %% "scalacheck"           % "1.14.3" % Test
   val specs2        = "org.specs2"            %% "specs2-core"          % "4.10.0"  % Test
 }

@@ -13,14 +13,13 @@
 import sbt._
 import Keys._
 
-// Bintray plugin
-import bintray.BintrayPlugin._
-import bintray.BintrayKeys._
-
 // Scaladocs
 import sbtunidoc.ScalaUnidocPlugin.autoImport._
 import com.typesafe.sbt.site.SitePlugin.autoImport._
 import com.typesafe.sbt.SbtGit.GitKeys._
+
+// dynver plugin
+import sbtdynver.DynVerPlugin.autoImport._
 
 // Scoverage
 import scoverage.ScoverageKeys._
@@ -28,34 +27,29 @@ import scoverage.ScoverageKeys._
 object BuildSettings {
 
   lazy val javaCompilerOptions = Seq(
-    "-source", "1.8",
-    "-target", "1.8"
+    "-source", "11",
+    "-target", "11"
   )
 
-  lazy val publishSettings = bintraySettings ++ Seq(
-    publishMavenStyle := true,
+  lazy val publishSettings = Seq(
     publishArtifact := true,
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-    bintrayOrganization := Some("snowplow"),
-    bintrayRepository := "snowplow-maven",
     pomIncludeRepository := { _ => false },
     homepage := Some(url("http://snowplowanalytics.com")),
-    scmInfo := Some(ScmInfo(url("https://github.com/snowplow/scala-maxmind-iplookups"),
-      "scm:git@github.com:snowplow/scala-maxmind-iplookups.git")),
-    pomExtra := (
-      <developers>
-        <developer>
-          <name>Snowplow Analytics Ltd</name>
-          <email>support@snowplowanalytics.com</email>
-          <organization>Snowplow Analytics Ltd</organization>
-          <organizationUrl>http://snowplowanalytics.com</organizationUrl>
-        </developer>
-      </developers>)
+    ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
+    developers := List(
+      Developer(
+        "Snowplow Analytics Ltd",
+        "Snowplow Analytics Ltd",
+        "support@snowplowanalytics.com",
+        url("https://snowplowanalytics.com")
+      )
+    ),
   )
 
   lazy val docSettings = Seq(
-    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
+    addMappingsToSiteDir(ScalaUnidoc / packageDoc / mappings, ScalaUnidoc / siteSubdirName),
     gitRemoteRepo := "https://github.com/snowplow/scala-maxmind-iplookups.git",
     siteSubdirName := ""
   )

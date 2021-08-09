@@ -208,7 +208,6 @@ class IpLookupsTest extends Specification with Tables {
       }
     }
 
-    // If this test fails, see https://github.com/snowplow/scala-maxmind-iplookups/issues/96
     "providing an invalid ip should fail" in {
       val ioIpLookups = ioIpLookupsFromFiles(true, 0)
       val idIpLookups = idIpLookupsFromFiles(true, 0)
@@ -260,19 +259,10 @@ class IpLookupsTest extends Specification with Tables {
     }
   }
 
-  // needed because == doesn't work on exceptions
+  // Match on Throwable's ClassName instead of error message, because messages are os-specific
   private def matchThrowables[A](
     actual: Option[Either[Throwable, A]],
     expected: Option[Either[Throwable, A]]
-  ): Boolean = actual match {
-    case None => actual must_== expected
-    case Some(r) =>
-      r match {
-        case Right(_) => actual must_== expected
-        case Left(_)  => getErrorMessage(actual) must_== getErrorMessage(expected)
-      }
-  }
-
-  private def getErrorMessage[A](e: Option[Either[Throwable, A]]): Option[Either[String, A]] =
-    e.map(_.leftMap(_.getMessage))
+  ): Boolean =
+    actual.map(_.leftMap(_.getClass)) must_== expected.map(_.leftMap(_.getClass))
 }

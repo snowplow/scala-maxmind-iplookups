@@ -50,19 +50,19 @@ object SpecializedReader {
       db: DatabaseReader,
       ip: InetAddress
     ): F[Either[Throwable, String]] =
-      Sync[F].delay { Either.catchNonFatal(f(db, ip)) }
+      Sync[F].delay(Either.catchNonFatal(f(db, ip)))
 
     def getCityValue(
       db: DatabaseReader,
       ip: InetAddress
     ): F[Either[Throwable, CityResponse]] =
-      Sync[F].delay { Either.catchNonFatal(db.city(ip)) }
+      Sync[F].delay(Either.catchNonFatal(db.city(ip)))
 
     def getAnonymousValue(
       db: DatabaseReader,
-      ip: InetAddress,
+      ip: InetAddress
     ): F[Either[Throwable, AnonymousIpResponse]] =
-      Sync[F].delay { Either.catchNonFatal(db.anonymousIp(ip)) }
+      Sync[F].delay(Either.catchNonFatal(db.anonymousIp(ip)))
 
   }
 
@@ -72,19 +72,19 @@ object SpecializedReader {
       db: DatabaseReader,
       ip: InetAddress
     ): Eval[Either[Throwable, String]] =
-      Eval.later { Either.catchNonFatal(f(db, ip)) }
+      Eval.later(Either.catchNonFatal(f(db, ip)))
 
     def getCityValue(
       db: DatabaseReader,
       ip: InetAddress
     ): Eval[Either[Throwable, CityResponse]] =
-      Eval.later { Either.catchNonFatal(db.city(ip)) }
+      Eval.later(Either.catchNonFatal(db.city(ip)))
 
     def getAnonymousValue(
       db: DatabaseReader,
       ip: InetAddress
     ): Eval[Either[Throwable, AnonymousIpResponse]] =
-      Eval.later { Either.catchNonFatal(db.anonymousIp(ip)) }
+      Eval.later(Either.catchNonFatal(db.anonymousIp(ip)))
 
   }
 

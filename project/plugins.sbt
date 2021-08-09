@@ -1,4 +1,4 @@
-addSbtPlugin("com.lucidchart" % "sbt-scalafmt" % "1.15")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.3")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.2")

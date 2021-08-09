@@ -64,22 +64,10 @@ result.ipLocation match {
 }
 ```
 
-`cats.Eval` and `cats.Id` are also supported:
+`cats.Id` is also supported:
 
 ```scala
-import cats.{Eval, Id}
-
-val evalResult: Eval[IpLookupResult] = for {
-  ipLookups <- CreateIpLookups[Eval].createFromFilenames(
-    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
-    ispFile = None,
-    domainFile = None,
-    connectionTypeFile = None,
-    memCache = false,
-    lruCacheSize = 20000
-  )
-  lookup <- ipLookups.performLookups("175.16.199.0")
-} yield lookup
+import cats.Id
 
 val idResult: IpLookupResult = {
   val ipLookups = CreateIpLookups[Id].createFromFilenames(

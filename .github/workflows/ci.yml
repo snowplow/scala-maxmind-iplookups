@@ -24,6 +24,9 @@ jobs:
     - name: Check assets can be published
       if: ${{ always() }}
       run: sbt +publishLocal
+    - name: Check Scala formatting
+      if: ${{ always() }}
+      run: sbt scalafmtCheckAll
     - name: Deploy snowplow-maxmind-iplookups to Maven Central
       if: startsWith(github.ref, 'refs/tags/')
       run: sbt ci-release

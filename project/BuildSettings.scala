@@ -14,9 +14,11 @@ import sbt._
 import Keys._
 
 // Scaladocs
-import sbtunidoc.ScalaUnidocPlugin.autoImport._
-import com.typesafe.sbt.site.SitePlugin.autoImport._
-import com.typesafe.sbt.SbtGit.GitKeys._
+import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
+import com.typesafe.sbt.site.SitePlugin.autoImport.{makeSite, siteSubdirName}
+import com.typesafe.sbt.SbtGit.GitKeys.{gitBranch, gitRemoteRepo}
+import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
+import com.typesafe.sbt.site.preprocess.PreprocessPlugin.autoImport._
 
 // dynver plugin
 import sbtdynver.DynVerPlugin.autoImport._
@@ -49,9 +51,15 @@ object BuildSettings {
   )
 
   lazy val docSettings = Seq(
-    addMappingsToSiteDir(ScalaUnidoc / packageDoc / mappings, ScalaUnidoc / siteSubdirName),
-    gitRemoteRepo := "https://github.com/snowplow/scala-maxmind-iplookups.git",
-    siteSubdirName := ""
+    ghpagesPushSite := (ghpagesPushSite dependsOn makeSite).value,
+    ghpagesNoJekyll := false,
+    gitRemoteRepo := "git@github.com:snowplow/scala-maxmind-iplookups.git",
+    gitBranch := Some("gh-pages"),
+    SiteScaladoc / siteSubdirName := s"${version.value}",
+    Preprocess / preprocessVars := Map("VERSION" -> version.value),
+    ghpagesCleanSite / excludeFilter := new FileFilter {
+      def accept(f: File) = true
+    }
   )
 
   lazy val coverageSettings = Seq(

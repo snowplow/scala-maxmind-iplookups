@@ -33,3 +33,20 @@ jobs:
         PGP_SECRET: ${{ secrets.SONA_PGP_SECRET }}
         SONATYPE_USERNAME: ${{ secrets.SONA_USER }}
         SONATYPE_PASSWORD: ${{ secrets.SONA_PASS }}
+    - name: Get current version
+      id: ver
+      run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
+    - name: Publish ScalaDoc
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        project_version=${{ steps.ver.outputs.tag }}
+        sbt makeSite
+        echo Publishing Scaladoc
+        git fetch
+        git checkout gh-pages
+        cp -r target/site/$project_version .
+        git config user.name "GitHub Actions"
+        git config user.email "<>"
+        git add $project_version
+        git commit -m "Added Scaladoc for $project_version"
+        git push origin gh-pages

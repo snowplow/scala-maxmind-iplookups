@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,11 +15,10 @@ credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials_nex
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
+  .enablePlugins(SiteScaladocPlugin, GhpagesPlugin, PreprocessPlugin)
   .settings(
     organization := "com.supersonic",
     name := "scala-maxmind-iplookups",
-    version := "0.7.3",
     description := "Scala wrapper for MaxMind GeoIP2 library",
     scalaVersion := "2.12.11",
     crossScalaVersions := Seq("2.13.3", "2.12.11"),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -83,20 +83,19 @@ object model {
 
       // Try to bypass bincompat problem with Spark Enrich,
       // Delete once Spark Enrich is deprecated
-      val isInEuropeanUnion = try {
-        country.isInEuropeanUnion
-      } catch {
-        case _: NoSuchMethodError => false
-      }
-
+      val isInEuropeanUnion =
+        try cityResponse.getCountry.isInEuropeanUnion
+        catch {
+          case _: NoSuchMethodError => false
+        }
       IpLocation(
         continent = continent.getName,
         countryCode = country.getIsoCode,
         countryName = country.getName,
         city = Option(city.getName),
         cityGeoNameId = Option(city.getGeoNameId),
-        latitude = Option(location.getLatitude).map(_.toFloat).getOrElse(0F),
-        longitude = Option(location.getLongitude).map(_.toFloat).getOrElse(0F),
+        latitude = Option(location.getLatitude).map(_.toFloat).getOrElse(0f),
+        longitude = Option(location.getLongitude).map(_.toFloat).getOrElse(0f),
         timezone = Option(location.getTimeZone),
         metroCode = Option(location.getMetroCode).map(_.toInt),
         accuracyRadius = location.getAccuracyRadius,
@@ -151,7 +150,9 @@ object model {
         Option[String],
         Option[String],
         Option[String],
-        Option[AnonymousIp])] = {
+        Option[AnonymousIp]
+      )
+    ] = {
       val location   = ipLocation.sequence[Error, IpLocation].toValidatedNel
       val provider   = isp.sequence[Error, String].toValidatedNel
       val org        = organization.sequence[Error, String].toValidatedNel

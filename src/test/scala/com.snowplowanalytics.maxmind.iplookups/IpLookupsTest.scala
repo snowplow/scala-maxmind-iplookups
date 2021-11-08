@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,10 +13,10 @@
 package com.snowplowanalytics.maxmind.iplookups
 
 import java.net.UnknownHostException
+import cats.Id
 import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
-import cats.{Eval, Id}
 import com.maxmind.geoip2.exception.AddressNotFoundException
 import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
@@ -42,19 +42,6 @@ object IpLookupsTest {
       )
       .unsafeRunSync()
 
-  def evalIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Eval] =
-    CreateIpLookups[Eval]
-      .createFromFilenames(
-        Some(geoFile),
-        Some(ispFile),
-        Some(domainFile),
-        Some(connectionTypeFile),
-        Some(anonymousFile),
-        memCache,
-        lruCache
-      )
-      .value
-
   def idIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Id] =
     CreateIpLookups[Id]
       .createFromFilenames(
@@ -76,8 +63,8 @@ object IpLookupsTest {
         countryName = "China",
         city = Some("Changchun"),
         cityGeoNameId = Some(2038180),
-        latitude = 43.88F,
-        longitude = 125.3228F,
+        latitude = 43.88f,
+        longitude = 125.3228f,
         timezone = Some("Asia/Harbin"),
         accuracyRadius = 100,
         averageIncome = 0,
@@ -109,8 +96,8 @@ object IpLookupsTest {
         countryName = "United States",
         city = Some("Milton"),
         cityGeoNameId = Some(5803556),
-        latitude = 47.2513F,
-        longitude = -122.3149F,
+        latitude = 47.2513f,
+        longitude = -122.3149f,
         timezone = Some("America/Los_Angeles"),
         accuracyRadius = 22,
         averageIncome = 0,
@@ -142,8 +129,8 @@ object IpLookupsTest {
         countryName = "Bhutan",
         city = None,
         cityGeoNameId = None,
-        latitude = 27.5F,
-        longitude = 90.5F,
+        latitude = 27.5f,
+        longitude = 90.5f,
         timezone = Some("Asia/Thimphu"),
         accuracyRadius = 534,
         averageIncome = 0,
@@ -213,7 +200,8 @@ class IpLookupsTest extends Specification with Tables {
         "The IP address %s looked up (%s memory cache and with %s)".format(
           ip,
           mcf(mcache),
-          lcf(lcache))
+          lcf(lcache)
+      )
 
     import IpLookupsTest._
 
@@ -222,28 +210,23 @@ class IpLookupsTest extends Specification with Tables {
       lruCache <- Seq(0, 1000, 10000)
     } {
 
-      val ioIpLookups   = ioIpLookupsFromFiles(memCache, lruCache)
-      val evalIpLookups = evalIpLookupsFromFiles(memCache, lruCache)
-      val idIpLookups   = idIpLookupsFromFiles(memCache, lruCache)
+      val ioIpLookups = ioIpLookupsFromFiles(memCache, lruCache)
+      val idIpLookups = idIpLookupsFromFiles(memCache, lruCache)
 
       testData foreach {
         case (ip, expected) =>
           formatter(ip, memCache, lruCache) should {
-            val ioActual   = ioIpLookups.performLookups(ip).unsafeRunSync()
-            val evalActual = evalIpLookups.performLookups(ip).value
-            val idActual   = idIpLookups.performLookups(ip)
+            val ioActual = ioIpLookups.performLookups(ip).unsafeRunSync()
+            val idActual = idIpLookups.performLookups(ip)
             matchIpLookupResult(ioActual, expected)
-            matchIpLookupResult(evalActual, expected)
             matchIpLookupResult(idActual, expected)
           }
       }
     }
 
-    // If this test fails, see https://github.com/snowplow/scala-maxmind-iplookups/issues/96
     "providing an invalid ip should fail" in {
-      val ioIpLookups   = ioIpLookupsFromFiles(memCache = true, 0)
-      val evalIpLookups = evalIpLookupsFromFiles(true, 0)
-      val idIpLookups   = idIpLookupsFromFiles(true, 0)
+      val ioIpLookups = ioIpLookupsFromFiles(memCache = true, 0)
+      val idIpLookups = idIpLookupsFromFiles(true, 0)
       val ioExpected = IpLookupResult(
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
@@ -251,14 +234,6 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some,
         new UnknownHostException("not: unknown error").asLeft.some
-      )
-      val evalExpected = IpLookupResult(
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some
       )
       val idExpected = IpLookupResult(
         new UnknownHostException("not").asLeft.some,
@@ -268,11 +243,9 @@ class IpLookupsTest extends Specification with Tables {
         new UnknownHostException("not").asLeft.some,
         new UnknownHostException("not").asLeft.some
       )
-      val ioActual   = ioIpLookups.performLookups("not").unsafeRunSync()
-      val evalActual = evalIpLookups.performLookups("not").value
-      val idActual   = idIpLookups.performLookups("not")
+      val ioActual = ioIpLookups.performLookups("not").unsafeRunSync()
+      val idActual = idIpLookups.performLookups("not")
       matchIpLookupResult(ioActual, ioExpected)
-      matchIpLookupResult(evalActual, evalExpected)
       matchIpLookupResult(idActual, idExpected)
     }
 
@@ -288,16 +261,11 @@ class IpLookupsTest extends Specification with Tables {
           0)
         res <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync()
-      val evalActual = (for {
-        ipLookups <- CreateIpLookups[Eval].createFromFiles(None, None, None, None, None, true, 0)
-        res       <- ipLookups.performLookups("67.43.156.0")
-      } yield res).value
       val idActual = CreateIpLookups[Id]
         .createFromFiles(None, None, None, None, None, true, 0)
         .performLookups("67.43.156.0")
       val expected = IpLookupResult(None, None, None, None, None, None)
       matchIpLookupResult(ioActual, expected)
-      matchIpLookupResult(evalActual, expected)
       matchIpLookupResult(idActual, expected)
     }
   }
@@ -314,19 +282,10 @@ class IpLookupsTest extends Specification with Tables {
     }
   }
 
-  // needed because == doesn't work on exceptions
+  // Match on Throwable's ClassName instead of error message, because messages are os-specific
   private def matchThrowables[A](
     actual: Option[Either[Throwable, A]],
     expected: Option[Either[Throwable, A]]
-  ): Boolean = actual match {
-    case None => actual must_== expected
-    case Some(r) =>
-      r match {
-        case Right(_) => actual must_== expected
-        case Left(_)  => getErrorMessage(actual) must_== getErrorMessage(expected)
-      }
-  }
-
-  private def getErrorMessage[A](e: Option[Either[Throwable, A]]): Option[Either[String, A]] =
-    e.map(_.leftMap(_.getMessage))
+  ): Boolean =
+    actual.map(_.leftMap(_.getClass)) must_== expected.map(_.leftMap(_.getClass))
 }

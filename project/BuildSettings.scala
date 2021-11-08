@@ -21,18 +21,18 @@ import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
 import com.typesafe.sbt.site.preprocess.PreprocessPlugin.autoImport._
 
 // dynver plugin
-import sbtdynver.DynVerPlugin.autoImport._
+//import sbtdynver.DynVerPlugin.autoImport._
 
 // Scoverage
 import scoverage.ScoverageKeys._
 
 // Scaladocs
-import sbtunidoc.ScalaUnidocPlugin.autoImport._
-import com.typesafe.sbt.site.SitePlugin.autoImport._
-import com.typesafe.sbt.SbtGit.GitKeys._
+//import sbtunidoc.ScalaUnidocPlugin.autoImport._
+//import com.typesafe.sbt.site.SitePlugin.autoImport._
+//import com.typesafe.sbt.SbtGit.GitKeys._
 
 // Scoverage
-import scoverage.ScoverageKeys._
+//import scoverage.ScoverageKeys._
 
 object BuildSettings {
 

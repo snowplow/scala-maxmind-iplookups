@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -19,6 +19,7 @@ import cats.effect.Sync
 import cats.syntax.either._
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.CityResponse
+import com.maxmind.geoip2.model.AnonymousIpResponse
 
 import model._
 
@@ -34,6 +35,12 @@ sealed trait SpecializedReader[F[_]] {
     db: DatabaseReader,
     ip: InetAddress
   ): F[Either[Throwable, CityResponse]]
+
+  def getAnonymousValue(
+    db: DatabaseReader,
+    ip: InetAddress
+  ): F[Either[Throwable, AnonymousIpResponse]]
+
 }
 
 object SpecializedReader {
@@ -43,13 +50,20 @@ object SpecializedReader {
       db: DatabaseReader,
       ip: InetAddress
     ): F[Either[Throwable, String]] =
-      Sync[F].delay { Either.catchNonFatal(f(db, ip)) }
+      Sync[F].delay(Either.catchNonFatal(f(db, ip)))
 
     def getCityValue(
       db: DatabaseReader,
       ip: InetAddress
     ): F[Either[Throwable, CityResponse]] =
-      Sync[F].delay { Either.catchNonFatal(db.city(ip)) }
+      Sync[F].delay(Either.catchNonFatal(db.city(ip)))
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): F[Either[Throwable, AnonymousIpResponse]] =
+      Sync[F].delay(Either.catchNonFatal(db.anonymousIp(ip)))
+
   }
 
   implicit def evalSpecializedReader: SpecializedReader[Eval] = new SpecializedReader[Eval] {
@@ -58,13 +72,20 @@ object SpecializedReader {
       db: DatabaseReader,
       ip: InetAddress
     ): Eval[Either[Throwable, String]] =
-      Eval.later { Either.catchNonFatal(f(db, ip)) }
+      Eval.later(Either.catchNonFatal(f(db, ip)))
 
     def getCityValue(
       db: DatabaseReader,
       ip: InetAddress
     ): Eval[Either[Throwable, CityResponse]] =
-      Eval.later { Either.catchNonFatal(db.city(ip)) }
+      Eval.later(Either.catchNonFatal(db.city(ip)))
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Eval[Either[Throwable, AnonymousIpResponse]] =
+      Eval.later(Either.catchNonFatal(db.anonymousIp(ip)))
+
   }
 
   implicit def idSpecializedReader: SpecializedReader[Id] = new SpecializedReader[Id] {
@@ -80,6 +101,12 @@ object SpecializedReader {
       ip: InetAddress
     ): Id[Either[Throwable, CityResponse]] =
       Either.catchNonFatal(db.city(ip))
+
+    def getAnonymousValue(
+      db: DatabaseReader,
+      ip: InetAddress
+    ): Id[Either[Throwable, AnonymousIpResponse]] =
+      Either.catchNonFatal(db.anonymousIp(ip))
   }
 }
 

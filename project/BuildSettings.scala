@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,9 +13,18 @@
 import sbt._
 import Keys._
 
-// Bintray plugin
-import bintray.BintrayPlugin._
-import bintray.BintrayKeys._
+// Scaladocs
+import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
+import com.typesafe.sbt.site.SitePlugin.autoImport.{makeSite, siteSubdirName}
+import com.typesafe.sbt.SbtGit.GitKeys.{gitBranch, gitRemoteRepo}
+import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
+import com.typesafe.sbt.site.preprocess.PreprocessPlugin.autoImport._
+
+// dynver plugin
+import sbtdynver.DynVerPlugin.autoImport._
+
+// Scoverage
+import scoverage.ScoverageKeys._
 
 // Scaladocs
 import sbtunidoc.ScalaUnidocPlugin.autoImport._
@@ -28,30 +37,41 @@ import scoverage.ScoverageKeys._
 object BuildSettings {
 
   lazy val javaCompilerOptions = Seq(
-    "-source", "1.8",
-    "-target", "1.8"
+    "-source", "11",
+    "-target", "11"
   )
 
-  lazy val publishSettings = bintraySettings ++ Seq(
-    publishMavenStyle := true,
+  lazy val publishSettings = Seq(
     publishArtifact := true,
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-    bintrayOrganization := Some("snowplow"),
-    bintrayRepository := "snowplow-maven",
     pomIncludeRepository := { _ => false },
     homepage := Some(url("http://snowplowanalytics.com")),
-    scmInfo := Some(ScmInfo(url("https://github.com/snowplow/scala-maxmind-iplookups"),
-      "scm:git@github.com:snowplow/scala-maxmind-iplookups.git")),
-    pomExtra := (
-      <developers>
-        <developer>
-          <name>Snowplow Analytics Ltd</name>
-          <email>support@snowplowanalytics.com</email>
-          <organization>Snowplow Analytics Ltd</organization>
-          <organizationUrl>http://snowplowanalytics.com</organizationUrl>
-        </developer>
-      </developers>)
+    ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
+    developers := List(
+      Developer(
+        "Snowplow Analytics Ltd",
+        "Snowplow Analytics Ltd",
+        "support@snowplowanalytics.com",
+        url("https://snowplowanalytics.com")
+      )
+    ),
+  )
+
+  lazy val docSettings = Seq(
+    ghpagesPushSite := (ghpagesPushSite dependsOn makeSite).value,
+    ghpagesNoJekyll := false,
+    gitRemoteRepo := "git@github.com:snowplow/scala-maxmind-iplookups.git",
+    gitBranch := Some("gh-pages"),
+    SiteScaladoc / siteSubdirName := s"${version.value}",
+    Preprocess / preprocessVars := Map("VERSION" -> version.value),
+    ghpagesCleanSite / excludeFilter := new FileFilter {
+      def accept(f: File) = true
+    }
+  )
+
+  lazy val coverageSettings = Seq(
+    coverageMinimum := 90
   )
 
   lazy val docSettings = Seq(

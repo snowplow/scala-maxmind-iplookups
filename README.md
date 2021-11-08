@@ -1,6 +1,6 @@
 # Scala MaxMind IP Lookups
 
-[![Build Status](https://api.travis-ci.org/snowplow/scala-maxmind-iplookups.svg?branch=develop)](https://travis-ci.org/snowplow/scala-maxmind-iplookups)
+[![Build Status](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)
 [![Maven Central](https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-maxmind-iplookups_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.12)
 [![codecov](https://codecov.io/gh/snowplow/scala-maxmind-iplookups/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-maxmind-iplookups)
 [![Join the chat at https://gitter.im/snowplow/scala-maxmind-iplookups](https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg)](https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -19,12 +19,12 @@ can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.6.0** and is compatible with Scala 2.12.
+The latest version of scala-maxmind-iplookups is **0.7.1** and is compatible with Scala 2.13.
 
 Add this to your SBT config:
 
 ```scala
-val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.6.0"
+val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.7.1"
 ```
 
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
@@ -45,7 +45,7 @@ import com.snowplowanalytics.maxmind.iplookups.IpLookups
 
 val result = (for {
   ipLookups <- CreateIpLookups[IO].createFromFilenames(
-    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
+    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb"),
     ispFile = None,
     domainFile = None,
     connectionTypeFile = None,
@@ -64,22 +64,10 @@ result.ipLocation match {
 }
 ```
 
-`cats.Eval` and `cats.Id` are also supported:
+`cats.Id` is also supported:
 
 ```scala
-import cats.{Eval, Id}
-
-val evalResult: Eval[IpLookupResult] = for {
-  ipLookups <- CreateIpLookups[Eval].createFromFilenames(
-    geoFile = Some("/opt/maxmind/GeoLite2-City.mmdb")
-    ispFile = None,
-    domainFile = None,
-    connectionTypeFile = None,
-    memCache = false,
-    lruCacheSize = 20000
-  )
-  lookup <- ipLookups.performLookups("175.16.199.0")
-} yield lookup
+import cats.Id
 
 val idResult: IpLookupResult = {
   val ipLookups = CreateIpLookups[Id].createFromFilenames(
@@ -253,7 +241,7 @@ As such we recommend upgrading to version 0.4.0 as soon as possible
 
 ## Copyright and license
 
-Copyright 2012-2019 Snowplow Analytics Ltd.
+Copyright 2012-2021 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.

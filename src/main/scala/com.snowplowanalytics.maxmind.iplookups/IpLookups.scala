@@ -214,7 +214,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   private val connectionTypeService =
     getService(connectionTypeFile).map((_, ReaderFunctions.connectionType))
   private val anonymousService = getService(anonymousFile)
-  private val asnService = getService(asnFile).map((_, ReaderFunctions.asn))
+  private val asnService       = getService(asnFile).map((_, ReaderFunctions.asn))
 
   /**
    * Get a LookupService from a database file
@@ -299,7 +299,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
       anonymous      <- getAnonymousIpLookup(ipAddress)
-      asn <- getLookup(ipAddress, asnService)
+      asn            <- getLookup(ipAddress, asnService)
     } yield IpLookupResult(ipLocation, isp, org, domain, connectionType, anonymous, asn)
 
   /**

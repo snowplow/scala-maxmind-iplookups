@@ -121,7 +121,7 @@ object model {
     domain: Option[Either[Throwable, String]],
     connectionType: Option[Either[Throwable, String]],
     anonymousIp: Option[Either[Throwable, AnonymousIp]],
-    asn: Option[Either[Throwable, String]],
+    asn: Option[Either[Throwable, String]]
   ) {
     // Combine all errors if any
     def results: ValidatedNel[
@@ -142,7 +142,7 @@ object model {
       val dom        = domain.sequence[Error, String].toValidatedNel
       val connection = connectionType.sequence[Error, String].toValidatedNel
       val anonymous  = anonymousIp.sequence[Error, AnonymousIp].toValidatedNel
-      val as  = asn.sequence[Error, String].toValidatedNel
+      val as         = asn.sequence[Error, String].toValidatedNel
 
       (location, provider, org, dom, connection, anonymous, as).tupled
     }

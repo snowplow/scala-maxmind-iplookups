@@ -30,7 +30,6 @@ object IpLookupsTest {
   val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
   val anonymousFile      = getClass.getResource("GeoIP2-Anonymous-IP-Test.mmdb").getFile
-  val asnFile            = getClass.getResource("GeoLite2-ASN-Test.mmdb").getFile
 
   def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
     CreateIpLookups[IO]
@@ -40,7 +39,6 @@ object IpLookupsTest {
         Some(domainFile),
         Some(connectionTypeFile),
         Some(anonymousFile),
-        Some(asnFile),
         memCache,
         lruCache
       )
@@ -54,7 +52,6 @@ object IpLookupsTest {
         Some(domainFile),
         Some(connectionTypeFile),
         Some(anonymousFile),
-        Some(asnFile),
         memCache,
         lruCache
       )
@@ -251,14 +248,13 @@ class IpLookupsTest extends Specification with Tables {
           None,
           None,
           None,
-          None,
           true,
           0
         )
         res <- ipLookups.performLookups("67.43.156.0")
       } yield res).unsafeRunSync()
       val idActual = CreateIpLookups[Id]
-        .createFromFiles(None, None, None, None, None, None, true, 0)
+        .createFromFiles(None, None, None, None, None, true, 0)
         .performLookups("67.43.156.0")
       val expected = IpLookupResult(None, None, None, None, None, None, None)
       matchIpLookupResult(ioActual, expected)

@@ -12,17 +12,17 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import java.net.UnknownHostException
-
-import cats.Id
 import cats.effect.IO
-import cats.syntax.either._
-import cats.syntax.option._
+import cats.effect.testing.specs2.CatsEffect
+import cats.implicits._
+import cats.{Id, Monad}
 import com.maxmind.geoip2.exception.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.IpLookupsTest.ipLookupsFromFiles
+import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
 
-import model._
+import java.net.UnknownHostException
 
 object IpLookupsTest {
   val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
@@ -31,8 +31,8 @@ object IpLookupsTest {
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
   val anonymousFile      = getClass.getResource("GeoIP2-Anonymous-IP-Test.mmdb").getFile
 
-  def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
-    CreateIpLookups[IO]
+  def ipLookupsFromFiles[F[_]: CreateIpLookups](memCache: Boolean, lruCache: Int): F[IpLookups[F]] =
+    CreateIpLookups[F]
       .createFromFilenames(
         Some(geoFile),
         Some(ispFile),
@@ -42,19 +42,17 @@ object IpLookupsTest {
         memCache,
         lruCache
       )
-      .unsafeRunSync()
 
-  def idIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Id] =
-    CreateIpLookups[Id]
-      .createFromFilenames(
-        Some(geoFile),
-        Some(ispFile),
-        Some(domainFile),
-        Some(connectionTypeFile),
-        Some(anonymousFile),
-        memCache,
-        lruCache
-      )
+  def failedLookupCauseUnknownHost(host: String): IpLookupResult = IpLookupResult(
+    ipLocation = unknownHostException(host),
+    isp = unknownHostException(host),
+    organization = unknownHostException(host),
+    domain = unknownHostException(host),
+    connectionType = unknownHostException(host),
+    anonymousIp = unknownHostException(host)
+  )
+
+  private def unknownHostException(host: String) = new UnknownHostException(host).asLeft.some
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
@@ -173,78 +171,88 @@ object IpLookupsTest {
   )
 }
 
-class IpLookupsTest extends Specification with Tables {
+class IpLookupsTest extends Specification with Tables with CatsEffect {
 
   "Looking up some IP address locations should match their expected locations" should {
-
-    val mcf: Boolean => String = mc => if (mc) "using" else "without using"
-    val lcf: Int => String =
-      lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
-    val formatter: (String, Boolean, Int) => String =
-      (ip, mcache, lcache) =>
-        "The IP address %s looked up (%s memory cache and with %s)".format(
-          ip,
-          mcf(mcache),
-          lcf(lcache)
-        )
-
     import IpLookupsTest._
 
     for {
       memCache <- Seq(true, false)
       lruCache <- Seq(0, 1000, 10000)
     } {
-
-      val ioIpLookups = ioIpLookupsFromFiles(memCache, lruCache)
-      val idIpLookups = idIpLookupsFromFiles(memCache, lruCache)
-
       testData foreach { case (ip, expected) =>
-        formatter(ip, memCache, lruCache) should {
-          val ioActual = ioIpLookups.performLookups(ip).unsafeRunSync()
-          val idActual = idIpLookups.performLookups(ip)
-          matchIpLookupResult(ioActual, expected)
-          matchIpLookupResult(idActual, expected)
+        prepareTestFormatter(ip, memCache, lruCache) should {
+          "work for IO monad" in {
+            assertWithFiles[IO](memCache, lruCache, ip, expected)
+          }
+          "work for Id monad" in {
+            assertWithFiles[Id](memCache, lruCache, ip, expected)
+          }
         }
       }
     }
 
-    "providing an invalid ip should fail" in {
-      val ioIpLookups = ioIpLookupsFromFiles(true, 0)
-      val idIpLookups = idIpLookupsFromFiles(true, 0)
-      val ioExpected = IpLookupResult(
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some,
-        new UnknownHostException("not: Name or service not known").asLeft.some
-      )
-      val idExpected = IpLookupResult(
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some
-      )
-      val ioActual = ioIpLookups.performLookups("not").unsafeRunSync()
-      val idActual = idIpLookups.performLookups("not")
-      matchIpLookupResult(ioActual, ioExpected)
-      matchIpLookupResult(idActual, idExpected)
+    "providing an invalid ip" should {
+      "fail with 'UnknownHostException' for IO monad" in {
+        val expected = failedLookupCauseUnknownHost("not: Name or service not known")
+
+        assertWithFiles[IO](memCache = true, lruCache = 0, ip = "not", expected)
+      }
+      "fail with 'UnknownHostException' for Id monad" in {
+        val expected = failedLookupCauseUnknownHost("not")
+
+        assertWithFiles[Id](memCache = true, lruCache = 0, ip = "not", expected)
+      }
     }
 
-    "providing no files should return Nones" in {
-      val ioActual = (for {
-        ipLookups <- CreateIpLookups[IO].createFromFiles(None, None, None, None, None, true, 0)
-        res       <- ipLookups.performLookups("67.43.156.0")
-      } yield res).unsafeRunSync()
-      val idActual = CreateIpLookups[Id]
-        .createFromFiles(None, None, None, None, None, true, 0)
-        .performLookups("67.43.156.0")
-      val expected = IpLookupResult(None, None, None, None, None, None)
-      matchIpLookupResult(ioActual, expected)
-      matchIpLookupResult(idActual, expected)
+    "providing no files" should {
+      "return Nones for IO monad" in {
+        assertNoneWithoutFiles[IO]
+      }
+      "return Nones for Id monad" in {
+        assertNoneWithoutFiles[Id]
+      }
     }
+  }
+
+  private def prepareTestFormatter: (String, Boolean, Int) => String = {
+    val mcf: Boolean => String = mc => if (mc) "using" else "without using"
+    val lcf: Int => String =
+      lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
+    (ip, mcache, lcache) =>
+      "The IP address %s looked up (%s memory cache and with %s)".format(
+        ip,
+        mcf(mcache),
+        lcf(lcache)
+      )
+  }
+
+  private def assertWithFiles[F[_]: CreateIpLookups: Monad](
+    memCache: Boolean,
+    lruCache: Int,
+    ip: String,
+    expected: IpLookupResult
+  ) = {
+    ipLookupsFromFiles[F](memCache, lruCache)
+      .flatMap(_.performLookups(ip))
+      .map(r => matchIpLookupResult(r, expected))
+  }
+
+  private def assertNoneWithoutFiles[F[_]: CreateIpLookups: Monad] = {
+    val noFilesLookup = CreateIpLookups[F].createFromFiles(
+      None,
+      None,
+      None,
+      None,
+      None,
+      memCache = true,
+      lruCacheSize = 0
+    )
+    val expected = IpLookupResult(None, None, None, None, None, None)
+
+    noFilesLookup
+      .flatMap(_.performLookups("67.43.156.0"))
+      .map(r => matchIpLookupResult(r, expected))
   }
 
   private def matchIpLookupResult(actual: IpLookupResult, expected: IpLookupResult) = {

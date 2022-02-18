@@ -29,10 +29,10 @@ lazy val root = project
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,
-      Dependencies.catsEffect,
       Dependencies.cats,
+      Dependencies.catsEffect,
       Dependencies.lruMap,
-      Dependencies.scalaCheck,
-      Dependencies.specs2
+      Dependencies.specs2,
+      Dependencies.specs2CatsEffect
     )
   )

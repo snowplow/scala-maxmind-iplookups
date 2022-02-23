@@ -29,7 +29,7 @@ lazy val root = project
   .settings(
     Seq(
       publishTo := Some(
-        "Supersonic Artifactory" at "https://nexus.general-prod.us-east-1.ironsrc.mobi/repository/ext-release-local"
+        "Supersonic Artifactory" at "https://nexus.service.ironsrc.mobi/repository/ext-release-local"
       )
     ))
   .settings(BuildSettings.docSettings)

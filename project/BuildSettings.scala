@@ -10,15 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+import sbt.Keys._
 import sbt._
-import Keys._
 
 // Scaladocs
-import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
-import com.typesafe.sbt.site.SitePlugin.autoImport.{makeSite, siteSubdirName}
-import com.typesafe.sbt.SbtGit.GitKeys.{gitBranch, gitRemoteRepo}
+import com.typesafe.sbt.site.SitePlugin.autoImport.siteSubdirName
 import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
-import com.typesafe.sbt.site.preprocess.PreprocessPlugin.autoImport._
 
 // dynver plugin
 import sbtdynver.DynVerPlugin.autoImport._
@@ -51,15 +48,7 @@ object BuildSettings {
   )
 
   lazy val docSettings = Seq(
-    ghpagesPushSite := (ghpagesPushSite dependsOn makeSite).value,
-    ghpagesNoJekyll := false,
-    gitRemoteRepo := "git@github.com:snowplow/scala-maxmind-iplookups.git",
-    gitBranch := Some("gh-pages"),
     SiteScaladoc / siteSubdirName := s"${version.value}",
-    Preprocess / preprocessVars := Map("VERSION" -> version.value),
-    ghpagesCleanSite / excludeFilter := new FileFilter {
-      def accept(f: File) = true
-    }
   )
 
   lazy val coverageSettings = Seq(

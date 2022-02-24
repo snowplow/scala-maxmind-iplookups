@@ -13,7 +13,7 @@
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(SiteScaladocPlugin, GhpagesPlugin, PreprocessPlugin)
+  .enablePlugins(SiteScaladocPlugin, PreprocessPlugin)
   .settings(
     organization := "com.snowplowanalytics",
     name := "scala-maxmind-iplookups",

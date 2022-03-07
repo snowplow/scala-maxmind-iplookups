@@ -1,9 +1,9 @@
 # Scala MaxMind IP Lookups
 
-[![Build Status](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)
-[![Maven Central](https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-maxmind-iplookups_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.12)
-[![codecov](https://codecov.io/gh/snowplow/scala-maxmind-iplookups/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-maxmind-iplookups)
-[![Join the chat at https://gitter.im/snowplow/scala-maxmind-iplookups](https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg)](https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status][ci-image]][ci]
+[![Maven Central][release-image]][releases]
+[![Coverage Status][coveralls-image]][coveralls]
+[![Gitter][chat-image]][chat]
 
 ## Introduction
 
@@ -265,3 +265,15 @@ limitations under the License.
 [geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[ci]: https://github.com/snowplow/scala-maxmind-iplookups/actions?query=workflow%3ACI
+[ci-image]: https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg
+
+[releases]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.13
+[release-image]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.13/badge.svg
+
+[coveralls]: https://coveralls.io/github/snowplow/scala-maxmind-iplookups?branch=master
+[coveralls-image]: https://coveralls.io/repos/github/snowplow/scala-maxmind-iplookups/badge.svg?branch=master
+
+[chat]: https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge
+[chat-image]: https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg

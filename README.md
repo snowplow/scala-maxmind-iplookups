@@ -19,12 +19,12 @@ can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.7.2** and is compatible with Scala 2.13.
+The latest version of scala-maxmind-iplookups is **0.8.0** and is compatible with Scala 2.13.
 
 Add this to your SBT config:
 
 ```scala
-val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.7.2"
+val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.8.0"
 ```
 
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
@@ -36,7 +36,7 @@ of these.
 
 ## Usage
 
-See [the scaladoc](https://snowplow.github.io/scala-maxmind-iplookups/0.7.2/) for the full API reference.
+See [the scaladoc](https://snowplow.github.io/scala-maxmind-iplookups/) for the full API reference.
 
 Here is a simple usage example, performing just a geographic lookup and not the ISP, domain, or
 connection type lookups:

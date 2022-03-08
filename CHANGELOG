@@ -1,3 +1,14 @@
+Version 0.8.0 (2022-03-08)
+--------------------------
+Use coveralls (#173)
+Remove gh-pages sbt plugin (#172)
+Bump maxmind-geoip2 to 3.0.0 (#171)
+Bump specs2 to 4.13.2 (#170)
+Add support for Cats Effect 3 (#169)
+Update copyright to 2022 (#168)
+Bump sbt to 1.6.2 (#167)
+Bump scala compiler to 2.13.8, 2.12.15 (#165)
+
 Version 0.7.2 (2021-08-11)
 --------------------------
 Extend copyright notice to 2021

@@ -13,7 +13,7 @@
 import sbt._
 
 object Dependencies {
-  val cats             = "org.typelevel"         %% "cats-core"                  % "2.7.0"
+  val cats             = "org.typelevel"         %% "cats-core"                  % "2.8.0"
   val catsEffect       = "org.typelevel"         %% "cats-effect"                % "3.3.5"
   val lruMap           = "com.snowplowanalytics" %% "scala-lru-map"              % "0.6.0"
   val maxmind          = "com.maxmind.geoip2"    %  "geoip2"                     % "3.0.1"

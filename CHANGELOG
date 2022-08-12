@@ -1,3 +1,10 @@
+Version 0.8.1 (2022-08-17)
+--------------------------
+Bump cats-effect to 3.3.14 (#175)
+Bump specs2-core to 4.15.0 (#175)
+Bump cats-core to 2.8.0 (#175)
+Bump geoip2 to 3.0.1 (#175)
+
 Version 0.8.0 (2022-03-08)
 --------------------------
 Use coveralls (#173)

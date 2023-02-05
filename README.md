@@ -1,9 +1,9 @@
 # Scala MaxMind IP Lookups
 
-[![Build Status](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)](https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg)
-[![Maven Central](https://img.shields.io/maven-central/v/com.snowplowanalytics/scala-maxmind-iplookups_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.12)
-[![codecov](https://codecov.io/gh/snowplow/scala-maxmind-iplookups/branch/master/graph/badge.svg)](https://codecov.io/gh/snowplow/scala-maxmind-iplookups)
-[![Join the chat at https://gitter.im/snowplow/scala-maxmind-iplookups](https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg)](https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status][ci-image]][ci]
+[![Maven Central][release-image]][releases]
+[![Coverage Status][coveralls-image]][coveralls]
+[![Gitter][chat-image]][chat]
 
 ## Introduction
 
@@ -19,12 +19,12 @@ can also configure an LRU (Least Recently Used) cache of variable size
 
 ## Installation
 
-The latest version of scala-maxmind-iplookups is **0.7.1** and is compatible with Scala 2.13.
+The latest version of scala-maxmind-iplookups is **0.8.1** and is compatible with Scala 2.13.
 
 Add this to your SBT config:
 
 ```scala
-val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.7.1"
+val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0.8.1"
 ```
 
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
@@ -35,6 +35,8 @@ MaxMind also has databases for looking up [ISPs][maxmind-isp], [domain names][ma
 of these.
 
 ## Usage
+
+See [the scaladoc](https://snowplow.github.io/scala-maxmind-iplookups/) for the full API reference.
 
 Here is a simple usage example, performing just a geographic lookup and not the ISP, domain, or
 connection type lookups:
@@ -241,7 +243,7 @@ As such we recommend upgrading to version 0.4.0 as soon as possible
 
 ## Copyright and license
 
-Copyright 2012-2021 Snowplow Analytics Ltd.
+Copyright 2012-2022 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -263,3 +265,15 @@ limitations under the License.
 [geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[ci]: https://github.com/snowplow/scala-maxmind-iplookups/actions?query=workflow%3ACI
+[ci-image]: https://github.com/snowplow/scala-maxmind-iplookups/workflows/CI/badge.svg
+
+[releases]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.13
+[release-image]: https://maven-badges.herokuapp.com/maven-central/com.snowplowanalytics/scala-maxmind-iplookups_2.13/badge.svg
+
+[coveralls]: https://coveralls.io/github/snowplow/scala-maxmind-iplookups?branch=master
+[coveralls-image]: https://coveralls.io/repos/github/snowplow/scala-maxmind-iplookups/badge.svg?branch=master
+
+[chat]: https://gitter.im/snowplow/scala-maxmind-iplookups?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge
+[chat-image]: https://badges.gitter.im/snowplow/scala-maxmind-iplookups.svg

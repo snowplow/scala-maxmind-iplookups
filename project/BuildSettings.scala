@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2022 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,29 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+import sbt.Keys._
 import sbt._
-import Keys._
 
 // Scaladocs
-import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
-import com.typesafe.sbt.site.SitePlugin.autoImport.{makeSite, siteSubdirName}
-import com.typesafe.sbt.SbtGit.GitKeys.{gitBranch, gitRemoteRepo}
+import com.typesafe.sbt.site.SitePlugin.autoImport.siteSubdirName
 import com.typesafe.sbt.site.SiteScaladocPlugin.autoImport._
-import com.typesafe.sbt.site.preprocess.PreprocessPlugin.autoImport._
 
 // dynver plugin
-//import sbtdynver.DynVerPlugin.autoImport._
+import sbtdynver.DynVerPlugin.autoImport._
 
 // Scoverage
 import scoverage.ScoverageKeys._
-
-// Scaladocs
-//import sbtunidoc.ScalaUnidocPlugin.autoImport._
-//import com.typesafe.sbt.site.SitePlugin.autoImport._
-//import com.typesafe.sbt.SbtGit.GitKeys._
-
-// Scoverage
-//import scoverage.ScoverageKeys._
 
 object BuildSettings {
 
@@ -59,18 +48,10 @@ object BuildSettings {
 //  )
 
   lazy val docSettings = Seq(
-    ghpagesPushSite := (ghpagesPushSite dependsOn makeSite).value,
-    ghpagesNoJekyll := false,
-    gitRemoteRepo := "git@github.com:snowplow/scala-maxmind-iplookups.git",
-    gitBranch := Some("gh-pages"),
     SiteScaladoc / siteSubdirName := s"${version.value}",
-    Preprocess / preprocessVars := Map("VERSION" -> version.value),
-    ghpagesCleanSite / excludeFilter := new FileFilter {
-      def accept(f: File) = true
-    }
   )
 
   lazy val coverageSettings = Seq(
-    coverageMinimum := 90
+    coverageMinimumStmtTotal := 90
   )
 }

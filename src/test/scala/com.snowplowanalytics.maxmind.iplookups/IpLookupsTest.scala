@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2022 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,15 +12,17 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import java.net.UnknownHostException
-import cats.Id
 import cats.effect.IO
-import cats.syntax.either._
-import cats.syntax.option._
+import cats.effect.testing.specs2.CatsEffect
+import cats.implicits._
+import cats.{Id, Monad}
 import com.maxmind.geoip2.exception.AddressNotFoundException
+import com.snowplowanalytics.maxmind.iplookups.IpLookupsTest.ipLookupsFromFiles
 import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
+
+import java.net.UnknownHostException
 
 object IpLookupsTest {
   val geoFile            = getClass.getResource("GeoIP2-City-Test.mmdb").getFile
@@ -29,8 +31,8 @@ object IpLookupsTest {
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
   val anonymousFile      = getClass.getResource("GeoIP2-Anonymous-IP-Test.mmdb").getFile
 
-  def ioIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[IO] =
-    CreateIpLookups[IO]
+  def ipLookupsFromFiles[F[_]: CreateIpLookups](memCache: Boolean, lruCache: Int): F[IpLookups[F]] =
+    CreateIpLookups[F]
       .createFromFilenames(
         Some(geoFile),
         Some(ispFile),
@@ -40,41 +42,41 @@ object IpLookupsTest {
         memCache,
         lruCache
       )
-      .unsafeRunSync()
 
-  def idIpLookupsFromFiles(memCache: Boolean, lruCache: Int): IpLookups[Id] =
-    CreateIpLookups[Id]
-      .createFromFilenames(
-        Some(geoFile),
-        Some(ispFile),
-        Some(domainFile),
-        Some(connectionTypeFile),
-        Some(anonymousFile),
-        memCache,
-        lruCache
+  def failedLookupCauseUnknownHost(host: String): IpLookupResult = IpLookupResult(
+    ipLocation = unknownHostException(host),
+    isp = unknownHostException(host),
+    organization = unknownHostException(host),
+    domain = unknownHostException(host),
+    connectionType = unknownHostException(host),
+    anonymousIp = unknownHostException(host)
       )
+
+  private def unknownHostException(host: String) = new UnknownHostException(host).asLeft.some
 
   // Databases and test data taken from https://github.com/maxmind/MaxMind-DB/tree/master/test-data
   val testData: Map[String, IpLookupResult] = Map(
     "175.16.199.0" -> IpLookupResult(
       IpLocation(
-        continent = "Asia",
         countryCode = "CN",
         countryName = "China",
+        region = Some("22"),
+        regionName = Some("Jilin Sheng"),
         city = Some("Changchun"),
         cityGeoNameId = Some(2038180),
         latitude = 43.88f,
         longitude = 125.3228f,
         timezone = Some("Asia/Harbin"),
+        postalCode = None,
+        metroCode = None,
+        isInEuropeanUnion = false,
+        continent = "Asia",
         accuracyRadius = 100,
         averageIncome = 0,
         populationDensity = 0,
-        postalCode = None,
-        metroCode = None,
         mostSpecificRegion = Some("22"),
         mostSpecificRegionName = Some("Jilin Sheng"),
-        subdivisions = List(ParsedSubdivision("Jilin Sheng", "22", 2036500)),
-        isInEuropeanUnion = false
+        subdivisions = List(ParsedSubdivision("Jilin Sheng", "22", 2036500))
       ).asRight.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
@@ -91,23 +93,25 @@ object IpLookupsTest {
     ),
     "216.160.83.56" -> IpLookupResult(
       IpLocation(
-        continent = "North America",
         countryCode = "US",
         countryName = "United States",
+        region = Some("WA"),
+        regionName = Some("Washington"),
         city = Some("Milton"),
         cityGeoNameId = Some(5803556),
         latitude = 47.2513f,
         longitude = -122.3149f,
         timezone = Some("America/Los_Angeles"),
+        postalCode = Some("98354"),
+        metroCode = Some(819),
+        isInEuropeanUnion = false,
+        continent = "North America",
         accuracyRadius = 22,
         averageIncome = 0,
         populationDensity = 0,
-        postalCode = Some("98354"),
-        metroCode = Some(819),
         mostSpecificRegion = Some("WA"),
         mostSpecificRegionName = Some("Washington"),
-        subdivisions = List(ParsedSubdivision("Washington", "WA", 5815135)),
-        isInEuropeanUnion = false
+        subdivisions = List(ParsedSubdivision("Washington", "WA", 5815135))
       ).asRight.some,
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
@@ -124,23 +128,25 @@ object IpLookupsTest {
     ),
     "67.43.156.0" -> IpLookupResult(
       IpLocation(
-        continent = "Asia",
         countryCode = "BT",
         countryName = "Bhutan",
+        region = None,
+        regionName = None,
         city = None,
-        cityGeoNameId = None,
+        cityGeoNameId = Some(0),
         latitude = 27.5f,
         longitude = 90.5f,
         timezone = Some("Asia/Thimphu"),
+        postalCode = None,
+        metroCode = None,
+        isInEuropeanUnion = false,
+        continent = "Asia",
         accuracyRadius = 534,
         averageIncome = 0,
         populationDensity = 0,
-        postalCode = None,
-        metroCode = None,
         mostSpecificRegion = None,
         mostSpecificRegionName = None,
-        subdivisions = List.empty,
-        isInEuropeanUnion = false
+        subdivisions = List.empty
       ).asRight.some,
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,
@@ -173,101 +179,98 @@ object IpLookupsTest {
     // Invalid IP address, as per
     // http://stackoverflow.com/questions/10456044/what-is-a-good-invalid-ip-address-to-use-for-unit-tests
     "192.0.2.0" -> IpLookupResult(
-      ipLocation =
         new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      isp =
         new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      organization =
         new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      domain =
         new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
-      connectionType =
         new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
     )
   )
 }
 
-class IpLookupsTest extends Specification with Tables {
+class IpLookupsTest extends Specification with Tables with CatsEffect {
 
   "Looking up some IP address locations should match their expected locations" should {
-
-    val mcf: Boolean => String = mc => if (mc) "using" else "without using"
-    val lcf: Int => String =
-      lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
-    val formatter: (String, Boolean, Int) => String =
-      (ip, mcache, lcache) =>
-        "The IP address %s looked up (%s memory cache and with %s)".format(
-          ip,
-          mcf(mcache),
-          lcf(lcache)
-      )
-
     import IpLookupsTest._
 
     for {
       memCache <- Seq(true, false)
       lruCache <- Seq(0, 1000, 10000)
     } {
-
-      val ioIpLookups = ioIpLookupsFromFiles(memCache, lruCache)
-      val idIpLookups = idIpLookupsFromFiles(memCache, lruCache)
-
-      testData foreach {
-        case (ip, expected) =>
-          formatter(ip, memCache, lruCache) should {
-            val ioActual = ioIpLookups.performLookups(ip).unsafeRunSync()
-            val idActual = idIpLookups.performLookups(ip)
-            matchIpLookupResult(ioActual, expected)
-            matchIpLookupResult(idActual, expected)
+      testData foreach { case (ip, expected) =>
+        prepareTestFormatter(ip, memCache, lruCache) should {
+          "work for IO monad" in {
+            assertWithFiles[IO](memCache, lruCache, ip, expected)
           }
+          "work for Id monad" in {
+            assertWithFiles[Id](memCache, lruCache, ip, expected)
+          }
+        }
       }
     }
 
-    "providing an invalid ip should fail" in {
-      val ioIpLookups = ioIpLookupsFromFiles(memCache = true, 0)
-      val idIpLookups = idIpLookupsFromFiles(true, 0)
-      val ioExpected = IpLookupResult(
-        new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: unknown error").asLeft.some,
-        new UnknownHostException("not: unknown error").asLeft.some
-      )
-      val idExpected = IpLookupResult(
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some,
-        new UnknownHostException("not").asLeft.some
-      )
-      val ioActual = ioIpLookups.performLookups("not").unsafeRunSync()
-      val idActual = idIpLookups.performLookups("not")
-      matchIpLookupResult(ioActual, ioExpected)
-      matchIpLookupResult(idActual, idExpected)
+    "providing an invalid ip" should {
+      "fail with 'UnknownHostException' for IO monad" in {
+        val expected = failedLookupCauseUnknownHost("not: Name or service not known")
+
+        assertWithFiles[IO](memCache = true, lruCache = 0, ip = "not", expected)
+      }
+      "fail with 'UnknownHostException' for Id monad" in {
+        val expected = failedLookupCauseUnknownHost("not")
+
+        assertWithFiles[Id](memCache = true, lruCache = 0, ip = "not", expected)
+      }
     }
 
-    "providing no files should return Nones" in {
-      val ioActual = (for {
-        ipLookups <- CreateIpLookups[IO].createFromFiles(
+    "providing no files" should {
+      "return Nones for IO monad" in {
+        assertNoneWithoutFiles[IO]
+      }
+      "return Nones for Id monad" in {
+        assertNoneWithoutFiles[Id]
+      }
+    }
+  }
+
+  private def prepareTestFormatter: (String, Boolean, Int) => String = {
+    val mcf: Boolean => String = mc => if (mc) "using" else "without using"
+    val lcf: Int => String =
+      lc => if (lc > 0) "LRU cache sized %s".format(lc) else "no LRU cache"
+      (ip, mcache, lcache) =>
+        "The IP address %s looked up (%s memory cache and with %s)".format(
+          ip,
+          mcf(mcache),
+          lcf(lcache)
+      )
+    }
+
+  private def assertWithFiles[F[_]: CreateIpLookups: Monad](
+    memCache: Boolean,
+    lruCache: Int,
+    ip: String,
+    expected: IpLookupResult
+  ) = {
+    ipLookupsFromFiles[F](memCache, lruCache)
+      .flatMap(_.performLookups(ip))
+      .map(r => matchIpLookupResult(r, expected))
+    }
+
+  private def assertNoneWithoutFiles[F[_]: CreateIpLookups: Monad] = {
+    val noFilesLookup = CreateIpLookups[F].createFromFiles(
           None,
           None,
           None,
           None,
           None,
           memCache = true,
-          0)
-        res <- ipLookups.performLookups("67.43.156.0")
-      } yield res).unsafeRunSync()
-      val idActual = CreateIpLookups[Id]
-        .createFromFiles(None, None, None, None, None, true, 0)
-        .performLookups("67.43.156.0")
+      lruCacheSize = 0
+    )
       val expected = IpLookupResult(None, None, None, None, None, None)
-      matchIpLookupResult(ioActual, expected)
-      matchIpLookupResult(idActual, expected)
-    }
+
+    noFilesLookup
+      .flatMap(_.performLookups("67.43.156.0"))
+      .map(r => matchIpLookupResult(r, expected))
   }
 
   private def matchIpLookupResult(actual: IpLookupResult, expected: IpLookupResult) = {

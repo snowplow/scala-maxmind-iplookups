@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2022 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,14 +15,14 @@ credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials_nex
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(SiteScaladocPlugin, GhpagesPlugin, PreprocessPlugin)
+  .enablePlugins(SiteScaladocPlugin, PreprocessPlugin)
   .settings(
     organization := "com.supersonic",
     name := "scala-maxmind-iplookups",
-    version := "0.7.3",
+    version := "0.8",
     description := "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion := "2.12.11",
-    crossScalaVersions := Seq("2.13.3", "2.12.11"),
+    scalaVersion := "2.12.15",
+    crossScalaVersions := Seq("2.13.8", "2.12.15"),
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )
@@ -37,10 +37,10 @@ lazy val root = project
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.maxmind,
-      Dependencies.catsEffect,
       Dependencies.cats,
+      Dependencies.catsEffect,
       Dependencies.lruMap,
-      Dependencies.scalaCheck,
-      Dependencies.specs2
+      Dependencies.specs2,
+      Dependencies.specs2CatsEffect
     )
   )

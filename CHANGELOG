@@ -1,3 +1,33 @@
+Version 0.8.1 (2022-08-17)
+--------------------------
+Bump cats-effect to 3.3.14 (#175)
+Bump specs2-core to 4.15.0 (#175)
+Bump cats-core to 2.8.0 (#175)
+Bump geoip2 to 3.0.1 (#175)
+
+Version 0.8.0 (2022-03-08)
+--------------------------
+Use coveralls (#173)
+Remove gh-pages sbt plugin (#172)
+Bump maxmind-geoip2 to 3.0.0 (#171)
+Bump specs2 to 4.13.2 (#170)
+Add support for Cats Effect 3 (#169)
+Update copyright to 2022 (#168)
+Bump sbt to 1.6.2 (#167)
+Bump scala compiler to 2.13.8, 2.12.15 (#165)
+
+Version 0.7.2 (2021-08-11)
+--------------------------
+Extend copyright notice to 2021
+Update publishing workflow for GH pages
+Run scalafmtCheck in github action
+Migrate from travis to github actions
+Bump scala-lru-map to 0.5.0
+Bump cats to 2.6.1
+Bump cats-effect to 2.5.3
+Bump maxmind geopip2 to 2.15.0
+Bump sbt to 1.5.5
+
 Version 0.7.1 (2020-07-07)
 --------------------------
 Bump geoip2 to 2.13.1 (#136)

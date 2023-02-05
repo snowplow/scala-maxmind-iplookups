@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2022 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -21,35 +21,36 @@ import cats.syntax.either._
 import cats.syntax.traverse._
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.{AnonymousIpResponse, CityResponse}
-import com.maxmind.geoip2.record._
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 
 object model {
   type ReaderFunction = (DatabaseReader, InetAddress) => String
 
   type Error[A] = Either[Throwable, A]
 
-  final case class ParsedSubdivision(name: String, isoCode: String, geoNameId: Integer)
+  final case class ParsedSubdivision(name: String, isoCode: String, geoNameId: Long)
 
   /** A case class wrapper around the MaxMind CityResponse class. */
   final case class IpLocation(
-    continent: String,
     countryCode: String,
     countryName: String,
+    region: Option[String],
+    regionName: Option[String],
     city: Option[String],
-    cityGeoNameId: Option[Integer],
+    cityGeoNameId: Option[Long],
     latitude: Float,
     longitude: Float,
     timezone: Option[String],
+    postalCode: Option[String],
+    metroCode: Option[Int],
+    isInEuropeanUnion: Boolean,
+    continent: String,
     accuracyRadius: Int,
     averageIncome: Int,
     populationDensity: Int,
-    postalCode: Option[String],
-    metroCode: Option[Int],
     mostSpecificRegion: Option[String],
     mostSpecificRegionName: Option[String],
-    subdivisions: List[ParsedSubdivision],
-    isInEuropeanUnion: Boolean
+    subdivisions: List[ParsedSubdivision]
   )
 
   /** A case class wrapper around the MaxMind AnonymousIp class. */
@@ -71,16 +72,6 @@ object model {
      * @return IpLocation
      */
     def apply(cityResponse: CityResponse): IpLocation = {
-
-      val continent: Continent = cityResponse.getContinent
-      val country: Country     = cityResponse.getCountry
-      val city: City           = cityResponse.getCity
-      val location: Location   = cityResponse.getLocation
-      val postal: Postal       = cityResponse.getPostal
-      val subdivisions: List[ParsedSubdivision] = cityResponse.getSubdivisions.asScala.map { i =>
-        ParsedSubdivision(i.getName, i.getIsoCode, i.getGeoNameId)
-      }.toList
-
       // Try to bypass bincompat problem with Spark Enrich,
       // Delete once Spark Enrich is deprecated
       val isInEuropeanUnion =
@@ -88,24 +79,32 @@ object model {
         catch {
           case _: NoSuchMethodError => false
         }
+
+      val geoNameId: Long = cityResponse.getCity.getGeoNameId
+      val subdivisions: List[ParsedSubdivision] = cityResponse.getSubdivisions.asScala.map { i =>
+        ParsedSubdivision(i.getName, i.getIsoCode, i.getGeoNameId)
+      }.toList
+
       IpLocation(
-        continent = continent.getName,
-        countryCode = country.getIsoCode,
-        countryName = country.getName,
-        city = Option(city.getName),
-        cityGeoNameId = Option(city.getGeoNameId),
-        latitude = Option(location.getLatitude).map(_.toFloat).getOrElse(0f),
-        longitude = Option(location.getLongitude).map(_.toFloat).getOrElse(0f),
-        timezone = Option(location.getTimeZone),
-        metroCode = Option(location.getMetroCode).map(_.toInt),
-        accuracyRadius = location.getAccuracyRadius,
-        averageIncome = location.getAverageIncome,
-        populationDensity = location.getPopulationDensity,
-        postalCode = Option(postal.getCode),
+        countryCode = cityResponse.getCountry.getIsoCode,
+        countryName = cityResponse.getCountry.getName,
+        region = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
+        regionName = Option(cityResponse.getMostSpecificSubdivision.getName),
+        city = Option(cityResponse.getCity.getName),
+        cityGeoNameId = Option(geoNameId),
+        latitude = Option(cityResponse.getLocation.getLatitude).map(_.toFloat).getOrElse(0f),
+        longitude = Option(cityResponse.getLocation.getLongitude).map(_.toFloat).getOrElse(0f),
+        timezone = Option(cityResponse.getLocation.getTimeZone),
+        postalCode = Option(cityResponse.getPostal.getCode),
+        metroCode = Option(cityResponse.getLocation.getMetroCode).map(_.toInt),
+        isInEuropeanUnion = isInEuropeanUnion,
+        continent = cityResponse.getContinent.getName,
+        accuracyRadius = cityResponse.getLocation.getAccuracyRadius,
+        averageIncome = cityResponse.getLocation.getAverageIncome,
+        populationDensity = cityResponse.getLocation.getPopulationDensity,
         mostSpecificRegion = Option(cityResponse.getMostSpecificSubdivision.getIsoCode),
         mostSpecificRegionName = Option(cityResponse.getMostSpecificSubdivision.getName),
-        subdivisions = subdivisions,
-        isInEuropeanUnion = isInEuropeanUnion
+        subdivisions = subdivisions
       )
     }
   }

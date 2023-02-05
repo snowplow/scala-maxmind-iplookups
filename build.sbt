@@ -11,27 +11,19 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-credentials in Global += Credentials(Path.userHome / ".ivy2" / ".credentials_nexus")
-
 lazy val root = project
   .in(file("."))
   .enablePlugins(SiteScaladocPlugin, PreprocessPlugin)
   .settings(
-    organization := "com.supersonic",
+    organization := "com.snowplowanalytics",
     name := "scala-maxmind-iplookups",
-    version := "0.8",
     description := "Scala wrapper for MaxMind GeoIP2 library",
-    scalaVersion := "2.12.15",
+    scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.13.8", "2.12.15"),
     javacOptions := BuildSettings.javaCompilerOptions,
     scalafmtOnCompile := true
   )
-  .settings(
-    Seq(
-      publishTo := Some(
-        "Supersonic Artifactory" at "https://nexus.service.ironsrc.mobi/repository/ext-release-local"
-      )
-    ))
+  .settings(BuildSettings.publishSettings)
   .settings(BuildSettings.docSettings)
   .settings(BuildSettings.coverageSettings)
   .settings(

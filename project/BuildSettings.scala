@@ -30,22 +30,22 @@ object BuildSettings {
     "-target", "11"
   )
 
-//  lazy val publishSettings = Seq(
-//    publishArtifact := true,
-//    Test / publishArtifact := false,
-//    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-//    pomIncludeRepository := { _ => false },
-//    homepage := Some(url("http://snowplowanalytics.com")),
-//    ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
-//    developers := List(
-//      Developer(
-//        "Snowplow Analytics Ltd",
-//        "Snowplow Analytics Ltd",
-//        "support@snowplowanalytics.com",
-//        url("https://snowplowanalytics.com")
-//      )
-//    ),
-//  )
+  lazy val publishSettings = Seq(
+    publishArtifact := true,
+    Test / publishArtifact := false,
+    licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
+    pomIncludeRepository := { _ => false },
+    homepage := Some(url("http://snowplowanalytics.com")),
+    ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
+    developers := List(
+      Developer(
+        "Snowplow Analytics Ltd",
+        "Snowplow Analytics Ltd",
+        "support@snowplowanalytics.com",
+        url("https://snowplowanalytics.com")
+      )
+    ),
+  )
 
   lazy val docSettings = Seq(
     SiteScaladoc / siteSubdirName := s"${version.value}",

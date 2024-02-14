@@ -233,12 +233,14 @@ class IpLookupsTest extends Specification with Tables with CatsEffect {
     ip: String,
     expected: IpLookupResult
   ) = {
+    import cats.syntax.all._
     ipLookupsFromFiles[F](memCache, lruCache)
       .flatMap(_.performLookups(ip))
       .map(r => matchIpLookupResult(r, expected))
   }
 
   private def assertNoneWithoutFiles[F[_]: CreateIpLookups: Monad] = {
+    import cats.syntax.all._
     val noFilesLookup = CreateIpLookups[F].createFromFiles(
       None,
       None,

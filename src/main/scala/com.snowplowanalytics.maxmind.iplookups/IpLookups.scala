@@ -21,6 +21,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import com.maxmind.db.CHMCache
+import com.maxmind.db.Reader.FileMode
 import com.maxmind.geoip2.DatabaseReader
 import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
@@ -213,7 +214,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
    */
   private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
     serviceFile.map { f =>
-      val builder = new DatabaseReader.Builder(f)
+      val builder = new DatabaseReader.Builder(f).fileMode(FileMode.MEMORY)
       (
         if (memCache) builder.withCache(new CHMCache())
         else builder

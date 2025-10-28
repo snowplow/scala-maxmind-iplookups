@@ -12,6 +12,9 @@ jobs:
     - uses: actions/checkout@v2
     - uses: coursier/cache-action@v6
 
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
+
     - name: Make site
       run: sbt makeSite
 

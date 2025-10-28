@@ -19,6 +19,9 @@ jobs:
       with:
         java-version: 11
 
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
+
     - name: Run tests
       run: sbt coverage +test
 

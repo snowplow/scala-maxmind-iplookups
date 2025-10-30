@@ -11,6 +11,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
+
     - name: Run Snyk to check for vulnerabilities
       uses: snyk/actions/scala@master
       with:

@@ -21,6 +21,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import com.maxmind.db.CHMCache
+import com.maxmind.db.Reader.FileMode
 import com.maxmind.geoip2.DatabaseReader
 import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
@@ -30,6 +31,10 @@ sealed trait CreateIpLookups[F[_]] {
 
   /**
    * Create an IpLookups from Files
+   *
+   * Note: Database initialization performs blocking I/O. In MEMORY mode, the entire database
+   * file is read from disk into heap memory during initialization.
+   *
    * @param geoFile Geographic lookup database file
    * @param ispFile ISP lookup database file
    * @param domainFile Domain lookup database file
@@ -99,7 +104,8 @@ object CreateIpLookups {
           Sync[F].pure(None)
         }
       ).flatMap { lruCache =>
-        Sync[F].delay {
+        // Use blocking because IpLookups construction reads entire database files from disk into memory
+        Sync[F].blocking {
           new IpLookups(
             geoFile,
             ispFile,
@@ -208,12 +214,14 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   /**
    * Get a LookupService from a database file
    *
+   * Note: In MEMORY mode, .build() performs blocking I/O by reading the entire database from disk into memory.
+   *
    * @param serviceFile The database file
    * @return LookupService
    */
   private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
     serviceFile.map { f =>
-      val builder = new DatabaseReader.Builder(f)
+      val builder = new DatabaseReader.Builder(f).fileMode(FileMode.MEMORY)
       (
         if (memCache) builder.withCache(new CHMCache())
         else builder

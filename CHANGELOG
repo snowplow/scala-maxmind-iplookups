@@ -1,3 +1,8 @@
+Version 0.8.2 (2025-11-03)
+--------------------------
+Fix CI (#182)
+Switch file mode to memory (#180)
+
 Version 0.8.1 (2022-08-17)
 --------------------------
 Bump cats-effect to 3.3.14 (#175)

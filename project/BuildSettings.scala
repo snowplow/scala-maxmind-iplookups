@@ -26,16 +26,18 @@ import scoverage.ScoverageKeys._
 object BuildSettings {
 
   lazy val javaCompilerOptions = Seq(
-    "-source", "11",
-    "-target", "11"
+    "-source",
+    "11",
+    "-target",
+    "11"
   )
 
   lazy val publishSettings = Seq(
-    publishArtifact := true,
+    publishArtifact        := true,
     Test / publishArtifact := false,
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-    pomIncludeRepository := { _ => false },
-    homepage := Some(url("http://snowplowanalytics.com")),
+    pomIncludeRepository         := { _ => false },
+    homepage                     := Some(url("http://snowplowanalytics.com")),
     ThisBuild / dynverVTagPrefix := false, // Otherwise git tags required to have v-prefix
     developers := List(
       Developer(
@@ -44,11 +46,11 @@ object BuildSettings {
         "support@snowplowanalytics.com",
         url("https://snowplowanalytics.com")
       )
-    ),
+    )
   )
 
   lazy val docSettings = Seq(
-    SiteScaladoc / siteSubdirName := s"${version.value}",
+    SiteScaladoc / siteSubdirName := s"${version.value}"
   )
 
   lazy val coverageSettings = Seq(

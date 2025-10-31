@@ -22,11 +22,11 @@ jobs:
     - name: Install sbt
       uses: sbt/setup-sbt@v1
 
+    - name: Check Scala formatting
+      run: sbt scalafmtSbtCheck scalafmtCheckAll
+
     - name: Run tests
       run: sbt coverage +test
-
-    - name: Check Scala formatting
-      run: sbt scalafmtCheckAll
 
     - name: Check assets can be published
       run: sbt +publishLocal

@@ -143,6 +143,7 @@ final case class IpLookupResult(
   ipLocation: Option[Either[Throwable, IpLocation]],
   isp: Option[Either[Throwable, String]],
   organization: Option[Either[Throwable, String]],
+  asn: Option[Either[Throwable, Asn]],
   domain: Option[Either[Throwable, String]],
   connectionType: Option[Either[Throwable, String]]
 )
@@ -150,11 +151,12 @@ final case class IpLookupResult(
 
 The first element is the result of the geographic location lookup. It is either `None` (if no
 geographic lookup database was provided) or `Some(ipLocation)`, where `ipLocation` is an instance of
-the `IpLocation` case class described below. The other three elements in the tuple are `Option`s
-wrapping the results of the other four possible lookups: ISP, organization, domain, and connection
-type.
+the `IpLocation` case class described below. The other elements are `Option`s wrapping the results
+of the other possible lookups: ISP, organization, ASN, domain, and connection type.
 
-Note that enabling providing an ISP database will return an `organization` in addition to an `isp`.
+Note that providing an ISP database will return `organization` and `asn` in addition to `isp`.
+The `asn` field contains an `Asn` case class with `autonomousSystemNumber` and
+`autonomousSystemOrganization` information extracted from the ISP database.
 
 ### IpLocation case class
 
@@ -175,6 +177,18 @@ final case class IpLocation(
   isInEuropeanUnion: Boolean,
   continent: String,
   accuracyRadius: Int
+)
+```
+
+### Asn case class
+
+The ASN lookup (extracted from the ISP database) returns an `Asn` case class instance with the
+following structure:
+
+```scala
+final case class Asn(
+  autonomousSystemNumber: Option[Long],
+  autonomousSystemOrganization: Option[String]
 )
 ```
 
@@ -206,6 +220,10 @@ println(lookupResult.isp) // => Some(Right("FDN Communications"))
 
 // Organization lookup
 println(lookupResult.organization) // => Some(Right("DSLAM WAN Allocation"))
+
+// ASN lookup
+println(lookupResult.asn.map(_.autonomousSystemNumber)) // => Some(Right(Some(123)))
+println(lookupResult.asn.map(_.autonomousSystemOrganization)) // => Some(Right(Some("Example ISP")))
 
 // Domain lookup
 println(lookupResult.domain) // => Some(Right("nuvox.net"))

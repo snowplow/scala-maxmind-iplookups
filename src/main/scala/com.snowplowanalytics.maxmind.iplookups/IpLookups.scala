@@ -204,8 +204,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
 )(implicit SR: SpecializedReader[F], IAR: IpAddressResolver[F]) {
   // Configure the lookup services
   private val geoService    = getService(geoFile)
-  private val ispService    = getService(ispFile).map((_, ReaderFunctions.isp))
-  private val orgService    = getService(ispFile).map((_, ReaderFunctions.org))
+  private val ispService    = getService(ispFile)
   private val domainService = getService(domainFile).map((_, ReaderFunctions.domain))
   private val connectionTypeService =
     getService(connectionTypeFile).map((_, ReaderFunctions.connectionType))
@@ -235,7 +234,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
    */
   private def getLookup(
     ipAddress: Either[Throwable, InetAddress],
-    service: Option[(DatabaseReader, ReaderFunction)]
+    service: Option[(DatabaseReader, ReaderFunction[String])]
   ): F[Option[Either[Throwable, String]]] =
     (ipAddress, service) match {
       case (Right(ipA), Some((db, f))) =>
@@ -260,7 +259,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     ipAddress: Either[Throwable, InetAddress]
   ): F[Option[Either[Throwable, IpLocation]]] = (ipAddress, geoService) match {
     case (Right(ipA), Some(gs)) =>
-      SR.getCityValue(gs, ipA)
+      SR.getValue(ReaderFunctions.city, gs, ipA)
         .map(loc => loc.map(IpLocation(_)).some)
     case (Left(f), _) => Monad[F].pure(Some(Left(f)))
     case _            => Monad[F].pure(None)
@@ -270,8 +269,18 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     ipAddress: Either[Throwable, InetAddress]
   ): F[Option[Either[Throwable, AnonymousIp]]] = (ipAddress, anonymousService) match {
     case (Right(ipA), Some(gs)) =>
-      SR.getAnonymousValue(gs, ipA)
+      SR.getValue(ReaderFunctions.anonymousIp, gs, ipA)
         .map(loc => loc.map(AnonymousIp(_)).some)
+    case (Left(f), _) => Monad[F].pure(Some(Left(f)))
+    case _            => Monad[F].pure(None)
+  }
+
+  private def getIspLookup(
+    ipAddress: Either[Throwable, InetAddress]
+  ): F[Option[Either[Throwable, Isp]]] = (ipAddress, ispService) match {
+    case (Right(ipA), Some(gs)) =>
+      SR.getValue(ReaderFunctions.isp, gs, ipA)
+        .map(ispResponse => ispResponse.map(Isp(_)).some)
     case (Left(f), _) => Monad[F].pure(Some(Left(f)))
     case _            => Monad[F].pure(None)
   }
@@ -290,13 +299,15 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     for {
       ipAddress <- IAR.resolve(ip)
 
-      ipLocation     <- getLocationLookup(ipAddress)
-      isp            <- getLookup(ipAddress, ispService)
-      org            <- getLookup(ipAddress, orgService)
+      ipLocation  <- getLocationLookup(ipAddress)
+      ispResponse <- getIspLookup(ipAddress)
+      ispName = ispResponse.map(_.map(_.name))
+      org     = ispResponse.map(_.map(_.organization))
+      asn     = ispResponse.map(_.map(_.asn))
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
       anonymous      <- getAnonymousIpLookup(ipAddress)
-    } yield IpLookupResult(ipLocation, isp, org, domain, connectionType, anonymous)
+    } yield IpLookupResult(ipLocation, ispName, org, asn, domain, connectionType, anonymous)
 
   /**
    * Returns the MaxMind location for this IP address

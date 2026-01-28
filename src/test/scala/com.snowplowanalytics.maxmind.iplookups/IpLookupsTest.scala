@@ -47,6 +47,7 @@ object IpLookupsTest {
     ipLocation = unknownHostException(host),
     isp = unknownHostException(host),
     organization = unknownHostException(host),
+    asn = unknownHostException(host),
     domain = unknownHostException(host),
     connectionType = unknownHostException(host),
     anonymousIp = unknownHostException(host)
@@ -72,6 +73,7 @@ object IpLookupsTest {
         continent = "Asia",
         accuracyRadius = 100
       ).asRight.some,
+      new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 175.16.199.0 is not in the database.").asLeft.some,
@@ -103,6 +105,10 @@ object IpLookupsTest {
       ).asRight.some,
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
+      Asn(
+        autonomousSystemNumber = 209L.some,
+        autonomousSystemOrganization = None
+      ).asRight.some,
       new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
       AnonymousIp(
@@ -132,6 +138,10 @@ object IpLookupsTest {
       ).asRight.some,
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,
+      Asn(
+        autonomousSystemNumber = 35908L.some,
+        autonomousSystemOrganization = None
+      ).asRight.some,
       "shoesfin.NET".asRight.some,
       new AddressNotFoundException("The address 67.43.156.0 is not in the database.").asLeft.some,
       AnonymousIp(
@@ -144,6 +154,7 @@ object IpLookupsTest {
       ).asRight.some
     ),
     "81.2.69.11" -> IpLookupResult(
+      new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 81.2.69.11 is not in the database.").asLeft.some,
@@ -166,7 +177,46 @@ object IpLookupsTest {
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 192.0.2.0 is not in the database.").asLeft.some
+    ),
+    "18.11.120.0" -> IpLookupResult(
+      new AddressNotFoundException("The address 18.11.120.0 is not in the database.").asLeft.some,
+      "Massachusetts Institute of Technology".asRight.some,
+      "Massachusetts Institute of Technology".asRight.some,
+      Asn(
+        autonomousSystemNumber = 3L.some,
+        autonomousSystemOrganization = Some("Massachusetts Institute of Technology")
+      ).asRight.some,
+      new AddressNotFoundException("The address 18.11.120.0 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 18.11.120.0 is not in the database.").asLeft.some,
+      AnonymousIp(
+        ipAddress = "18.11.120.0",
+        isAnonymous = false,
+        isAnonymousVpn = false,
+        isHostingProvider = false,
+        isPublicProxy = false,
+        isTorExitNode = false
+      ).asRight.some
+    ),
+    "8.33.20.1" -> IpLookupResult(
+      new AddressNotFoundException("The address 18.11.120.0 is not in the database.").asLeft.some,
+      "Level 3 Communications".asRight.some,
+      "Level 3 Communications".asRight.some,
+      Asn(
+        autonomousSystemNumber = None,
+        autonomousSystemOrganization = None
+      ).asRight.some,
+      new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
+      new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
+      AnonymousIp(
+        ipAddress = "8.33.20.1",
+        isAnonymous = false,
+        isAnonymousVpn = false,
+        isHostingProvider = false,
+        isPublicProxy = false,
+        isTorExitNode = false
+      ).asRight.some
     )
   )
 }
@@ -248,7 +298,7 @@ class IpLookupsTest extends Specification with Tables with CatsEffect {
       memCache = true,
       lruCacheSize = 0
     )
-    val expected = IpLookupResult(None, None, None, None, None, None)
+    val expected = IpLookupResult(None, None, None, None, None, None, None)
 
     noFilesLookup
       .flatMap(_.performLookups("67.43.156.0"))
@@ -260,6 +310,7 @@ class IpLookupsTest extends Specification with Tables with CatsEffect {
       "iplocation" ! expected.ipLocation ! actual.ipLocation |
       "isp" ! expected.isp ! actual.isp |
       "organization" ! expected.organization ! actual.organization |
+      "asn" ! expected.asn ! actual.asn |
       "domain" ! expected.domain ! actual.domain |
       "connection type" ! expected.connectionType ! actual.connectionType |
       "anonymous" ! expected.anonymousIp ! actual.anonymousIp | { (_, e, a) =>

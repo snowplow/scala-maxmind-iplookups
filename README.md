@@ -143,6 +143,7 @@ final case class IpLookupResult(
   ipLocation: Option[Either[Throwable, IpLocation]],
   isp: Option[Either[Throwable, String]],
   organization: Option[Either[Throwable, String]],
+  asn: Option[Either[Throwable, Asn]],
   domain: Option[Either[Throwable, String]],
   connectionType: Option[Either[Throwable, String]]
 )

@@ -22,11 +22,10 @@ import cats.instances.option._
 import cats.instances.either._
 
 import com.maxmind.geoip2.DatabaseReader
-import com.maxmind.geoip2.model.CityResponse
-import com.maxmind.geoip2.model.AnonymousIpResponse
+import com.maxmind.geoip2.model.{AnonymousIpResponse, AsnResponse, CityResponse}
 
 object model {
-  type ReaderFunction = (DatabaseReader, InetAddress) => String
+  type ReaderFunction[A] = (DatabaseReader, InetAddress) => A
 
   type Error[A] = Either[Throwable, A]
 
@@ -55,6 +54,12 @@ object model {
     isHostingProvider: Boolean,
     isPublicProxy: Boolean,
     isTorExitNode: Boolean
+  )
+
+  /** A case class wrapper around the MaxMind AsnResponse class. */
+  final case class Asn(
+    autonomousSystemNumber: Option[Long],
+    autonomousSystemOrganization: Option[String]
   )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
@@ -113,11 +118,29 @@ object model {
 
   }
 
+  /** Companion class contains a constructor which takes a MaxMind AsnResponse. */
+  object Asn {
+
+    /**
+     * Constructs an Asn instance from a MaxMind AsnResponse instance.
+     * @param asnResponse MaxMind AsnResponse object
+     * @return Asn
+     */
+    def apply(asnResponse: AsnResponse): Asn =
+      Asn(
+        autonomousSystemNumber = Option(asnResponse.getAutonomousSystemNumber: Long)
+          // autonomousSystemNumber is returned as 0 if it doesn't exist in the database
+          .flatMap(n => if (n == 0L) None else Some(n)),
+        autonomousSystemOrganization = Option(asnResponse.getAutonomousSystemOrganization)
+      )
+  }
+
   /** Result of MaxMind lookups */
   final case class IpLookupResult(
     ipLocation: Option[Either[Throwable, IpLocation]],
     isp: Option[Either[Throwable, String]],
     organization: Option[Either[Throwable, String]],
+    asn: Option[Either[Throwable, Asn]],
     domain: Option[Either[Throwable, String]],
     connectionType: Option[Either[Throwable, String]],
     anonymousIp: Option[Either[Throwable, AnonymousIp]]
@@ -129,6 +152,7 @@ object model {
         Option[IpLocation],
         Option[String],
         Option[String],
+        Option[Asn],
         Option[String],
         Option[String],
         Option[AnonymousIp]
@@ -137,11 +161,12 @@ object model {
       val location   = ipLocation.sequence[Error, IpLocation].toValidatedNel
       val provider   = isp.sequence[Error, String].toValidatedNel
       val org        = organization.sequence[Error, String].toValidatedNel
+      val asnRes     = asn.sequence[Error, Asn].toValidatedNel
       val dom        = domain.sequence[Error, String].toValidatedNel
       val connection = connectionType.sequence[Error, String].toValidatedNel
       val anonymous  = anonymousIp.sequence[Error, AnonymousIp].toValidatedNel
 
-      (location, provider, org, dom, connection, anonymous).tupled
+      (location, provider, org, asnRes, dom, connection, anonymous).tupled
     }
   }
 }

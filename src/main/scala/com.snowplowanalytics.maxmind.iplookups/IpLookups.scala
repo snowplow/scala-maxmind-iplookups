@@ -40,6 +40,7 @@ sealed trait CreateIpLookups[F[_]] {
    * @param domainFile Domain lookup database file
    * @param connectionTypeFile Connection type lookup database file
    * @param anonymousFile Anonymous lookup database file
+   * @param asnFile ASN lookup database file
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
@@ -49,6 +50,7 @@ sealed trait CreateIpLookups[F[_]] {
     domainFile: Option[File] = None,
     connectionTypeFile: Option[File] = None,
     anonymousFile: Option[File] = None,
+    asnFile: Option[File] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]]
@@ -60,6 +62,7 @@ sealed trait CreateIpLookups[F[_]] {
    * @param domainFile Domain lookup database filepath
    * @param connectionTypeFile Connection type lookup database filepath
    * @param anonymousFile Anonymous lookup database filepath
+   * @param asnFile ASN lookup database filepath
    * @param memCache Whether to use MaxMind's CHMCache
    * @param lruCacheSize Maximum size of LruMap cache
    */
@@ -69,6 +72,7 @@ sealed trait CreateIpLookups[F[_]] {
     domainFile: Option[String] = None,
     connectionTypeFile: Option[String] = None,
     anonymousFile: Option[String] = None,
+    asnFile: Option[String] = None,
     memCache: Boolean = true,
     lruCacheSize: Int = 10000
   ): F[IpLookups[F]] = createFromFiles(
@@ -77,6 +81,7 @@ sealed trait CreateIpLookups[F[_]] {
     domainFile.map(new File(_)),
     connectionTypeFile.map(new File(_)),
     anonymousFile.map(new File(_)),
+    asnFile.map(new File(_)),
     memCache,
     lruCacheSize
   )
@@ -94,6 +99,7 @@ object CreateIpLookups {
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
       anonymousFile: Option[File] = None,
+      asnFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): F[IpLookups[F]] =
@@ -112,6 +118,7 @@ object CreateIpLookups {
             domainFile,
             connectionTypeFile,
             anonymousFile,
+            asnFile,
             memCache,
             lruCache
           )
@@ -128,6 +135,7 @@ object CreateIpLookups {
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
       anonymousFile: Option[File] = None,
+      asnFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): Eval[IpLookups[Eval]] =
@@ -145,6 +153,7 @@ object CreateIpLookups {
             domainFile,
             connectionTypeFile,
             anonymousFile,
+            asnFile,
             memCache,
             lruCache
           )
@@ -161,6 +170,7 @@ object CreateIpLookups {
       domainFile: Option[File] = None,
       connectionTypeFile: Option[File] = None,
       anonymousFile: Option[File] = None,
+      asnFile: Option[File] = None,
       memCache: Boolean = true,
       lruCacheSize: Int = 10000
     ): Id[IpLookups[Id]] = {
@@ -176,6 +186,7 @@ object CreateIpLookups {
         domainFile,
         connectionTypeFile,
         anonymousFile,
+        asnFile,
         memCache,
         lruCache
       )
@@ -199,6 +210,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   domainFile: Option[File],
   connectionTypeFile: Option[File],
   anonymousFile: Option[File],
+  asnFile: Option[File],
   memCache: Boolean,
   lru: Option[LruMap[F, String, IpLookupResult]]
 )(implicit SR: SpecializedReader[F], IAR: IpAddressResolver[F]) {
@@ -209,6 +221,7 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   private val connectionTypeService =
     getService(connectionTypeFile).map((_, ReaderFunctions.connectionType))
   private val anonymousService = getService(anonymousFile)
+  private val asnService       = getService(asnFile)
 
   /**
    * Get a LookupService from a database file
@@ -285,6 +298,24 @@ class IpLookups[F[_]: Monad] private[iplookups] (
     case _            => Monad[F].pure(None)
   }
 
+  private def getAsnLookup(
+    ipAddress: Either[Throwable, InetAddress],
+    ispResponse: Option[Either[Throwable, Isp]]
+  ): F[Option[Either[Throwable, Asn]]] = {
+    val asnFromIsp = ispResponse.map(_.flatMap(_.asn))
+    asnFromIsp.flatMap(_.toOption) match {
+      case Some(_) => Monad[F].pure(asnFromIsp)
+      case None =>
+        (ipAddress, asnService) match {
+          case (Right(ipA), Some(gs)) =>
+            SR.getValue(ReaderFunctions.asn, gs, ipA)
+              .map(asnResponse => asnResponse.flatMap(Asn.create).some)
+          case (Left(f), _) => Monad[F].pure(Some(Left(f)))
+          case _            => Monad[F].pure(asnFromIsp)
+        }
+    }
+  }
+
   /**
    * This version does not use the LRU cache.
    * Concurrently looks up information
@@ -297,13 +328,12 @@ class IpLookups[F[_]: Monad] private[iplookups] (
    */
   private def performLookupsWithoutLruCache(ip: String): F[IpLookupResult] =
     for {
-      ipAddress <- IAR.resolve(ip)
-
+      ipAddress   <- IAR.resolve(ip)
       ipLocation  <- getLocationLookup(ipAddress)
       ispResponse <- getIspLookup(ipAddress)
       ispName = ispResponse.map(_.map(_.name))
       org     = ispResponse.map(_.map(_.organization))
-      asn     = ispResponse.map(_.map(_.asn))
+      asn            <- getAsnLookup(ipAddress, ispResponse)
       domain         <- getLookup(ipAddress, domainService)
       connectionType <- getLookup(ipAddress, connectionTypeService)
       anonymous      <- getAnonymousIpLookup(ipAddress)

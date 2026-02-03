@@ -66,4 +66,5 @@ object ReaderFunctions {
     db.connectionType(ip).getConnectionType.toString
   val city        = (db: DatabaseReader, ip: InetAddress) => db.city(ip)
   val anonymousIp = (db: DatabaseReader, ip: InetAddress) => db.anonymousIp(ip)
+  val asn         = (db: DatabaseReader, ip: InetAddress) => db.asn(ip)
 }

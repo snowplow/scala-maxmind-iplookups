@@ -10,8 +10,8 @@
 This is a Scala wrapper for the MaxMind [Java Geo-IP2][java-lib] library. The main benefits of using
 this wrapper over directly calling the Java library from Scala are:
 
-1. **Provides a common interface to four MaxMind databases** - it works with MaxMind's databases for
-looking up geographic location, ISP, domain, and connection type from an IP address
+1. **Provides a common interface to five MaxMind databases** - it works with MaxMind's databases for
+looking up geographic location, ISP, ASN, domain, and connection type from an IP address
 2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses
 Option-boxing wherever possible
 3. **Better performance** - as well as or instead of using MaxMind's own caching (`CHMCache`), you
@@ -30,7 +30,7 @@ val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
 ([direct link][geolitecity-dat]).
 
-MaxMind also has databases for looking up [ISPs][maxmind-isp], [domain names][maxmind-domain], and
+MaxMind also has databases for looking up [ISPs][maxmind-isp], [ASN][maxmind-asn], [domain names][maxmind-domain], and
 [connection types][maxmind-connection-type] from IP addresses. Scala MaxMind IP Lookups supports all
 of these.
 
@@ -102,6 +102,7 @@ final case class IpLookups(
   ispFile: Option[File],
   domainFile: Option[File],
   connectionTypeFile: Option[File],
+  asnFile: Option[File],
   memCache: Boolean = true,
   lruCache: Int = 10000
 )
@@ -116,14 +117,15 @@ def createFromFilenames(
   ispFile: Option[String],
   domainFile: Option[String],
   connectionTypeFile: Option[String],
+  asnFile: Option[String],
   memCache: Boolean = true,
   lruCache: Int = 10000
 )
 ```
 
-The first four arguments are the MaxMind databases from which the lookup should be performed.
-`geoFile`, `ispFile`, `domainFile`, and `connectionTypeFile` refer respectively to MaxMind's
-databases for looking up location, ISP, domain, and connection type based on an IP address. They are
+The first five arguments are the MaxMind databases from which the lookup should be performed.
+`geoFile`, `ispFile`, `domainFile`, `connectionTypeFile`, and `asnFile` refer respectively to MaxMind's
+databases for looking up location, ISP, domain, connection type, and ASN based on an IP address. They are
 all wrapped in `Option`, so if you don't have access to all of them, just pass in `None` as in the
 example above.
 
@@ -156,7 +158,10 @@ of the other possible lookups: ISP, organization, ASN, domain, and connection ty
 
 Note that providing an ISP database will return `organization` and `asn` in addition to `isp`.
 The `asn` field contains an `Asn` case class with `autonomousSystemNumber` and
-`autonomousSystemOrganization` information extracted from the ISP database.
+`autonomousSystemOrganization` information. ASN information can be extracted from either the ISP
+database or a dedicated ASN database. If both databases are provided, the ISP database takes
+precedence. If the ISP database is provided but doesn't contain ASN information for a given IP,
+the lookup will fall back to the ASN database (if provided).
 
 ### IpLocation case class
 
@@ -182,19 +187,22 @@ final case class IpLocation(
 
 ### Asn case class
 
-The ASN lookup (extracted from the ISP database) returns an `Asn` case class instance with the
+The ASN lookup (extracted from either the ISP or ASN database) returns an `Asn` case class instance with the
 following structure:
 
 ```scala
 final case class Asn(
-  autonomousSystemNumber: Option[Long],
+  autonomousSystemNumber: Long,
   autonomousSystemOrganization: Option[String]
 )
 ```
 
+Note that `autonomousSystemNumber` is a required field. If an ASN database entry doesn't contain a valid
+ASN number, the lookup will return an error instead of an `Asn` instance.
+
 ### An example using multiple databases
 
-This example shows how to do a lookup using all four databases.
+This example shows how to do a lookup using all five databases.
 
 ```scala
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
@@ -205,6 +213,7 @@ val lookupResult = (for {
     ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
     domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
     connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
+    asnFile = Some("/opt/maxmind/GeoLite2-ASN.mmdb"),
     memCache = false,
     lruCache = 10000
   )
@@ -222,7 +231,7 @@ println(lookupResult.isp) // => Some(Right("FDN Communications"))
 println(lookupResult.organization) // => Some(Right("DSLAM WAN Allocation"))
 
 // ASN lookup
-println(lookupResult.asn.map(_.autonomousSystemNumber)) // => Some(Right(Some(123)))
+println(lookupResult.asn.map(_.autonomousSystemNumber)) // => Some(Right(123))
 println(lookupResult.asn.map(_.autonomousSystemOrganization)) // => Some(Right(Some("Example ISP")))
 
 // Domain lookup
@@ -278,6 +287,7 @@ limitations under the License.
 
 [maxmind-downloads]: https://dev.maxmind.com/geoip/geoip2/downloadable/#MaxMind_APIs
 [maxmind-isp]: https://www.maxmind.com/en/geoip2-isp-database
+[maxmind-asn]: https://dev.maxmind.com/geoip/docs/databases/asn
 [maxmind-domain]: https://www.maxmind.com/en/geoip2-domain-name-database
 [maxmind-connection-type]: https://www.maxmind.com/en/geoip2-connection-type-database
 [geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz

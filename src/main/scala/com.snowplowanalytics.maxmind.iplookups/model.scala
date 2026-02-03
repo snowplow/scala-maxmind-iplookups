@@ -23,6 +23,7 @@ import cats.instances.either._
 
 import com.maxmind.geoip2.DatabaseReader
 import com.maxmind.geoip2.model.{AnonymousIpResponse, AsnResponse, CityResponse, IspResponse}
+import com.maxmind.geoip2.exception.AddressNotFoundException
 
 object model {
   type ReaderFunction[A] = (DatabaseReader, InetAddress) => A
@@ -58,7 +59,7 @@ object model {
 
   /** A case class wrapper around the MaxMind AsnResponse class. */
   final case class Asn(
-    autonomousSystemNumber: Option[Long],
+    autonomousSystemNumber: Long,
     autonomousSystemOrganization: Option[String]
   )
 
@@ -66,7 +67,7 @@ object model {
   final case class Isp(
     name: String,
     organization: String,
-    asn: Asn
+    asn: Either[Throwable, Asn]
   )
 
   /** Companion class contains a constructor which takes a MaxMind CityResponse. */
@@ -125,7 +126,7 @@ object model {
 
   }
 
-  /** Companion class contains a constructor which takes a MaxMind AsnResponse. */
+  /** Companion class contains a helper method which takes a MaxMind AsnResponse. */
   object Asn {
 
     /**
@@ -133,11 +134,20 @@ object model {
      * @param asnResponse MaxMind AsnResponse object
      * @return Asn
      */
-    def apply(asnResponse: AsnResponse): Asn =
-      Asn(
-        autonomousSystemNumber = Option(asnResponse.getAutonomousSystemNumber).map(_.toLong),
-        autonomousSystemOrganization = Option(asnResponse.getAutonomousSystemOrganization)
-      )
+    def create(asnResponse: AsnResponse): Either[Throwable, Asn] =
+      Option(asnResponse.getAutonomousSystemNumber)
+        .map(_.toLong)
+        .map(asn =>
+          Asn(
+            autonomousSystemNumber = asn,
+            autonomousSystemOrganization = Option(asnResponse.getAutonomousSystemOrganization)
+          )
+        )
+        .toRight(
+          new AddressNotFoundException(
+            s"The address ${asnResponse.getIpAddress} is not in the database."
+          )
+        )
   }
 
   /** Companion class contains a constructor which takes a MaxMind IspResponse. */
@@ -152,7 +162,7 @@ object model {
       Isp(
         name = ispResponse.getIsp,
         organization = ispResponse.getOrganization,
-        asn = Asn(ispResponse)
+        asn = Asn.create(ispResponse)
       )
   }
 

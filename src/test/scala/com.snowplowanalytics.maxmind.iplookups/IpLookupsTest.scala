@@ -17,7 +17,6 @@ import cats.effect.testing.specs2.CatsEffect
 import cats.implicits._
 import cats.{Id, Monad}
 import com.maxmind.geoip2.exception.AddressNotFoundException
-import com.snowplowanalytics.maxmind.iplookups.IpLookupsTest.ipLookupsFromFiles
 import com.snowplowanalytics.maxmind.iplookups.model._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Tables
@@ -30,18 +29,7 @@ object IpLookupsTest {
   val domainFile         = getClass.getResource("GeoIP2-Domain-Test.mmdb").getFile
   val connectionTypeFile = getClass.getResource("GeoIP2-Connection-Type-Test.mmdb").getFile
   val anonymousFile      = getClass.getResource("GeoIP2-Anonymous-IP-Test.mmdb").getFile
-
-  def ipLookupsFromFiles[F[_]: CreateIpLookups](memCache: Boolean, lruCache: Int): F[IpLookups[F]] =
-    CreateIpLookups[F]
-      .createFromFilenames(
-        Some(geoFile),
-        Some(ispFile),
-        Some(domainFile),
-        Some(connectionTypeFile),
-        Some(anonymousFile),
-        memCache,
-        lruCache
-      )
+  val asnFile            = getClass.getResource("GeoLite2-ASN-Test.mmdb").getFile
 
   def failedLookupCauseUnknownHost(host: String): IpLookupResult = IpLookupResult(
     ipLocation = unknownHostException(host),
@@ -106,7 +94,7 @@ object IpLookupsTest {
       "Century Link".asRight.some,
       "Lariat Software".asRight.some,
       Asn(
-        autonomousSystemNumber = 209L.some,
+        autonomousSystemNumber = 209L,
         autonomousSystemOrganization = None
       ).asRight.some,
       new AddressNotFoundException("The address 216.160.83.56 is not in the database.").asLeft.some,
@@ -139,7 +127,7 @@ object IpLookupsTest {
       "Loud Packet".asRight.some,
       "zudoarichikito_".asRight.some,
       Asn(
-        autonomousSystemNumber = 35908L.some,
+        autonomousSystemNumber = 35908L,
         autonomousSystemOrganization = None
       ).asRight.some,
       "shoesfin.NET".asRight.some,
@@ -185,7 +173,7 @@ object IpLookupsTest {
       "Massachusetts Institute of Technology".asRight.some,
       "Massachusetts Institute of Technology".asRight.some,
       Asn(
-        autonomousSystemNumber = 3L.some,
+        autonomousSystemNumber = 3L,
         autonomousSystemOrganization = Some("Massachusetts Institute of Technology")
       ).asRight.some,
       new AddressNotFoundException("The address 18.11.120.0 is not in the database.").asLeft.some,
@@ -203,10 +191,7 @@ object IpLookupsTest {
       new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
       "Level 3 Communications".asRight.some,
       "Level 3 Communications".asRight.some,
-      Asn(
-        autonomousSystemNumber = None,
-        autonomousSystemOrganization = None
-      ).asRight.some,
+      new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
       new AddressNotFoundException("The address 8.33.20.1 is not in the database.").asLeft.some,
       AnonymousIp(
@@ -222,9 +207,9 @@ object IpLookupsTest {
 }
 
 class IpLookupsTest extends Specification with Tables with CatsEffect {
+  import IpLookupsTest._
 
-  "Looking up some IP address locations should match their expected locations" should {
-    import IpLookupsTest._
+  "Looking up some IP address" should {
 
     for {
       memCache <- Seq(true, false)
@@ -237,6 +222,22 @@ class IpLookupsTest extends Specification with Tables with CatsEffect {
           }
           "work for Id monad" in {
             assertWithFiles[Id](memCache, lruCache, ip, expected)
+          }
+          "return correct ASN when both ISP and ASN database provided" in {
+            assertWithFiles[IO](memCache, lruCache, ip, expected, Some(asnFile), Some(ispFile))
+          }
+          "return correct ASN when only ISP database provided" in {
+            assertWithFiles[IO](memCache, lruCache, ip, expected, None, Some(ispFile))
+          }
+          "return correct ASN when only ASN database provided" in {
+            assertWithFiles[IO](
+              memCache,
+              lruCache,
+              ip,
+              expected.copy(isp = None, organization = None),
+              Some(asnFile),
+              None
+            )
           }
         }
       }
@@ -281,9 +282,21 @@ class IpLookupsTest extends Specification with Tables with CatsEffect {
     memCache: Boolean,
     lruCache: Int,
     ip: String,
-    expected: IpLookupResult
+    expected: IpLookupResult,
+    asnFileParam: Option[String] = Some(asnFile),
+    ispFileParam: Option[String] = Some(ispFile)
   ) = {
-    ipLookupsFromFiles[F](memCache, lruCache)
+    CreateIpLookups[F]
+      .createFromFilenames(
+        Some(geoFile),
+        ispFileParam,
+        Some(domainFile),
+        Some(connectionTypeFile),
+        Some(anonymousFile),
+        asnFileParam,
+        memCache,
+        lruCache
+      )
       .flatMap(_.performLookups(ip))
       .map(r => matchIpLookupResult(r, expected))
   }

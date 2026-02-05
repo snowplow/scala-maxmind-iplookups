@@ -10,8 +10,8 @@
 This is a Scala wrapper for the MaxMind [Java Geo-IP2][java-lib] library. The main benefits of using
 this wrapper over directly calling the Java library from Scala are:
 
-1. **Provides a common interface to five MaxMind databases** - it works with MaxMind's databases for
-looking up geographic location, ISP, ASN, domain, and connection type from an IP address
+1. **Provides a common interface to six MaxMind databases** - it works with MaxMind's databases for
+looking up geographic location, ISP, ASN, domain, connection type, and anonymous IP from an IP address
 2. **Better type safety** - the MaxMind Java library is somewhat null-happy. This wrapper uses
 Option-boxing wherever possible
 3. **Better performance** - as well as or instead of using MaxMind's own caching (`CHMCache`), you
@@ -30,8 +30,8 @@ val maxmindIpLookups = "com.snowplowanalytics" %% "scala-maxmind-iplookups" % "0
 Retrieve the `GeoLite2-City.mmdb` file from the [MaxMind downloads page][maxmind-downloads]
 ([direct link][geolitecity-dat]).
 
-MaxMind also has databases for looking up [ISPs][maxmind-isp], [ASN][maxmind-asn], [domain names][maxmind-domain], and
-[connection types][maxmind-connection-type] from IP addresses. Scala MaxMind IP Lookups supports all
+MaxMind also has databases for looking up [ISPs][maxmind-isp], [ASN][maxmind-asn], [domain names][maxmind-domain],
+[connection types][maxmind-connection-type], and [anonymous IPs][maxmind-anonymous] from IP addresses. Scala MaxMind IP Lookups supports all
 of these.
 
 ## Usage
@@ -102,6 +102,7 @@ final case class IpLookups(
   ispFile: Option[File],
   domainFile: Option[File],
   connectionTypeFile: Option[File],
+  anonymousFile: Option[File],
   asnFile: Option[File],
   memCache: Boolean = true,
   lruCache: Int = 10000
@@ -117,15 +118,16 @@ def createFromFilenames(
   ispFile: Option[String],
   domainFile: Option[String],
   connectionTypeFile: Option[String],
+  anonymousFile: Option[String],
   asnFile: Option[String],
   memCache: Boolean = true,
   lruCache: Int = 10000
 )
 ```
 
-The first five arguments are the MaxMind databases from which the lookup should be performed.
-`geoFile`, `ispFile`, `domainFile`, `connectionTypeFile`, and `asnFile` refer respectively to MaxMind's
-databases for looking up location, ISP, domain, connection type, and ASN based on an IP address. They are
+The first six arguments are the MaxMind databases from which the lookup should be performed.
+`geoFile`, `ispFile`, `domainFile`, `connectionTypeFile`, `anonymousFile`, and `asnFile` refer respectively to MaxMind's
+databases for looking up location, ISP, domain, connection type, anonymous IP, and ASN based on an IP address. They are
 all wrapped in `Option`, so if you don't have access to all of them, just pass in `None` as in the
 example above.
 
@@ -147,14 +149,15 @@ final case class IpLookupResult(
   organization: Option[Either[Throwable, String]],
   asn: Option[Either[Throwable, Asn]],
   domain: Option[Either[Throwable, String]],
-  connectionType: Option[Either[Throwable, String]]
+  connectionType: Option[Either[Throwable, String]],
+  anonymousIp: Option[Either[Throwable, AnonymousIp]]
 )
 ```
 
 The first element is the result of the geographic location lookup. It is either `None` (if no
 geographic lookup database was provided) or `Some(ipLocation)`, where `ipLocation` is an instance of
 the `IpLocation` case class described below. The other elements are `Option`s wrapping the results
-of the other possible lookups: ISP, organization, ASN, domain, and connection type.
+of the other possible lookups: ISP, organization, ASN, domain, connection type, and anonymous IP.
 
 Note that providing an ISP database will return `organization` and `asn` in addition to `isp`.
 The `asn` field contains an `Asn` case class with `autonomousSystemNumber` and
@@ -200,9 +203,26 @@ final case class Asn(
 Note that `autonomousSystemNumber` is a required field. If an ASN database entry doesn't contain a valid
 ASN number, the lookup will return an error instead of an `Asn` instance.
 
+### AnonymousIp case class
+
+The anonymous IP lookup returns an `AnonymousIp` case class instance with the following structure:
+
+```scala
+final case class AnonymousIp(
+  ipAddress: String,
+  isAnonymous: Boolean,
+  isAnonymousVpn: Boolean,
+  isHostingProvider: Boolean,
+  isPublicProxy: Boolean,
+  isTorExitNode: Boolean
+)
+```
+
+This lookup provides information about whether an IP address is associated with various types of anonymous or proxy services.
+
 ### An example using multiple databases
 
-This example shows how to do a lookup using all five databases.
+This example shows how to do a lookup using all six databases.
 
 ```scala
 import com.snowplowanalytics.maxmind.iplookups.IpLookups
@@ -213,6 +233,7 @@ val lookupResult = (for {
     ispFile = Some("/opt/maxmind/GeoIP2-ISP.mmdb"),
     domainFile = Some("/opt/maxmind/GeoIP2-Domain.mmdb"),
     connectionType = Some("/opt/maxmind/GeoIP2-Connection-Type.mmdb"),
+    anonymousFile = Some("/opt/maxmind/GeoIP2-Anonymous-IP.mmdb"),
     asnFile = Some("/opt/maxmind/GeoLite2-ASN.mmdb"),
     memCache = false,
     lruCache = 10000
@@ -239,6 +260,10 @@ println(lookupResult.domain) // => Some(Right("nuvox.net"))
 
 // Connection type lookup
 println(lookupResult.connectionType) // => Some(Right("Dialup"))
+
+// Anonymous IP lookup
+println(lookupResult.anonymousIp.map(_.isAnonymous)) // => Some(Right(false))
+println(lookupResult.anonymousIp.map(_.isTorExitNode)) // => Some(Right(false))
 ```
 
 ### LRU cache
@@ -290,6 +315,7 @@ limitations under the License.
 [maxmind-asn]: https://dev.maxmind.com/geoip/docs/databases/asn
 [maxmind-domain]: https://www.maxmind.com/en/geoip2-domain-name-database
 [maxmind-connection-type]: https://www.maxmind.com/en/geoip2-connection-type-database
+[maxmind-anonymous]: https://www.maxmind.com/en/geoip2-anonymous-ip-database
 [geolitecity-dat]: http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0

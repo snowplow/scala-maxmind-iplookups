@@ -12,8 +12,9 @@
  */
 package com.snowplowanalytics.maxmind.iplookups
 
-import java.io.File
+import java.io.{ByteArrayInputStream, File}
 import java.net.InetAddress
+import java.nio.file.Files
 
 import cats.{Eval, Id, Monad}
 import cats.effect.Sync
@@ -21,7 +22,6 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import com.maxmind.db.CHMCache
-import com.maxmind.db.Reader.FileMode
 import com.maxmind.geoip2.DatabaseReader
 import com.snowplowanalytics.lrumap.{CreateLruMap, LruMap}
 
@@ -226,14 +226,19 @@ class IpLookups[F[_]: Monad] private[iplookups] (
   /**
    * Get a LookupService from a database file
    *
-   * Note: In MEMORY mode, .build() performs blocking I/O by reading the entire database from disk into memory.
+   * Reads the file into a byte array using java.nio.file.Files.readAllBytes, then passes it
+   * to DatabaseReader as an InputStream. This avoids FileChannel.read into a heap ByteBuffer,
+   * which causes the JDK to allocate and cache temporary direct ByteBuffers in thread-local
+   * storage (sun.nio.ch.Util.BufferCache), leading to off-heap memory growth.
    *
    * @param serviceFile The database file
    * @return LookupService
    */
   private def getService(serviceFile: Option[File]): Option[DatabaseReader] =
     serviceFile.map { f =>
-      val builder = new DatabaseReader.Builder(f).fileMode(FileMode.MEMORY)
+      val bytes   = Files.readAllBytes(f.toPath)
+      val stream  = new ByteArrayInputStream(bytes)
+      val builder = new DatabaseReader.Builder(stream)
       (
         if (memCache) builder.withCache(new CHMCache())
         else builder

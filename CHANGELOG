@@ -1,3 +1,7 @@
+Version 0.9.1 (2026-02-18)
+--------------------------
+Avoid off-heap memory growth from JDK direct buffer caching (#186)
+
 Version 0.9.0 (2026-02-06)
 --------------------------
 Extract ASN fields from ISP database (#183)
